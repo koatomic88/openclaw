@@ -1,38 +1,13 @@
-import { execFile } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { promisify } from "node:util";
+import {
+  createPluginBlobStore,
+  resetPluginBlobStoreForTests,
+} from "openclaw/plugin-sdk/plugin-state-runtime";
 import { resolvePreferredOpenClawTmpDir } from "../api.js";
-import { DiffArtifactStore } from "./store.js";
+import { DiffArtifactStore, type DiffBlobMetadata } from "./store.js";
 
-const execFileAsync = promisify(execFile);
-
-async function pathExists(filePath: string): Promise<boolean> {
-  try {
-    await fs.stat(filePath);
-    return true;
-  } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-      return false;
-    }
-    throw error;
-  }
-}
-
-export async function ensureCuratedViewerRuntimeForTests(): Promise<void> {
-  const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
-  const runtimePath = path.join(repoRoot, "extensions", "diffs", "assets", "viewer-runtime.js");
-  if (await pathExists(runtimePath)) {
-    return;
-  }
-
-  // The curated runtime is generated output. Source tests that serve viewer
-  // assets need a clean-checkout fixture before the normal build hook runs.
-  await execFileAsync(process.execPath, ["scripts/build-diffs-viewer-runtime.mjs", "curated"], {
-    cwd: repoRoot,
-  });
-}
+const MAX_TEST_DIFF_ARTIFACT_BLOBS = 512;
 
 export async function createTempDiffRoot(prefix: string): Promise<{
   rootDir: string;
@@ -47,15 +22,36 @@ export async function createTempDiffRoot(prefix: string): Promise<{
   };
 }
 
-export async function createDiffStoreHarness(prefix: string): Promise<{
+export async function createDiffStoreHarness(
+  prefix: string,
+  options: { cleanupIntervalMs?: number } = {},
+): Promise<{
   rootDir: string;
   store: DiffArtifactStore;
   cleanup: () => Promise<void>;
 }> {
   const { rootDir, cleanup } = await createTempDiffRoot(prefix);
+  const originalStateDir = process.env.OPENCLAW_STATE_DIR;
+  process.env.OPENCLAW_STATE_DIR = await fs.mkdtemp(path.join(rootDir, "state-"));
+  resetPluginBlobStoreForTests();
   return {
     rootDir,
-    store: new DiffArtifactStore({ rootDir }),
-    cleanup,
+    store: new DiffArtifactStore({
+      rootDir,
+      cleanupIntervalMs: options.cleanupIntervalMs,
+      blobStore: createPluginBlobStore<DiffBlobMetadata>("diffs", {
+        namespace: "artifacts",
+        maxEntries: MAX_TEST_DIFF_ARTIFACT_BLOBS,
+      }),
+    }),
+    cleanup: async () => {
+      if (originalStateDir === undefined) {
+        delete process.env.OPENCLAW_STATE_DIR;
+      } else {
+        process.env.OPENCLAW_STATE_DIR = originalStateDir;
+      }
+      resetPluginBlobStoreForTests();
+      await cleanup();
+    },
   };
 }

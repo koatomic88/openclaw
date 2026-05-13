@@ -22,10 +22,6 @@ import { extractToolPayload } from "../../infra/outbound/tool-payload.js";
 import { getAgentScopedMediaLocalRoots } from "../../media/local-roots.js";
 import { normalizePollInput } from "../../polls.js";
 import {
-  normalizeSessionKeyPreservingOpaquePeerIds,
-  parseThreadSessionSuffix,
-} from "../../sessions/session-key-utils.js";
-import {
   normalizeOptionalLowercaseString,
   normalizeOptionalString,
   readStringValue,
@@ -568,11 +564,7 @@ export const sendHandlers: GatewayRequestHandlers = {
         const mirrorProjection = projectOutboundPayloadPlanForMirror(outboundPayloadPlan);
         const mirrorText = mirrorProjection.text;
         const mirrorMediaUrls = mirrorProjection.mediaUrls;
-        // Preserve opaque, case-sensitive peer IDs (e.g. Matrix room ids) on an
-        // explicit session key instead of raw-lowercasing it (openclaw#75670).
-        // Non-enrolled channels still canonicalize to lowercase via the registry.
-        const providedSessionKey =
-          normalizeSessionKeyPreservingOpaquePeerIds(request.sessionKey) || undefined;
+        const providedSessionKey = normalizeOptionalLowercaseString(request.sessionKey);
         const explicitAgentId = normalizeOptionalString(request.agentId);
         const sessionAgentId = providedSessionKey
           ? resolveSessionAgentId({ sessionKey: providedSessionKey, config: cfg })
@@ -590,14 +582,12 @@ export const sendHandlers: GatewayRequestHandlers = {
           replyToId,
           threadId,
         });
-        const providedSessionBaseKey =
-          parseThreadSessionSuffix(providedSessionKey).baseSessionKey ?? providedSessionKey;
         const shouldUseDerivedThreadSessionKey =
           channel === "slack" &&
           !!providedSessionKey &&
           !!normalizeOptionalString(derivedRoute?.threadId) &&
-          normalizeOptionalLowercaseString(derivedRoute?.baseSessionKey) ===
-            normalizeOptionalLowercaseString(providedSessionBaseKey) &&
+          (normalizeOptionalLowercaseString(derivedRoute?.baseSessionKey) === providedSessionKey ||
+            normalizeOptionalLowercaseString(derivedRoute?.sessionKey) === providedSessionKey) &&
           normalizeOptionalLowercaseString(derivedRoute?.sessionKey) !== providedSessionKey;
         const outboundRoute = derivedRoute
           ? providedSessionKey

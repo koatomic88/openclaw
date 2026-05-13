@@ -2,7 +2,6 @@
 
 import { execFileSync } from "node:child_process";
 import {
-  copyFileSync,
   existsSync,
   lstatSync,
   mkdtempSync,
@@ -36,10 +35,7 @@ import {
 } from "./lib/bundled-plugin-build-entries.mjs";
 import { collectPackUnpackedSizeErrors as collectNpmPackUnpackedSizeErrors } from "./lib/npm-pack-budget.mjs";
 import { collectBundledPluginPackageDependencySpecs } from "./lib/plugin-package-dependencies.mjs";
-import {
-  listPluginSdkDistArtifacts,
-  listPrivateLocalOnlyPluginSdkDistArtifacts,
-} from "./lib/plugin-sdk-entries.mjs";
+import { listPluginSdkDistArtifacts } from "./lib/plugin-sdk-entries.mjs";
 import {
   runInstalledWorkspaceBootstrapSmoke,
   WORKSPACE_TEMPLATE_PACK_PATHS,
@@ -103,12 +99,10 @@ const forbiddenPrefixes = [
   "dist/plugin-sdk/qa-channel-protocol.",
   "dist/plugin-sdk/qa-lab.",
   "dist/plugin-sdk/qa-runtime.",
-  "dist/plugin-sdk/src/",
   "dist/plugin-sdk/src/plugin-sdk/qa-channel.d.ts",
   "dist/plugin-sdk/src/plugin-sdk/qa-channel-protocol.d.ts",
   "dist/plugin-sdk/src/plugin-sdk/qa-lab.d.ts",
   "dist/plugin-sdk/src/plugin-sdk/qa-runtime.d.ts",
-  ...listPrivateLocalOnlyPluginSdkDistArtifacts(),
   "dist/qa-runtime-",
   "dist/plugin-sdk/.tsbuildinfo",
   "docs/.generated/",
@@ -122,12 +116,6 @@ const forbiddenPrivateQaContentMarkers = [
   "qa-channel-protocol.js",
   "qa-lab/cli.js",
   "qa-lab/runtime-api.js",
-] as const;
-const forbiddenPrivatePluginSdkDeclarationMarkers = [
-  "//#region src/agents/test-helpers/",
-  "//#region src/plugin-sdk/test-helpers/",
-  "//#region src/test-helpers/",
-  "//#region src/test-utils/",
 ] as const;
 const forbiddenPrivateQaContentScanPrefixes = ["dist/"] as const;
 const forbiddenPluginSdkRootAliasMinifiedExportPattern = /\bmod\.[A-Za-z_$]\b/u;
@@ -155,15 +143,8 @@ export const PACKED_BUNDLED_RUNTIME_DEPS_REPAIR_ARGS = [
   "--fix",
   "--non-interactive",
 ] as const;
-export const PACKED_COMPLETION_SMOKE_ARGS = [
-  "completion",
-  "--write-state",
-  "--shell",
-  "zsh",
-] as const;
-const PACKED_PLUGIN_SDK_TYPESCRIPT_SMOKE_FIXTURE = resolve(
-  "scripts/fixtures/packed-plugin-sdk-type-smoke.ts",
-);
+export const PACKED_COMPLETION_SMOKE_ARGS = ["completion", "--shell", "zsh"] as const;
+
 export function collectSkillShellScriptExecutableErrors(rootDir = resolve(".")): string[] {
   if (process.platform === "win32") {
     return [];
@@ -497,78 +478,6 @@ function verifyPackedInstalledPackage(params: {
   }
 }
 
-export function createPackedPluginSdkTypescriptSmokeProject(params: {
-  consumerDir: string;
-  packageSpec: string;
-}): void {
-  mkdirSync(join(params.consumerDir, "src"), { recursive: true });
-  writeFileSync(
-    join(params.consumerDir, "package.json"),
-    `${JSON.stringify(
-      {
-        name: "openclaw-plugin-sdk-type-smoke",
-        private: true,
-        type: "module",
-        dependencies: {
-          openclaw: params.packageSpec,
-        },
-      },
-      null,
-      2,
-    )}\n`,
-    "utf8",
-  );
-  writeFileSync(
-    join(params.consumerDir, "tsconfig.json"),
-    `${JSON.stringify(
-      {
-        compilerOptions: {
-          module: "NodeNext",
-          moduleResolution: "NodeNext",
-          noEmit: true,
-          strict: true,
-          skipLibCheck: true,
-          target: "ES2022",
-        },
-        include: ["src/index.ts"],
-      },
-      null,
-      2,
-    )}\n`,
-    "utf8",
-  );
-  copyFileSync(
-    PACKED_PLUGIN_SDK_TYPESCRIPT_SMOKE_FIXTURE,
-    join(params.consumerDir, "src", "index.ts"),
-  );
-}
-
-function runPackedPluginSdkTypescriptSmoke(tarballPath: string, tmpRoot: string): void {
-  const consumerDir = join(tmpRoot, "plugin-sdk-type-consumer");
-  createPackedPluginSdkTypescriptSmokeProject({
-    consumerDir,
-    packageSpec: `file:${tarballPath}`,
-  });
-  execNpm(["install", "--ignore-scripts", "--no-audit", "--no-fund"], {
-    cwd: consumerDir,
-    encoding: "utf8",
-    stdio: "inherit",
-  });
-
-  const installedOpenClawRoot = join(consumerDir, "node_modules", "openclaw");
-  const tscPath = [
-    join(consumerDir, "node_modules", "typescript", "bin", "tsc"),
-    join(installedOpenClawRoot, "node_modules", "typescript", "bin", "tsc"),
-  ].find((candidate) => existsSync(candidate));
-  if (!tscPath) {
-    throw new Error("release-check: packed plugin SDK TypeScript smoke could not find tsc.");
-  }
-  execFileSync(process.execPath, [tscPath, "-p", "tsconfig.json", "--pretty", "false"], {
-    cwd: consumerDir,
-    stdio: "inherit",
-  });
-}
-
 export function writePackedBundledPluginActivationConfig(homeDir: string): void {
   const configPath = join(homeDir, ".openclaw", "openclaw.json");
   mkdirSync(join(homeDir, ".openclaw"), { recursive: true });
@@ -738,7 +647,6 @@ function runPackedBundledChannelEntrySmoke(): void {
     runPackedBundledPluginPostinstall(packageRoot);
     runPackedBundledPluginActivationSmoke(packageRoot, tmpRoot);
     runPackedTaskRegistryControlRuntimeSmoke(packageRoot);
-    runPackedPluginSdkTypescriptSmoke(tarballPath, tmpRoot);
     execFileSync(
       process.execPath,
       [
@@ -767,13 +675,6 @@ function runPackedBundledChannelEntrySmoke(): void {
         }),
       },
     );
-
-    const completionFiles = readdirSync(join(stateDir, "completions")).filter(
-      (entry) => !entry.startsWith("."),
-    );
-    if (completionFiles.length === 0) {
-      throw new Error("release-check: packed completion smoke produced no completion files.");
-    }
 
     runInstalledWorkspaceBootstrapSmoke({ packageRoot });
   } finally {
@@ -846,10 +747,7 @@ export function collectForbiddenPackContentPaths(
       } catch {
         return false;
       }
-      return (
-        forbiddenPrivateQaContentMarkers.some((marker) => content.includes(marker)) ||
-        forbiddenPrivatePluginSdkDeclarationMarkers.some((marker) => content.includes(marker))
-      );
+      return forbiddenPrivateQaContentMarkers.some((marker) => content.includes(marker));
     })
     .toSorted((left, right) => left.localeCompare(right));
 }

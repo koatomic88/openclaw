@@ -99,8 +99,8 @@ describe("packed CLI smoke", () => {
     ]);
   });
 
-  it("keeps packed completion smoke scoped to one shell cache", () => {
-    expect(PACKED_COMPLETION_SMOKE_ARGS).toEqual(["completion", "--write-state", "--shell", "zsh"]);
+  it("keeps packed completion smoke scoped to one generated shell script", () => {
+    expect(PACKED_COMPLETION_SMOKE_ARGS).toEqual(["completion", "--shell", "zsh"]);
   });
 
   it("builds a packed CLI smoke env with packaged-install guardrails", () => {
@@ -141,7 +141,7 @@ describe("packed CLI smoke", () => {
     });
   });
 
-  it("skips plugin command discovery during packed completion cache smoke", () => {
+  it("skips plugin command discovery during packed completion smoke", () => {
     expect(
       createPackedCompletionSmokeEnv(
         {

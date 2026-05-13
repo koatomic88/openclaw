@@ -898,7 +898,6 @@ export async function processDiscordMessage(
       accountId: route.accountId,
       agentId: route.agentId,
       routeSessionKey: persistedSessionKey,
-      storePath: turn.storePath,
       ctxPayload,
       recordInboundSession,
       dispatchReplyWithBufferedBlockDispatcher,
