@@ -1048,7 +1048,7 @@ async function finalizeCronRun(params: {
     agentId: prepared.agentId,
     agentSessionKey: prepared.agentSessionKey,
     runSessionKey: prepared.runSessionKey,
-    sessionId: prepared.runSessionId,
+    sessionId: prepared.cronSession.sessionEntry.sessionId ?? prepared.runSessionId,
     runStartedAt: execution.runStartedAt,
     runEndedAt: execution.runEndedAt,
     timeoutMs: prepared.timeoutMs,
