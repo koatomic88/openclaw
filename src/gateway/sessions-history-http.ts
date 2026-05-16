@@ -123,6 +123,7 @@ export async function handleSessionHistoryHttpRequest(
   const target = resolveGatewaySessionDatabaseTarget({ cfg, key: sessionKey });
   const entry = getSessionEntry({
     agentId: target.agentId,
+    path: target.databasePath,
     sessionKey: target.canonicalKey,
   });
   if (!entry?.sessionId) {
@@ -146,6 +147,7 @@ export async function handleSessionHistoryHttpRequest(
       ? await readRecentSessionMessagesWithStatsAsync(
           {
             agentId: target.agentId,
+            path: target.databasePath,
             sessionId: entry.sessionId,
           },
           {
@@ -161,6 +163,7 @@ export async function handleSessionHistoryHttpRequest(
       ? await readSessionMessagesAsync(
           {
             agentId: target.agentId,
+            path: target.databasePath,
             sessionId: entry.sessionId,
           },
           {
@@ -191,6 +194,7 @@ export async function handleSessionHistoryHttpRequest(
   const sseState = SessionHistorySseState.fromRawSnapshot({
     target: {
       agentId: target.agentId,
+      path: target.databasePath,
       sessionId: entry.sessionId,
     },
     rawMessages: rawSnapshot,
