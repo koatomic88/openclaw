@@ -2004,6 +2004,7 @@ export async function runEmbeddedAgent(
                   await runPostCompactionSideEffects({
                     config: params.config,
                     agentId: sessionAgentId,
+                    path: params.path,
                     sessionId: activeSessionId,
                     sessionKey: params.sessionKey,
                   });
@@ -2269,6 +2270,7 @@ export async function runEmbeddedAgent(
                   contextWindowTokens,
                   maxCharsOverride: toolResultMaxChars,
                   agentId: sessionAgentId,
+                  path: params.path,
                   sessionId: activeSessionId,
                   sessionKey: params.sessionKey,
                   config: params.config,

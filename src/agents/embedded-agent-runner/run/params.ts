@@ -40,6 +40,7 @@ export type CurrentInboundPromptContext = {
 
 export type RunEmbeddedAgentParams = {
   sessionId: string;
+  path?: string;
   sessionKey?: string;
   /** Provider prompt-cache affinity key; distinct from transcript/session identity. */
   promptCacheKey?: string;
