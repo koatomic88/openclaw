@@ -399,7 +399,6 @@ function resolveUsableProviderAuthProfiles(params: {
   }
 
   const fallbackStore = loadAuthProfileStoreWithoutExternalProfiles(agentDir, {
-    allowKeychainPrompt: params.allowKeychainPrompt ?? false,
     resolveLegacyOAuthSidecars: true,
   });
   return {
