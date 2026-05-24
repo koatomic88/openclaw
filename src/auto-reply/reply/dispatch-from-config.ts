@@ -1353,7 +1353,7 @@ export async function dispatchReplyFromConfig(
             shouldRouteToOriginating,
             originatingChannel: routeReplyChannel,
             originatingTo: routeReplyTo,
-            shouldSendToolSummaries,
+            shouldSendToolSummaries: shouldSendToolSummaries(),
             sendPolicy,
           },
           {
@@ -1867,7 +1867,7 @@ export async function dispatchReplyFromConfig(
             shouldRouteToOriginating,
             originatingChannel: routeReplyChannel,
             originatingTo: routeReplyTo,
-            shouldSendToolSummaries,
+            shouldSendToolSummaries: shouldSendToolSummaries(),
             sendPolicy,
             isTailDispatch: true,
           },
