@@ -648,7 +648,7 @@ export function createCommandHandlers(context: CommandHandlerContext) {
     const runId = randomUUID();
     try {
       if (!isBtw) {
-        chatLog.addUser(text);
+        chatLog.addPendingUser(runId, text);
         state.pendingOptimisticUserMessage = true;
         setActivityStatus("sending");
       } else {
@@ -680,6 +680,7 @@ export function createCommandHandlers(context: CommandHandlerContext) {
         state.pendingOptimisticUserMessage = false;
         state.pendingChatRunId = null;
         state.activeChatRunId = null;
+        chatLog.dropPendingUser(runId);
       }
       chatLog.addSystem(`${isBtw ? "btw failed" : "send failed"}: ${String(err)}`);
       if (!isBtw) {

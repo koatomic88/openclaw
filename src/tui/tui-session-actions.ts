@@ -48,6 +48,18 @@ type SessionInfoEntry = SessionInfo & {
   providerOverride?: string;
 };
 
+function extractMessageTimestamp(message: Record<string, unknown>): number | null {
+  const timestamp = message.timestamp;
+  if (typeof timestamp === "number" && Number.isFinite(timestamp)) {
+    return timestamp;
+  }
+  if (typeof timestamp !== "string") {
+    return null;
+  }
+  const parsed = Date.parse(timestamp);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export function createSessionActions(context: SessionActionContext) {
   const {
     client,
@@ -314,7 +326,8 @@ export function createSessionActions(context: SessionActionContext) {
       state.sessionInfo.verboseLevel = record.verboseLevel ?? state.sessionInfo.verboseLevel;
       state.sessionInfo.traceLevel = record.traceLevel ?? state.sessionInfo.traceLevel;
       const showTools = (state.sessionInfo.verboseLevel ?? "off") !== "off";
-      chatLog.clearAll();
+      const historyUsers: Array<{ text: string; timestamp?: number | null }> = [];
+      chatLog.clearAll({ preservePendingUsers: true });
       btw.clear();
       chatLog.addSystem(`session ${state.currentSessionKey}`);
       for (const entry of record.messages ?? []) {
@@ -332,6 +345,10 @@ export function createSessionActions(context: SessionActionContext) {
         if (message.role === "user") {
           const text = extractTextFromMessage(message);
           if (text) {
+            historyUsers.push({
+              text,
+              timestamp: extractMessageTimestamp(message),
+            });
             chatLog.addUser(text);
           }
           continue;
@@ -366,6 +383,8 @@ export function createSessionActions(context: SessionActionContext) {
           );
         }
       }
+      chatLog.reconcilePendingUsers(historyUsers);
+      chatLog.restorePendingUsers();
       state.historyLoaded = true;
       void rememberSessionKey?.(state.currentSessionKey);
     } catch (err) {
@@ -387,6 +406,7 @@ export function createSessionActions(context: SessionActionContext) {
     // so refresh data for the newly selected session isn't rejected as stale.
     state.sessionInfo.updatedAt = null;
     state.historyLoaded = false;
+    chatLog.clearPendingUsers();
     clearLocalRunIds?.();
     btw.clear();
     updateHeader();

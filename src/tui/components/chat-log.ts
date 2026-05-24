@@ -191,6 +191,12 @@ export class ChatLog extends Container {
     return this.pendingUsers.delete(runId);
   }
 
+  commitPendingUsers() {
+    const count = this.pendingUsers.size;
+    this.pendingUsers.clear();
+    return count;
+  }
+
   dropPendingUser(runId: string) {
     const existing = this.pendingUsers.get(runId);
     if (!existing) {

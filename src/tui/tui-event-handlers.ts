@@ -19,6 +19,7 @@ type EventHandlerChatLog = {
   updateAssistant: (text: string, runId: string) => void;
   finalizeAssistant: (text: string, runId: string) => void;
   dropAssistant: (runId: string) => void;
+  commitPendingUsers: () => void;
 };
 
 type EventHandlerTui = {
@@ -455,6 +456,7 @@ export function createEventHandlers(context: EventHandlerContext) {
       state.activeChatRunId = evt.runId;
       if (state.pendingOptimisticUserMessage) {
         noteLocalRunId?.(evt.runId);
+        chatLog.commitPendingUsers();
         state.pendingOptimisticUserMessage = false;
       }
     }
@@ -621,6 +623,7 @@ export function createEventHandlers(context: EventHandlerContext) {
           if (localMode) {
             noteLocalRunId?.(evt.runId);
           }
+          chatLog.commitPendingUsers();
           state.pendingOptimisticUserMessage = false;
         }
       }

@@ -13,6 +13,7 @@ type HandlerChatLog = {
   updateAssistant: (...args: unknown[]) => void;
   finalizeAssistant: (...args: unknown[]) => void;
   dropAssistant: (...args: unknown[]) => void;
+  commitPendingUsers: (...args: unknown[]) => void;
 };
 type HandlerBtwPresenter = {
   showResult: (...args: unknown[]) => void;
@@ -28,6 +29,7 @@ type MockChatLog = {
   updateAssistant: MockFn;
   finalizeAssistant: MockFn;
   dropAssistant: MockFn;
+  commitPendingUsers: MockFn;
 };
 type MockBtwPresenter = {
   showResult: MockFn;
@@ -45,6 +47,7 @@ function createMockChatLog(): MockChatLog & HandlerChatLog {
     updateAssistant: vi.fn(),
     finalizeAssistant: vi.fn(),
     dropAssistant: vi.fn(),
+    commitPendingUsers: vi.fn(),
   } as unknown as MockChatLog & HandlerChatLog;
 }
 
@@ -702,7 +705,7 @@ describe("tui-event-handlers: handleAgentEvent", () => {
   });
 
   it("binds optimistic pending messages to the first gateway run id and skips history reload", () => {
-    const { state, loadHistory, isLocalRunId, handleChatEvent } = createHandlersHarness({
+    const { state, chatLog, loadHistory, isLocalRunId, handleChatEvent } = createHandlersHarness({
       state: { activeChatRunId: null, pendingOptimisticUserMessage: true },
     });
 
@@ -716,6 +719,7 @@ describe("tui-event-handlers: handleAgentEvent", () => {
     expect(state.pendingOptimisticUserMessage).toBe(false);
     expect(state.activeChatRunId).toBeNull();
     expect(isLocalRunId("run-gateway")).toBe(false);
+    expect(chatLog.commitPendingUsers).toHaveBeenCalledTimes(1);
     expect(loadHistory).not.toHaveBeenCalled();
   });
 
