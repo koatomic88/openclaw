@@ -46,7 +46,11 @@ import {
 import { formatErrorMessage } from "../errors.js";
 import { throwIfAborted } from "./abort.js";
 import { resolveOutboundChannelMessageAdapter } from "./channel-resolution.js";
-import type { OutboundDeliveryResult, OutboundPayloadDeliveryOutcome } from "./deliver-types.js";
+import {
+  OutboundDeliveryError,
+  type OutboundDeliveryResult,
+  type OutboundPayloadDeliveryOutcome,
+} from "./deliver-types.js";
 import {
   attachOutboundDeliveryCommitHook,
   runOutboundDeliveryCommitHooks,
@@ -1390,6 +1394,11 @@ async function deliverOutboundPayloadsCore(
     }
   };
   const normalizedPayloads = normalizePayloadsForChannelDelivery(outboundPayloadPlan, handler);
+  const payloadOutcomes: OutboundPayloadDeliveryOutcome[] = [];
+  const recordPayloadDeliveryOutcome = (outcome: OutboundPayloadDeliveryOutcome) => {
+    payloadOutcomes.push(outcome);
+    params.onPayloadDeliveryOutcome?.(outcome);
+  };
   const hookRunner = getGlobalHookRunner();
   // Canonical session key forwarded to internal lifecycle hooks
   // (`message:sent` event, `message_sending` plugin hook ctx, etc.). Mirror
@@ -1484,7 +1493,7 @@ async function deliverOutboundPayloadsCore(
         sessionKey: sessionKeyForInternalHooks,
       });
       if (hookResult.cancelled) {
-        params.onPayloadDeliveryOutcome?.({
+        recordPayloadDeliveryOutcome({
           index: sourceIndex,
           status: "suppressed",
           reason: "cancelled_by_message_sending_hook",
@@ -1503,7 +1512,7 @@ async function deliverOutboundPayloadsCore(
           )
         : null;
       if (!effectivePayload) {
-        params.onPayloadDeliveryOutcome?.({
+        recordPayloadDeliveryOutcome({
           index: sourceIndex,
           status: "suppressed",
           reason: "empty_after_message_sending_hook",
@@ -1545,7 +1554,7 @@ async function deliverOutboundPayloadsCore(
         );
         if (!hasDeliveryResultIdentity(delivery)) {
           completeDeliveryDiagnostics(0);
-          params.onPayloadDeliveryOutcome?.({
+          recordPayloadDeliveryOutcome({
             index: sourceIndex,
             status: "suppressed",
             reason: "adapter_returned_no_identity",
@@ -1572,7 +1581,7 @@ async function deliverOutboundPayloadsCore(
           content: payloadSummary.hookContent ?? payloadSummary.text,
           messageId: delivery.messageId,
         });
-        params.onPayloadDeliveryOutcome?.({
+        recordPayloadDeliveryOutcome({
           index: sourceIndex,
           status: "sent",
           results: [delivery],
@@ -1613,7 +1622,7 @@ async function deliverOutboundPayloadsCore(
           content: payloadSummary.hookContent ?? payloadSummary.text,
           messageId,
         });
-        params.onPayloadDeliveryOutcome?.({
+        recordPayloadDeliveryOutcome({
           index: sourceIndex,
           status: deliveredResults.length > 0 ? "sent" : "suppressed",
           ...(deliveredResults.length > 0
@@ -1662,7 +1671,7 @@ async function deliverOutboundPayloadsCore(
           content: payloadSummary.hookContent ?? payloadSummary.text,
           messageId,
         });
-        params.onPayloadDeliveryOutcome?.({
+        recordPayloadDeliveryOutcome({
           index: sourceIndex,
           status: deliveredResults.length > 0 ? "sent" : "suppressed",
           ...(deliveredResults.length > 0
@@ -1712,7 +1721,7 @@ async function deliverOutboundPayloadsCore(
         content: payloadSummary.hookContent ?? payloadSummary.text,
         messageId: lastMessageId,
       });
-      params.onPayloadDeliveryOutcome?.({
+      recordPayloadDeliveryOutcome({
         index: sourceIndex,
         status: "sent",
         results: results.slice(beforeCount),
@@ -1724,16 +1733,25 @@ async function deliverOutboundPayloadsCore(
         content: payloadSummary.hookContent ?? payloadSummary.text,
         error: formatErrorMessage(err),
       });
-      if (!params.bestEffort) {
+      if (isAbortError(err)) {
         throw err;
       }
-      params.onPayloadDeliveryOutcome?.({
+      const failureOutcome: OutboundPayloadDeliveryOutcome = {
         index: sourceIndex,
         status: "failed",
         error: err,
         sentBeforeError: results.length > 0,
         stage: "platform_send",
-      });
+      };
+      recordPayloadDeliveryOutcome(failureOutcome);
+      if (!params.bestEffort) {
+        throw new OutboundDeliveryError(formatErrorMessage(err), {
+          cause: err,
+          results,
+          payloadOutcomes,
+          stage: "platform_send",
+        });
+      }
       params.onError?.(err, payloadSummary);
     }
   }
