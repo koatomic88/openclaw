@@ -11,12 +11,6 @@ import { expandHomePrefix, resolveOsHomeDir } from "../infra/home-dir.js";
 import { hasEncodedFileUrlSeparator, trySafeFileURLToPath } from "../infra/local-file-access.js";
 import { detectMime } from "../media/mime.js";
 import { sniffMimeFromBase64 } from "../media/sniff-mime-from-base64.js";
-import type { AgentToolResult } from "./agent-core-contract.js";
-import type { VirtualAgentFs } from "./filesystem/agent-filesystem.js";
-import type { ImageSanitizationLimits } from "./image-sanitization.js";
-import { toRelativeWorkspacePath } from "./path-policy.js";
-import { createEditTool, createReadTool, createWriteTool } from "./pi-coding-agent-contract.js";
-import { wrapEditToolWithRecovery, wrapWriteToolWithRecovery } from "./pi-tools.host-edit.js";
 import {
   REQUIRED_PARAM_GROUPS,
   assertRequiredParams,
@@ -24,8 +18,10 @@ import {
   wrapToolParamValidation,
 } from "./agent-tools.params.js";
 import type { AnyAgentTool } from "./agent-tools.types.js";
+import type { VirtualAgentFs } from "./filesystem/agent-filesystem.js";
 import type { ImageSanitizationLimits } from "./image-sanitization.js";
 import { toRelativeWorkspacePath } from "./path-policy.js";
+import { wrapEditToolWithRecovery } from "./pi-tools.host-edit.js";
 import type { AgentToolResult } from "./runtime/index.js";
 import { assertSandboxPath } from "./sandbox-paths.js";
 import type { SandboxFsBridge } from "./sandbox/fs-bridge.js";
@@ -41,7 +37,7 @@ export {
 
 // NOTE(steipete): Upstream read now does file-magic MIME detection; we keep the wrapper
 // to sanitize oversized images before they hit providers.
-type ToolContentBlock = AgentToolResult["content"][number];
+type ToolContentBlock = AgentToolResult<unknown>["content"][number];
 type ImageContentBlock = Extract<ToolContentBlock, { type: "image" }>;
 type TextContentBlock = Extract<ToolContentBlock, { type: "text" }>;
 
