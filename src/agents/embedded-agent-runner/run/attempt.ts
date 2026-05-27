@@ -3313,7 +3313,10 @@ export async function runEmbeddedAttempt(
               }),
               repairToolUseResultPairing: transcriptPolicy.repairToolUseResultPairing,
             }),
-        );
+            repairToolUseResultPairing: transcriptPolicy.repairToolUseResultPairing,
+          });
+          return inner(model, { ...ctx, messages: nextMessages } as typeof context, options);
+        };
       }
 
       if (isOpenAIResponsesApi) {
