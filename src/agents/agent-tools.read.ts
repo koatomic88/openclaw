@@ -21,7 +21,6 @@ import type { AnyAgentTool } from "./agent-tools.types.js";
 import type { VirtualAgentFs } from "./filesystem/agent-filesystem.js";
 import type { ImageSanitizationLimits } from "./image-sanitization.js";
 import { toRelativeWorkspacePath } from "./path-policy.js";
-import { wrapEditToolWithRecovery } from "./pi-tools.host-edit.js";
 import type { AgentToolResult } from "./runtime/index.js";
 import { assertSandboxPath } from "./sandbox-paths.js";
 import type { SandboxFsBridge } from "./sandbox/fs-bridge.js";
@@ -837,12 +836,7 @@ export function createVirtualEditTool(params: VirtualToolParams) {
   const base = createEditTool(params.root, {
     operations: createVirtualEditOperations(params),
   }) as unknown as AnyAgentTool;
-  const withRecovery = wrapEditToolWithRecovery(base, {
-    root: params.root,
-    readFile: async (absolutePath: string) =>
-      params.scratch.readFile(resolveVirtualPath(params.root, absolutePath)).toString("utf8"),
-  });
-  return wrapToolParamValidation(withRecovery, REQUIRED_PARAM_GROUPS.edit);
+  return wrapToolParamValidation(base, REQUIRED_PARAM_GROUPS.edit);
 }
 
 export function createWorkspaceScratchOverlayReadTool(
@@ -872,14 +866,7 @@ export function createWorkspaceScratchOverlayEditTool(
   const base = createEditTool(params.root, {
     operations: createWorkspaceScratchOverlayEditOperations(params),
   }) as unknown as AnyAgentTool;
-  const withRecovery = wrapEditToolWithRecovery(base, {
-    root: params.root,
-    readFile: async (absolutePath: string) =>
-      readWorkspaceScratchOverlayFile(params, absolutePath).then((buffer) =>
-        buffer.toString("utf8"),
-      ),
-  });
-  return wrapToolParamValidation(withRecovery, REQUIRED_PARAM_GROUPS.edit);
+  return wrapToolParamValidation(base, REQUIRED_PARAM_GROUPS.edit);
 }
 
 export function createHostWorkspaceWriteTool(root: string, options?: { workspaceOnly?: boolean }) {
