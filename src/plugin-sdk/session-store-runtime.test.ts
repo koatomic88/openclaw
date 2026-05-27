@@ -77,6 +77,52 @@ describe("session-store-runtime compatibility", () => {
     );
   });
 
+  it("serializes concurrent writes to custom legacy store paths", async () => {
+    await withOpenClawTestState(
+      {
+        layout: "state-only",
+        prefix: "openclaw-session-store-compat-",
+        scenario: "minimal",
+      },
+      async (state) => {
+        const customStorePath = path.join(state.path("custom"), "sessions.json");
+        let releaseFirst: () => void = () => {};
+        const firstCanFinish = new Promise<void>((resolve) => {
+          releaseFirst = resolve;
+        });
+        let firstUpdate: Promise<void>;
+        const firstEntered = new Promise<void>((resolve) => {
+          firstUpdate = updateSessionStore(customStorePath, async (store) => {
+            store["custom:first"] = {
+              sessionId: "first-session",
+              updatedAt: 100,
+              sessionStartedAt: 100,
+            };
+            resolve();
+            await firstCanFinish;
+          });
+        });
+
+        await firstEntered;
+        const second = updateSessionStore(customStorePath, (store) => {
+          store["custom:second"] = {
+            sessionId: "second-session",
+            updatedAt: 200,
+            sessionStartedAt: 200,
+          };
+        });
+
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        releaseFirst();
+        await Promise.all([firstUpdate!, second]);
+
+        const store = loadSessionStore(customStorePath);
+        expect(store["custom:first"]?.sessionId).toBe("first-session");
+        expect(store["custom:second"]?.sessionId).toBe("second-session");
+      },
+    );
+  });
+
   it("overwrites the compatibility store when saving a replacement snapshot", async () => {
     await withOpenClawTestState(
       {

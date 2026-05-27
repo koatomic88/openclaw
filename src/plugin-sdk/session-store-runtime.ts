@@ -27,6 +27,7 @@ import {
 } from "../routing/session-key.js";
 import { closeOpenClawAgentDatabasesForTest } from "../state/openclaw-agent-db.js";
 import { resolveUserPath } from "../utils.js";
+import { writeJsonFileAtomically } from "./json-store.js";
 
 export { closeOpenClawAgentDatabasesForTest };
 export { resolveSessionRowEntry };
@@ -80,6 +81,8 @@ type SessionFilePathOptions = {
   agentId?: string;
   sessionsDir?: string;
 };
+
+const legacySessionStoreWrites = new Map<string, Promise<void>>();
 
 function optionsWithEnv(agentId: string, env?: NodeJS.ProcessEnv): SessionRowOptions {
   return env ? { agentId, env } : { agentId };
@@ -169,9 +172,35 @@ function readLegacySessionStoreJson(storePath: string): Record<string, SessionEn
   }
 }
 
-function writeLegacySessionStoreJson(storePath: string, store: Record<string, SessionEntry>): void {
-  fs.mkdirSync(path.dirname(storePath), { recursive: true });
-  fs.writeFileSync(storePath, `${JSON.stringify(store, null, 2)}\n`);
+async function runExclusiveLegacySessionStoreWrite<T>(
+  storePath: string,
+  operation: () => Promise<T> | T,
+): Promise<T> {
+  const key = path.resolve(storePath);
+  const previous = legacySessionStoreWrites.get(key) ?? Promise.resolve();
+  let releaseCurrent: () => void = () => {};
+  const current = new Promise<void>((resolve) => {
+    releaseCurrent = resolve;
+  });
+  const queued = previous.catch(() => undefined).then(() => current);
+  legacySessionStoreWrites.set(key, queued);
+
+  await previous.catch(() => undefined);
+  try {
+    return await operation();
+  } finally {
+    releaseCurrent();
+    if (legacySessionStoreWrites.get(key) === queued) {
+      legacySessionStoreWrites.delete(key);
+    }
+  }
+}
+
+async function writeLegacySessionStoreJson(
+  storePath: string,
+  store: Record<string, SessionEntry>,
+): Promise<void> {
+  await writeJsonFileAtomically(storePath, store);
 }
 
 export function clearSessionStoreCacheForTest(): void {
@@ -309,7 +338,9 @@ export async function saveSessionStore(
 ): Promise<void> {
   normalizeSessionEntries(store);
   if (!parseSessionStorePath(storePath)) {
-    writeLegacySessionStoreJson(storePath, store);
+    await runExclusiveLegacySessionStoreWrite(storePath, () =>
+      writeLegacySessionStoreJson(storePath, store),
+    );
     return;
   }
   const options = resolveSessionRowOptionsFromStorePath(storePath);
@@ -340,11 +371,13 @@ export async function updateSessionStore<T>(
   _opts?: SaveSessionStoreOptions,
 ): Promise<T> {
   if (!parseSessionStorePath(storePath)) {
-    const store = readLegacySessionStoreJson(storePath) ?? {};
-    const result = await mutator(store);
-    normalizeSessionEntries(store);
-    writeLegacySessionStoreJson(storePath, store);
-    return result;
+    return await runExclusiveLegacySessionStoreWrite(storePath, async () => {
+      const store = readLegacySessionStoreJson(storePath) ?? {};
+      const result = await mutator(store);
+      normalizeSessionEntries(store);
+      await writeLegacySessionStoreJson(storePath, store);
+      return result;
+    });
   }
   const options = resolveSessionRowOptionsFromStorePath(storePath);
   const sqliteStore = loadSqliteSessionEntries(options);
