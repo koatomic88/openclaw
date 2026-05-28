@@ -1,11 +1,16 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ensureCustomApiRegistered, getCustomApiRegistrySourceId } from "./custom-api-registry.js";
 import {
   clearApiProviders,
   getApiProvider,
   registerApiProvider,
   unregisterApiProviders,
-} from "./pi-ai-contract.js";
+} from "../llm/api-registry.js";
+import {
+  registerBuiltInApiProviders,
+  resetApiProviders,
+} from "../llm/providers/register-builtins.js";
+import { createAssistantMessageEventStream } from "../llm/utils/event-stream.js";
+import { ensureCustomApiRegistered, getCustomApiRegistrySourceId } from "./custom-api-registry.js";
 
 function getRegisteredTestProvider() {
   const provider = getApiProvider("test-custom-api");

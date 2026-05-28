@@ -760,7 +760,7 @@ describe("runContextEngineMaintenance", () => {
         contextEngine: firstEngine,
         sessionId: "session-owned-dispose",
         sessionKey,
-        sessionFile: "/tmp/session-owned-dispose.jsonl",
+        transcriptScope: sqliteTranscriptScope("session-owned-dispose"),
         reason: "turn",
         disposeDeferredContextEngineAfterMaintenance: true,
         onDeferredMaintenance: (promise) => {
@@ -774,7 +774,7 @@ describe("runContextEngineMaintenance", () => {
         contextEngine: secondEngine,
         sessionId: "session-owned-dispose",
         sessionKey,
-        sessionFile: "/tmp/session-owned-dispose.jsonl",
+        transcriptScope: sqliteTranscriptScope("session-owned-dispose"),
         reason: "turn",
         disposeDeferredContextEngineAfterMaintenance: true,
         onDeferredMaintenance: (promise) => {
@@ -840,7 +840,7 @@ describe("runContextEngineMaintenance", () => {
         contextEngine: backgroundEngine,
         sessionId: "session-draining",
         sessionKey,
-        sessionFile: "/tmp/session-draining.jsonl",
+        transcriptScope: sqliteTranscriptScope("session-draining"),
         reason: "turn",
         onDeferredMaintenance,
         onDeferredMaintenanceFailure,
@@ -901,7 +901,7 @@ describe("runContextEngineMaintenance", () => {
           contextEngine: backgroundEngine,
           sessionId: "session-draining-coalesced",
           sessionKey,
-          sessionFile: "/tmp/session-draining-coalesced.jsonl",
+          transcriptScope: sqliteTranscriptScope("session-draining-coalesced"),
           reason: "turn",
           onDeferredMaintenance: (promise) => {
             firstDeferred.push(promise);
@@ -916,7 +916,7 @@ describe("runContextEngineMaintenance", () => {
           contextEngine: backgroundEngine,
           sessionId: "session-draining-coalesced",
           sessionKey,
-          sessionFile: "/tmp/session-draining-coalesced.jsonl",
+          transcriptScope: sqliteTranscriptScope("session-draining-coalesced"),
           reason: "turn",
           onDeferredMaintenance,
           onDeferredMaintenanceFailure,
