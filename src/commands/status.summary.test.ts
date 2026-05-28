@@ -9,6 +9,8 @@ const statusSummaryMocks = vi.hoisted(() => ({
     () => [] as Array<{ sessionKey: string; entry: Record<string, unknown> }>,
   ),
   readSessionStoreReadOnly: vi.fn(() => ({})),
+  taskRegistrySummary: undefined as unknown as TaskRegistrySummary,
+  taskAuditFindings: [] as TaskAuditFinding[],
 }));
 
 vi.mock("../plugins/channel-plugin-ids.js", () => ({
