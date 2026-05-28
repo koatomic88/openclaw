@@ -14,6 +14,51 @@ export type ParsedThreadSessionSuffix = {
   threadId: string | undefined;
 };
 
+export type RawSessionConversationRef = {
+  channel: string;
+  kind: "group" | "channel";
+  rawId: string;
+  prefix: string;
+};
+
+type CasePreservingPeerDescriptor = {
+  channel: string;
+  peerKinds: ReadonlySet<string>;
+  span: "segment" | "tail";
+  unscoped: boolean;
+};
+
+const CASE_PRESERVING_PEERS: readonly CasePreservingPeerDescriptor[] = [
+  { channel: "signal", peerKinds: new Set(["group"]), span: "segment", unscoped: true },
+  { channel: "matrix", peerKinds: new Set(["channel", "group"]), span: "tail", unscoped: true },
+];
+
+export function isCasePreservingPeer(
+  channel: string | undefined | null,
+  peerKind: string | undefined | null,
+): boolean {
+  const c = normalizeLowercaseStringOrEmpty(channel);
+  const k = normalizeLowercaseStringOrEmpty(peerKind);
+  return findCasePreservingPeerDescriptor(c, k) !== undefined;
+}
+
+function findCasePreservingPeerDescriptor(
+  channel: string | undefined | null,
+  peerKind: string | undefined | null,
+): CasePreservingPeerDescriptor | undefined {
+  const c = normalizeLowercaseStringOrEmpty(channel);
+  const k = normalizeLowercaseStringOrEmpty(peerKind);
+  return CASE_PRESERVING_PEERS.find((descriptor) => {
+    return descriptor.channel === c && descriptor.peerKinds.has(k);
+  });
+}
+
+export function requiresFoldedSessionKeyAliasProof(sessionKey: string | undefined | null): boolean {
+  const ref = parseRawSessionConversationRef(sessionKey);
+  const descriptor = findCasePreservingPeerDescriptor(ref?.channel, ref?.kind);
+  return descriptor?.span === "tail";
+}
+
 export function normalizeSessionPeerId(params: {
   channel: string | undefined | null;
   peerKind?: string | null;
@@ -23,14 +68,69 @@ export function normalizeSessionPeerId(params: {
   if (!peerId) {
     return "";
   }
-  const channel = normalizeLowercaseStringOrEmpty(params.channel);
-  const peerKind = normalizeLowercaseStringOrEmpty(params.peerKind);
-  return channel === "signal" && peerKind === "group"
+  return isCasePreservingPeer(params.channel, params.peerKind)
     ? peerId
     : normalizeLowercaseStringOrEmpty(peerId);
 }
 
-const SIGNAL_GROUP_SESSION_SEGMENT_RE = /(^|:)signal:group:([^:]+)/gi;
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+type PreservedSpan = { start: number; end: number; trim: boolean };
+
+function collectCasePreservedSpans(raw: string): PreservedSpan[] {
+  const spans: PreservedSpan[] = [];
+  for (const descriptor of CASE_PRESERVING_PEERS) {
+    const channel = escapeRegExp(descriptor.channel);
+    for (const peerKind of descriptor.peerKinds) {
+      const kind = escapeRegExp(peerKind);
+      if (descriptor.span === "segment") {
+        const re = new RegExp(`(^|:)${channel}:${kind}:([^:]+)`, "gi");
+        for (const match of raw.matchAll(re)) {
+          const matched = match[0] ?? "";
+          const segment = match[2] ?? "";
+          const segStart = (match.index ?? 0) + matched.length - segment.length;
+          spans.push({ start: segStart, end: segStart + segment.length, trim: true });
+        }
+        continue;
+      }
+
+      const collectTailSpan = (tailStart: number): void => {
+        if (tailStart >= raw.length) {
+          return;
+        }
+        const tail = raw.slice(tailStart);
+        const threadMarker = ":thread:";
+        const markerIndex = normalizeLowercaseStringOrEmpty(tail).lastIndexOf(threadMarker);
+        if (markerIndex === -1) {
+          spans.push({ start: tailStart, end: raw.length, trim: false });
+          return;
+        }
+        spans.push({ start: tailStart, end: tailStart + markerIndex, trim: false });
+        const threadIdStart = tailStart + markerIndex + threadMarker.length;
+        if (threadIdStart < raw.length) {
+          spans.push({ start: threadIdStart, end: raw.length, trim: false });
+        }
+      };
+
+      const scopedRe = new RegExp(`^agent:[^:]+:${channel}:${kind}:`, "i");
+      const scopedMatch = scopedRe.exec(raw);
+      if (scopedMatch) {
+        collectTailSpan(scopedMatch[0].length);
+        continue;
+      }
+      if (descriptor.unscoped) {
+        const unscopedRe = new RegExp(`^${channel}:${kind}:`, "i");
+        const unscopedMatch = unscopedRe.exec(raw);
+        if (unscopedMatch) {
+          collectTailSpan(unscopedMatch[0].length);
+        }
+      }
+    }
+  }
+  return spans;
+}
 
 export function normalizeSessionKeyPreservingOpaquePeerIds(
   sessionKey: string | undefined | null,
@@ -40,16 +140,20 @@ export function normalizeSessionKeyPreservingOpaquePeerIds(
     return "";
   }
 
+  const spans = collectCasePreservedSpans(raw)
+    .filter((span) => span.end > span.start)
+    .toSorted((a, b) => a.start - b.start);
+
   let normalized = "";
   let cursor = 0;
-  for (const match of raw.matchAll(SIGNAL_GROUP_SESSION_SEGMENT_RE)) {
-    const matchIndex = match.index ?? 0;
-    const matched = match[0] ?? "";
-    const peerId = match[2] ?? "";
-    const peerStart = matchIndex + matched.length - peerId.length;
-    normalized += normalizeLowercaseStringOrEmpty(raw.slice(cursor, peerStart));
-    normalized += peerId.trim();
-    cursor = matchIndex + matched.length;
+  for (const span of spans) {
+    if (span.start < cursor) {
+      continue;
+    }
+    normalized += normalizeLowercaseStringOrEmpty(raw.slice(cursor, span.start));
+    const preserved = raw.slice(span.start, span.end);
+    normalized += span.trim ? preserved.trim() : preserved;
+    cursor = span.end;
   }
   normalized += normalizeLowercaseStringOrEmpty(raw.slice(cursor));
   return normalized;
@@ -150,4 +254,35 @@ export function parseThreadSessionSuffix(
   const threadId = normalizeOptionalString(threadIdRaw);
 
   return { baseSessionKey, threadId };
+}
+
+export function parseRawSessionConversationRef(
+  sessionKey: string | undefined | null,
+): RawSessionConversationRef | null {
+  const raw = normalizeOptionalString(sessionKey);
+  if (!raw) {
+    return null;
+  }
+
+  const rawParts = raw.split(":").filter(Boolean);
+  const bodyStartIndex =
+    rawParts.length >= 3 && normalizeOptionalLowercaseString(rawParts[0]) === "agent" ? 2 : 0;
+  const parts = rawParts.slice(bodyStartIndex);
+  if (parts.length < 3) {
+    return null;
+  }
+
+  const channel = normalizeOptionalLowercaseString(parts[0]);
+  const kind = normalizeOptionalLowercaseString(parts[1]);
+  if (!channel || (kind !== "group" && kind !== "channel")) {
+    return null;
+  }
+
+  const rawId = normalizeOptionalString(parts.slice(2).join(":"));
+  const prefix = normalizeOptionalString(rawParts.slice(0, bodyStartIndex + 2).join(":"));
+  if (!rawId || !prefix) {
+    return null;
+  }
+
+  return { channel, kind, rawId, prefix };
 }
