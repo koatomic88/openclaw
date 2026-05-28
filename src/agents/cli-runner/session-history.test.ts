@@ -9,6 +9,7 @@ import {
   buildCliSessionHistoryPrompt,
   loadCliSessionHistoryMessages,
   loadCliSessionReseedMessages,
+  MAX_AUTO_CLI_SESSION_RESEED_HISTORY_CHARS,
   MAX_CLI_SESSION_HISTORY_BYTES,
   MAX_CLI_SESSION_HISTORY_MESSAGES,
   MAX_CLI_SESSION_RESEED_HISTORY_CHARS,

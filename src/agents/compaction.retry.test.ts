@@ -1,13 +1,13 @@
 import type { AgentMessage } from "openclaw/plugin-sdk/agent-core";
+import type { ExtensionContext } from "openclaw/plugin-sdk/agent-sessions";
+import type { AssistantMessage, UserMessage } from "openclaw/plugin-sdk/llm";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { retryAsync } from "../infra/retry.js";
-import type { ExtensionContext } from "./agent-extension-contract.js";
-import type { AssistantMessage, UserMessage } from "./pi-ai-contract.js";
-import * as piCodingAgent from "./pi-coding-agent-contract.js";
+import * as agentSessions from "./sessions/index.js";
 
 // Mock the external generateSummary function
-vi.mock("./pi-coding-agent-contract.js", async () => {
-  const actual = await vi.importActual<typeof piCodingAgent>("./pi-coding-agent-contract.js");
+vi.mock("./sessions/index.js", async () => {
+  const actual = await vi.importActual<typeof agentSessions>("./sessions/index.js");
   return {
     ...actual,
     generateSummary: vi.fn(),
