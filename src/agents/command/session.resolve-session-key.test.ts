@@ -133,8 +133,8 @@ describe("resolveSessionKeyForRequest", () => {
       "agent:other:acp:sid": { sessionId: "sid", updatedAt: 20 },
     } satisfies Record<string, SessionEntry>;
     mockSessionStores({
-      "/stores/main.json": mainStore,
-      "/stores/other.json": otherStore,
+      main: mainStore,
+      other: otherStore,
     });
 
     const result = resolveSessionKeyForRequest({
@@ -149,11 +149,7 @@ describe("resolveSessionKeyForRequest", () => {
 
     expect(result.sessionKey).toBe("agent:other:acp:sid");
     expect(result.sessionStore).toBe(otherStore);
-    expect(hoisted.loadSessionStoreMock).toHaveBeenCalledWith("/stores/main.json", {
-      clone: false,
-    });
-    expect(hoisted.loadSessionStoreMock).toHaveBeenCalledWith("/stores/other.json", {
-      clone: false,
-    });
+    expect(hoisted.listSessionRowsMock).toHaveBeenCalledWith("main");
+    expect(hoisted.listSessionRowsMock).toHaveBeenCalledWith("other");
   });
 });

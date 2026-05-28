@@ -69,6 +69,7 @@ function createTranscriptStateFixture(params?: {
   history?: Array<{ role: "user"; content: string }>;
 }) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "openclaw-cli-hooks-"));
+  const sessionFile = path.join(dir, `${TEST_SESSION_ID}.jsonl`);
   vi.stubEnv("OPENCLAW_STATE_DIR", dir);
   upsertSessionEntry({
     agentId: "main",
@@ -80,6 +81,7 @@ function createTranscriptStateFixture(params?: {
   });
   replaceSqliteSessionTranscriptEvents({
     agentId: "main",
+    path: sessionFile,
     sessionId: TEST_SESSION_ID,
     events: [
       {
@@ -102,7 +104,11 @@ function createTranscriptStateFixture(params?: {
       })),
     ],
   });
-  return { dir };
+  return { dir, sessionFile };
+}
+
+function createSessionFile(params?: { history?: Array<{ role: "user"; content: string }> }) {
+  return createTranscriptStateFixture(params);
 }
 
 function createCliUserTurnRecorder(params: {
@@ -242,11 +248,12 @@ function expectTextMessage(value: unknown, fields: { role: string; content: stri
 }
 
 function readTranscriptMessages(sessionFile: string): unknown[] {
-  return fs
-    .readFileSync(sessionFile, "utf-8")
-    .trim()
-    .split("\n")
-    .map((line) => JSON.parse(line) as { message?: unknown })
+  return loadSqliteSessionTranscriptEvents({
+    agentId: "main",
+    path: sessionFile,
+    sessionId: TEST_SESSION_ID,
+  })
+    .map((entry) => entry.event as { message?: unknown })
     .map((entry) => entry.message)
     .filter(Boolean);
 }
@@ -401,7 +408,7 @@ describe("runCliAgent reliability", () => {
         noOutputTimedOut: false,
       }),
     );
-    const { dir } = createTranscriptStateFixture({
+    const { dir, sessionFile } = createTranscriptStateFixture({
       history: [{ role: "user", content: "earlier context" }],
     });
 
@@ -1150,7 +1157,7 @@ describe("runCliAgent reliability", () => {
       runAgentEnd: vi.fn(() => agentEndSettled),
     };
     setHookRunnerForTest(hookRunner);
-    const { dir } = createTranscriptStateFixture({
+    const { dir, sessionFile } = createTranscriptStateFixture({
       history: [{ role: "user", content: "earlier context" }],
     });
 

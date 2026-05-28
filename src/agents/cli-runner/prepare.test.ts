@@ -1805,13 +1805,13 @@ describe("shouldSkipLocalCliCredentialEpoch", () => {
     });
     const recentMarker = "RAW_RESEED_RECENT_MARKER_KEEP";
     const padding = "x".repeat(8_000);
-    appendTranscriptEntry(sessionFile, {
+    appendTranscriptEntry({
       id: "msg-1",
       parentId: null,
       timestamp: new Date(1).toISOString(),
       message: { role: "user", content: `EARLIEST_USER ${padding}`, timestamp: 1 },
     });
-    appendTranscriptEntry(sessionFile, {
+    appendTranscriptEntry({
       id: "msg-2",
       parentId: "msg-1",
       timestamp: new Date(2).toISOString(),
