@@ -18,6 +18,7 @@ import { closeOpenClawAgentDatabasesForTest } from "../state/openclaw-agent-db.j
 import "./test-helpers/fast-bash-tools.js";
 import "./test-helpers/fast-coding-tools.js";
 import "./test-helpers/fast-openclaw-tools.js";
+import { createOpenClawCodingTools } from "./agent-tools.js";
 import type { AuthProfileStore } from "./auth-profiles/types.js";
 import type { VirtualAgentFs, VirtualAgentFsEntry } from "./filesystem/agent-filesystem.js";
 import * as openClawPluginTools from "./openclaw-plugin-tools.js";
