@@ -2,6 +2,9 @@ import type { DatabaseSync } from "node:sqlite";
 
 const transactionDepthByDatabase = new WeakMap<DatabaseSync, number>();
 
+const RETRYABLE_COMMIT_ERROR_CODES = new Set(["SQLITE_BUSY", "SQLITE_LOCKED"]);
+const MAX_COMMIT_ATTEMPTS = 8;
+
 let nextSavepointId = 0;
 
 function nextSavepointName(): string {
@@ -18,6 +21,24 @@ function assertSyncTransactionResult(value: unknown): void {
     throw new Error(
       "SQLite write transactions must be synchronous; Promise returns are not supported.",
     );
+  }
+}
+
+function isRetryableCommitError(error: unknown): boolean {
+  const code = error && typeof error === "object" ? (error as { code?: unknown }).code : undefined;
+  return typeof code === "string" && RETRYABLE_COMMIT_ERROR_CODES.has(code);
+}
+
+function commitImmediateTransaction(db: DatabaseSync): void {
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      db.exec("COMMIT");
+      return;
+    } catch (error) {
+      if (!isRetryableCommitError(error) || attempt >= MAX_COMMIT_ATTEMPTS) {
+        throw error;
+      }
+    }
   }
 }
 
@@ -58,19 +79,43 @@ export function runSqliteImmediateTransactionSync<T>(db: DatabaseSync, operation
 
   db.exec("BEGIN IMMEDIATE");
   setTransactionDepth(db, 1);
+  let transactionStillActive = true;
+  let result: T;
   try {
-    const result = operation();
+    result = operation();
     assertSyncTransactionResult(result);
-    db.exec("COMMIT");
-    return result;
   } catch (error) {
     try {
       db.exec("ROLLBACK");
+      transactionStillActive = false;
     } catch {
       // Preserve the original error; rollback failure is secondary.
     }
     throw error;
   } finally {
-    setTransactionDepth(db, 0);
+    if (!transactionStillActive) {
+      setTransactionDepth(db, 0);
+    }
+  }
+
+  try {
+    commitImmediateTransaction(db);
+    transactionStillActive = false;
+    return result;
+  } catch (error) {
+    if (isRetryableCommitError(error)) {
+      throw error;
+    }
+    try {
+      db.exec("ROLLBACK");
+      transactionStillActive = false;
+    } catch {
+      // Preserve the original error; rollback failure is secondary.
+    }
+    throw error;
+  } finally {
+    if (!transactionStillActive) {
+      setTransactionDepth(db, 0);
+    }
   }
 }
