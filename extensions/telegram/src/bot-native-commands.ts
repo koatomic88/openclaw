@@ -1182,10 +1182,7 @@ export const registerTelegramNativeCommands = ({
         let topicName: string | undefined;
         if (isForum && resolvedThreadId != null) {
           try {
-            const storePath = resolveStorePath(executionCfg.session?.store, {
-              agentId: route.accountId,
-            });
-            const scope = resolveTopicNameCacheScope(storePath);
+            const scope = resolveTopicNameCacheScope(`telegram:${route.accountId}`);
             topicName = await getTopicName(chatId, resolvedThreadId, scope);
           } catch {
             // best-effort: topic name is supplementary metadata
@@ -1382,10 +1379,6 @@ export const registerTelegramNativeCommands = ({
           threadSpec,
           botHasTopicsEnabled: resolveTelegramBotHasTopicsEnabled(ctx.me),
           resolveThreadSessionKeys: nativeCommandRuntime.resolveThreadSessionKeys,
-        });
-        const targetSessionEntry = nativeCommandRuntime.getSessionEntry({
-          agentId: route.agentId,
-          sessionKey: targetSessionKey,
         });
         const deliveryBaseOptions = buildCommandDeliveryBaseOptions({
           cfg: runtimeCfg,

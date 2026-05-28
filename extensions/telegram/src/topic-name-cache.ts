@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { readJsonFileWithFallback } from "openclaw/plugin-sdk/json-store";
 import { createPluginStateSyncKeyedStore } from "openclaw/plugin-sdk/plugin-state-runtime";
 
 const MAX_ENTRIES = 900;
@@ -28,9 +29,6 @@ type TopicNameStore = Map<string, TopicEntry>;
 type TopicNameStoreState = {
   lastUpdatedAt: number;
   store: TopicNameStore;
-  hydrated: boolean;
-  hydratePromise?: Promise<void>;
-  persistentStore: TopicNamePersistentStore;
 };
 
 type TopicNameCacheState = {
@@ -134,17 +132,6 @@ function nextUpdatedAt(scopeKey?: string): number {
   return state.lastUpdatedAt;
 }
 
-function removeTopicStore(scopeKey?: string): void {
-  const state = getTopicNameCacheState();
-  const stateKey = scopeKey ?? DEFAULT_TOPIC_NAME_CACHE_KEY;
-  for (const entry of TOPIC_NAME_STORE.entries()) {
-    if (entry.value.scopeKey === stateKey) {
-      TOPIC_NAME_STORE.delete(entry.key);
-    }
-  }
-  state.stores.delete(stateKey);
-}
-
 function persistTopicEntry(scopeKey: string, key: string, entry: TopicEntry): void {
   TOPIC_NAME_STORE.register(key, {
     scopeKey,
@@ -179,12 +166,12 @@ export function importTelegramTopicNameEntry(
   });
 }
 
-export function updateTopicName(
+export async function updateTopicName(
   chatId: number | string,
   threadId: number | string,
   patch: Partial<Omit<TopicEntry, "updatedAt">>,
   optionalScopeKey?: string,
-): void {
+): Promise<void> {
   const scopeKey = optionalScopeKey ?? DEFAULT_TOPIC_NAME_CACHE_KEY;
   const cache = getTopicStore(scopeKey);
   const storeKey = topicEntryKey(scopeKey, chatId, threadId);
@@ -211,7 +198,7 @@ export async function getTopicName(
   chatId: number | string,
   threadId: number | string,
   optionalScopeKey?: string,
-): string | undefined {
+): Promise<string | undefined> {
   const scopeKey = optionalScopeKey ?? DEFAULT_TOPIC_NAME_CACHE_KEY;
   const entry = getTopicStore(scopeKey).get(topicEntryKey(scopeKey, chatId, threadId));
   if (entry) {
@@ -224,7 +211,7 @@ export async function getTopicEntry(
   chatId: number | string,
   threadId: number | string,
   optionalScopeKey?: string,
-): TopicEntry | undefined {
+): Promise<TopicEntry | undefined> {
   const scopeKey = optionalScopeKey ?? DEFAULT_TOPIC_NAME_CACHE_KEY;
   return getTopicStore(scopeKey).get(topicEntryKey(scopeKey, chatId, threadId));
 }
@@ -240,15 +227,13 @@ export async function listTelegramLegacyTopicNameCacheEntries(params: {
   return Object.entries(value)
     .filter((entry): entry is [string, TopicEntry] => isTopicEntry(entry[1]))
     .toSorted(([, left], [, right]) => right.updatedAt - left.updatedAt)
-    .slice(0, params.maxEntries ?? TELEGRAM_TOPIC_NAME_CACHE_MAX_ENTRIES)
+    .slice(0, params.maxEntries ?? MAX_ENTRIES)
     .map(([key, entry]) => ({ key, value: entry }));
 }
 
 export async function clearTopicNameCache(): Promise<void> {
   const state = getTopicNameCacheState();
-  await Promise.all(
-    [...state.stores.values()].map((storeState) => storeState.persistentStore.clear()),
-  );
+  TOPIC_NAME_STORE.clear();
   state.stores.clear();
 }
 
@@ -258,6 +243,22 @@ export function topicNameCacheSize(scope?: string): number {
 
 export function resetTopicNameCacheForTest(): void {
   getTopicNameCacheState().stores.clear();
+  TOPIC_NAME_STORE.clear();
+}
+
+type TopicNamePersistentStore = {
+  register(key: string, value: TopicEntry & { scopeKey?: string }): Promise<void> | void;
+  entries():
+    | Promise<Array<{ key: string; value: TopicEntry }>>
+    | Array<{ key: string; value: TopicEntry }>;
+  delete(key: string): Promise<boolean> | boolean;
+  clear(): Promise<void> | void;
+};
+
+export function setTelegramTopicNameStoreFactoryForTest(
+  _factory: ((namespace: string) => TopicNamePersistentStore) | undefined,
+): void {
+  resetTopicNameCacheForTest();
 }
 
 export function resetTopicNameCacheStoreForTest(): void {

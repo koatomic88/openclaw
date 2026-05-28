@@ -25,17 +25,6 @@ const CATCHUP_CURSOR_STORE_MAX = 256;
 // should not balloon the persisted cursor. When over the bound, keep only the
 // highest-count entries (closest to give-up) and drop the rest.
 const MAX_FAILURE_RETRY_MAP_SIZE = 5_000;
-const CATCHUP_CURSOR_LOCK_OPTIONS: FileLockOptions = {
-  retries: {
-    retries: 6,
-    factor: 1.35,
-    minTimeout: 8,
-    maxTimeout: 180,
-    randomize: true,
-  },
-  stale: 60_000,
-};
-const cursorWriteQueues = new Map<string, Promise<unknown>>();
 
 const CATCHUP_CURSOR_STORE = createPluginStateSyncKeyedStore<IMessageCatchupCursor>("imessage", {
   namespace: "catchup-cursors",
@@ -110,20 +99,6 @@ export function iMessageCatchupCursorKey(accountId: string): string {
   const safePrefix = accountId.replace(/[^a-zA-Z0-9_-]/g, "_") || "account";
   const hash = createHash("sha256").update(accountId, "utf8").digest("hex").slice(0, 12);
   return `${safePrefix}__${hash}`;
-}
-
-function enqueueCursorWrite<T>(filePath: string, fn: () => Promise<T>): Promise<T> {
-  const prev = cursorWriteQueues.get(filePath) ?? Promise.resolve();
-  const next = prev.then(fn, fn);
-  cursorWriteQueues.set(filePath, next);
-  next
-    .finally(() => {
-      if (cursorWriteQueues.get(filePath) === next) {
-        cursorWriteQueues.delete(filePath);
-      }
-    })
-    .catch(() => {});
-  return next;
 }
 
 function sanitizeFailureRetriesInput(raw: unknown): Record<string, number> {

@@ -75,6 +75,7 @@ import {
 import { createLoopRateLimiter } from "./loop-rate-limiter.js";
 import { stageIMessageAttachments } from "./media-staging.js";
 import { parseIMessageNotification } from "./parse-notification.js";
+import { enqueueIMessageReactionSystemEvent } from "./reaction-system-event.js";
 import { normalizeAllowList, resolveRuntime } from "./runtime.js";
 import { createSelfChatCache } from "./self-chat-cache.js";
 import type { IMessagePayload, MonitorIMessageOpts } from "./types.js";
@@ -622,27 +623,12 @@ export async function monitorIMessageProvider(opts: MonitorIMessageOpts = {}): P
       return;
     }
 
-    const dispatchDecision =
-      decision.kind === "reaction"
-        ? ({
-            kind: "dispatch" as const,
-            isGroup: decision.isGroup,
-            chatId: decision.chatId,
-            chatGuid: decision.chatGuid,
-            chatIdentifier: decision.chatIdentifier,
-            sender: decision.sender,
-            senderNormalized: decision.senderNormalized,
-            route: decision.route,
-            bodyText: decision.text,
-            createdAt: message.created_at ? Date.parse(message.created_at) : undefined,
-            replyContext: null,
-            effectiveWasMentioned: true,
-            commandAuthorized: false,
-          } satisfies Extract<
-            Awaited<ReturnType<typeof resolveIMessageInboundDecision>>,
-            { kind: "dispatch" }
-          >)
-        : decision;
+    if (decision.kind === "reaction") {
+      enqueueIMessageReactionSystemEvent({ decision, runtime, logVerbose });
+      return;
+    }
+
+    const dispatchDecision = decision;
 
     const previousTimestamp = readSessionUpdatedAt({
       agentId: dispatchDecision.route.agentId,

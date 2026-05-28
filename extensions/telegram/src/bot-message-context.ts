@@ -197,10 +197,10 @@ export const buildTelegramMessageContext = async ({
             : undefined;
 
     if (topicPatch) {
-      updateTopicName(chatId, resolvedThreadId, topicPatch, topicNameCacheScope);
+      await updateTopicName(chatId, resolvedThreadId, topicPatch, topicNameCacheScope);
     }
 
-    topicName = getTopicName(chatId, resolvedThreadId, topicNameCacheScope);
+    topicName = await getTopicName(chatId, resolvedThreadId, topicNameCacheScope);
     if (!topicName) {
       const replyFtCreated = msg.reply_to_message?.forum_topic_created;
       if (replyFtCreated?.name) {
