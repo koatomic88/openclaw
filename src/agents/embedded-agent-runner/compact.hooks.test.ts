@@ -402,7 +402,7 @@ describe("compactEmbeddedAgentSessionDirect hooks", () => {
         details: { ok: true },
       });
 
-    const result = await compactEmbeddedPiSessionDirect({
+    const result = await compactEmbeddedAgentSessionDirect({
       sessionId: "session-1",
       sessionKey: TEST_SESSION_KEY,
       workspaceDir: "/tmp/workspace",
