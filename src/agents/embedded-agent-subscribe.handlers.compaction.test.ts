@@ -13,8 +13,8 @@ import {
   handleCompactionEnd,
   handleCompactionStart,
   reconcileSessionRowCompactionCountAfterSuccess,
-} from "./pi-embedded-subscribe.handlers.compaction.js";
-import type { EmbeddedPiSubscribeContext } from "./pi-embedded-subscribe.handlers.types.js";
+} from "./embedded-agent-subscribe.handlers.compaction.js";
+import type { EmbeddedPiSubscribeContext } from "./embedded-agent-subscribe.handlers.types.js";
 
 const ORIGINAL_STATE_DIR = process.env.OPENCLAW_STATE_DIR;
 const TEST_AGENT_ID = "test-agent";

@@ -11,5 +11,5 @@ export {
   generateSummary,
   ModelRegistry,
   SettingsManager,
-} from "@earendil-works/pi-coding-agent";
-export type { CreateAgentSessionOptions, ToolDefinition } from "@earendil-works/pi-coding-agent";
+} from "./sessions/index.js";
+export type { CreateAgentSessionOptions, ToolDefinition } from "./sessions/index.js";

@@ -6,20 +6,20 @@ import { resolveContextEngine as resolveContextEngineImpl } from "../../context-
 import type { ContextEngine, ContextEngineTranscriptScope } from "../../context-engine/types.js";
 import { createSubsystemLogger } from "../../logging/subsystem.js";
 import type { AgentMessage } from "../agent-core-contract.js";
-import { buildEmbeddedCompactionRuntimeContext } from "../pi-embedded-runner/compaction-runtime-context.js";
-import { runContextEngineMaintenance as runContextEngineMaintenanceImpl } from "../pi-embedded-runner/context-engine-maintenance.js";
-import { shouldPreemptivelyCompactBeforePrompt as shouldPreemptivelyCompactBeforePromptImpl } from "../pi-embedded-runner/run/preemptive-compaction.js";
-import { resolveLiveToolResultMaxChars as resolveLiveToolResultMaxCharsImpl } from "../pi-embedded-runner/tool-result-truncation.js";
-import { createPreparedEmbeddedPiSettingsManager as createPreparedEmbeddedPiSettingsManagerImpl } from "../pi-project-settings.js";
+import { createPreparedEmbeddedAgentSettingsManager as createPreparedEmbeddedAgentSettingsManagerImpl } from "../agent-project-settings.js";
 import {
-  applyPiAutoCompactionGuard as applyPiAutoCompactionGuardImpl,
+  applyAgentAutoCompactionGuard as applyAgentAutoCompactionGuardImpl,
   resolveEffectiveCompactionMode,
-} from "../pi-settings.js";
+} from "../agent-settings.js";
+import { buildEmbeddedCompactionRuntimeContext } from "../embedded-agent-runner/compaction-runtime-context.js";
+import { runContextEngineMaintenance as runContextEngineMaintenanceImpl } from "../embedded-agent-runner/context-engine-maintenance.js";
+import { shouldPreemptivelyCompactBeforePrompt as shouldPreemptivelyCompactBeforePromptImpl } from "../embedded-agent-runner/run/preemptive-compaction.js";
+import { resolveLiveToolResultMaxChars as resolveLiveToolResultMaxCharsImpl } from "../embedded-agent-runner/tool-result-truncation.js";
 import type { SkillSnapshot } from "../skills.js";
 import {
   readTranscriptStateForSession as readTranscriptStateForSessionImpl,
   type TranscriptState,
-} from "../transcript/transcript-state.js";
+} from "../transcript/transcript-persistence.js";
 import { recordCliCompactionInSessionEntry as recordCliCompactionInSessionEntryImpl } from "./session-entry-updates.js";
 
 type SettingsManagerLike = {
@@ -213,13 +213,13 @@ export async function runCliTurnCompactionLifecycle(params: {
     agentId: params.sessionAgentId,
     sessionId: params.sessionEntry.sessionId,
   });
-  const settingsManager = await cliCompactionDeps.createPreparedEmbeddedPiSettingsManager({
+  const settingsManager = await cliCompactionDeps.createPreparedEmbeddedAgentSettingsManager({
     cwd: params.workspaceDir,
     agentDir: params.agentDir,
     cfg: params.cfg,
     contextTokenBudget,
   });
-  await cliCompactionDeps.applyPiAutoCompactionGuard({
+  await cliCompactionDeps.applyAgentAutoCompactionGuard({
     settingsManager,
     contextEngineInfo: contextEngine.info,
     compactionMode: resolveEffectiveCompactionMode(params.cfg),

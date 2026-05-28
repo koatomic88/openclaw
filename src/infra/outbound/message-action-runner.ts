@@ -1,7 +1,6 @@
 import { resolveSendableOutboundReplyParts } from "openclaw/plugin-sdk/reply-payload";
 import type { AgentToolResult } from "../../agents/agent-core-contract.js";
 import { resolveSessionAgentId } from "../../agents/agent-scope.js";
-import type { AgentToolResult } from "../../agents/runtime/index.js";
 import {
   readNumberParam,
   readStringArrayParam,

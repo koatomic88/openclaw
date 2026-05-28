@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { expect, test } from "vitest";
-import { readTranscriptStateForSession } from "../agents/transcript/transcript-state.js";
+import { readTranscriptStateForSession } from "../agents/transcript/transcript-persistence.js";
 import { getSessionEntry, upsertSessionEntry } from "../config/sessions.js";
 import { replaceSqliteSessionTranscriptEvents } from "../config/sessions/transcript-store.sqlite.js";
 import { withEnvAsync } from "../test-utils/env.js";
@@ -11,6 +11,7 @@ import {
   onceMessage,
   agentDiscoveryMock,
   rpcReq,
+  seedGatewaySessionEntries,
   startConnectedServerWithClient,
 } from "./test-helpers.js";
 import {
@@ -22,37 +23,42 @@ import {
 
 const { createSessionFixtureDir, openClient } = setupGatewaySessionsTestHarness();
 
+function expectRpcOk(response: { ok: boolean; error?: unknown }): void {
+  expect(response.error).toBeUndefined();
+  expect(response.ok).toBe(true);
+}
+
 test("sessions.compaction.* lists checkpoints and branches or restores from pre-compaction snapshots", async () => {
   const { dir } = await createSessionFixtureDir();
   const fixture = await createCheckpointFixture(dir);
   const checkpointCreatedAt = Date.now();
-  upsertSessionEntry({
-    agentId: "main",
-    sessionKey: "agent:main:main",
-    entry: sessionStoreEntry(fixture.sessionId, {
-      compactionCheckpoints: [
-        {
-          checkpointId: "checkpoint-1",
-          sessionKey: "agent:main:main",
-          sessionId: fixture.sessionId,
-          createdAt: checkpointCreatedAt,
-          reason: "manual",
-          tokensBefore: 123,
-          tokensAfter: 45,
-          summary: "checkpoint summary",
-          firstKeptEntryId: fixture.preCompactionLeafId,
-          preCompaction: {
-            sessionId: fixture.preCompactionSessionId,
-            leafId: fixture.preCompactionLeafId,
-          },
-          postCompaction: {
+  await seedGatewaySessionEntries({
+    entries: {
+      main: sessionStoreEntry(fixture.sessionId, {
+        compactionCheckpoints: [
+          {
+            checkpointId: "checkpoint-1",
+            sessionKey: "agent:main:main",
             sessionId: fixture.sessionId,
-            leafId: fixture.postCompactionLeafId,
-            entryId: fixture.postCompactionLeafId,
+            createdAt: checkpointCreatedAt,
+            reason: "manual",
+            tokensBefore: 123,
+            tokensAfter: 45,
+            summary: "checkpoint summary",
+            firstKeptEntryId: fixture.preCompactionLeafId,
+            preCompaction: {
+              sessionId: fixture.preCompactionSessionId,
+              leafId: fixture.preCompactionLeafId,
+            },
+            postCompaction: {
+              sessionId: fixture.sessionId,
+              leafId: fixture.postCompactionLeafId,
+              entryId: fixture.postCompactionLeafId,
+            },
           },
-        },
-      ],
-    }),
+        ],
+      }),
+    },
   });
   fixture.session.appendMessage({
     role: "user",
@@ -142,7 +148,7 @@ test("sessions.compaction.* lists checkpoints and branches or restores from pre-
     key: "main",
     checkpointId: "checkpoint-1",
   });
-  expect(branched.ok).toBe(true);
+  expectRpcOk(branched);
   expect(branched.payload?.sourceKey).toBe("agent:main:main");
   expect(branched.payload?.entry.parentSessionKey).toBe("agent:main:main");
   const branchedSession = await readTranscriptStateForSession({
@@ -169,7 +175,7 @@ test("sessions.compaction.* lists checkpoints and branches or restores from pre-
     key: "main",
     checkpointId: "checkpoint-1",
   });
-  expect(restored.ok).toBe(true);
+  expectRpcOk(restored);
   expect(restored.payload?.key).toBe("agent:main:main");
   expect(restored.payload?.sessionId).not.toBe(fixture.sessionId);
   expect(restored.payload?.entry.compactionCheckpoints).toHaveLength(1);
@@ -209,13 +215,13 @@ test("sessions.compact without maxLines runs embedded manual compaction for chec
       },
     ],
   });
-  upsertSessionEntry({
-    agentId: "main",
-    sessionKey: "agent:main:main",
-    entry: sessionStoreEntry("sess-main", {
-      thinkingLevel: "medium",
-      reasoningLevel: "stream",
-    }),
+  await seedGatewaySessionEntries({
+    entries: {
+      main: sessionStoreEntry("sess-main", {
+        thinkingLevel: "medium",
+        reasoningLevel: "stream",
+      }),
+    },
   });
 
   const { ws } = await openClient();
@@ -245,7 +251,7 @@ test("sessions.compact without maxLines runs embedded manual compaction for chec
     key: "main",
   });
 
-  expect(compacted.ok).toBe(true);
+  expectRpcOk(compacted);
   expect(compacted.payload?.key).toBe("agent:main:main");
   expect(compacted.payload?.compacted).toBe(true);
   const startEvent = await startEventPromise;
@@ -276,8 +282,8 @@ test("sessions.compact without maxLines runs embedded manual compaction for chec
   expect(endPayload.operationId).toBe(startPayload.operationId);
   expect(typeof startPayload.ts).toBe("number");
   expect(typeof endPayload.ts).toBe("number");
-  expect(embeddedRunMock.compactEmbeddedPiSession).toHaveBeenCalledTimes(1);
-  const compactionCall = embeddedRunMock.compactEmbeddedPiSession.mock.calls[0]?.[0] as
+  expect(embeddedRunMock.compactEmbeddedAgentSession).toHaveBeenCalledTimes(1);
+  const compactionCall = embeddedRunMock.compactEmbeddedAgentSession.mock.calls[0]?.[0] as
     | {
         agentHarnessId?: string;
         allowGatewaySubagentBinding?: boolean;
@@ -328,13 +334,27 @@ test("sessions.compact without maxLines runs embedded manual compaction for chec
 });
 
 test("sessions.compact treats Codex native compaction start as pending, not completed", async () => {
-  const { dir, storePath } = await createSessionStoreDir();
-  await fs.writeFile(
-    path.join(dir, "sess-codex.jsonl"),
-    `${JSON.stringify({ role: "user", content: "hello codex" })}\n`,
-    "utf-8",
-  );
-  await writeSessionStore({
+  const { dir } = await createSessionFixtureDir();
+  replaceSqliteSessionTranscriptEvents({
+    agentId: "main",
+    sessionId: "sess-codex",
+    events: [
+      {
+        type: "session",
+        id: "sess-codex",
+        timestamp: new Date().toISOString(),
+        cwd: dir,
+      },
+      {
+        type: "message",
+        id: "user-codex",
+        parentId: null,
+        timestamp: new Date().toISOString(),
+        message: { role: "user", content: "hello codex", timestamp: Date.now() },
+      },
+    ],
+  });
+  await seedGatewaySessionEntries({
     entries: {
       main: sessionStoreEntry("sess-codex", {
         agentHarnessId: "codex",
@@ -380,7 +400,7 @@ test("sessions.compact treats Codex native compaction start as pending, not comp
     key: "main",
   });
 
-  expect(compacted.ok).toBe(true);
+  expectRpcOk(compacted);
   expect(compacted.payload?.key).toBe("agent:main:main");
   expect(compacted.payload?.compacted).toBe(false);
   expect(compacted.payload?.result?.details).toMatchObject({
@@ -397,17 +417,10 @@ test("sessions.compact treats Codex native compaction start as pending, not comp
     completed: false,
   });
 
-  const store = JSON.parse(await fs.readFile(storePath, "utf-8")) as Record<
-    string,
-    {
-      compactionCount?: number;
-      totalTokens?: number;
-      totalTokensFresh?: boolean;
-    }
-  >;
-  expect(store["agent:main:main"]?.compactionCount).toBe(2);
-  expect(store["agent:main:main"]?.totalTokens).toBe(54_321);
-  expect(store["agent:main:main"]?.totalTokensFresh).toBe(true);
+  const entry = getSessionEntry({ agentId: "main", sessionKey: "agent:main:main" });
+  expect(entry?.compactionCount).toBe(2);
+  expect(entry?.totalTokens).toBe(54_321);
+  expect(entry?.totalTokensFresh).toBe(true);
 
   ws.close();
 });

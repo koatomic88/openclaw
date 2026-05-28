@@ -1,6 +1,6 @@
 import {
-  Agent as PiAgent,
-  runAgentLoop as piRunAgentLoop,
+  Agent as OpenClawAgent,
+  runAgentLoop as openClawRunAgentLoop,
   type AgentMessage as PiAgentMessage,
   type AgentEvent as PiAgentEvent,
   type AgentTool as PiAgentTool,
@@ -8,7 +8,7 @@ import {
   type AgentToolUpdateCallback as PiAgentToolUpdateCallback,
   type StreamFn as PiStreamFn,
   type ThinkingLevel as PiThinkingLevel,
-} from "@earendil-works/pi-agent-core";
+} from "./runtime/index.js";
 
 export type AgentMessage = PiAgentMessage;
 export type AgentEvent = PiAgentEvent;
@@ -21,5 +21,5 @@ export type AgentToolUpdateCallback<TDetails = unknown> = PiAgentToolUpdateCallb
 export type StreamFn = PiStreamFn;
 export type ThinkingLevel = PiThinkingLevel;
 
-export const Agent = PiAgent;
-export const runAgentLoop = piRunAgentLoop;
+export const Agent = OpenClawAgent;
+export const runAgentLoop = openClawRunAgentLoop;

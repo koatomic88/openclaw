@@ -33,7 +33,7 @@ vi.mock("./auth-profiles/store.js", () => ({
   loadAuthProfileStoreForSecretsRuntime: () => ({ version: 1, profiles: {} }),
 }));
 
-vi.mock("./pi-auth-discovery-core.js", () => ({
+vi.mock("./agent-auth-discovery-core.js", () => ({
   addEnvBackedPiCredentials: (credentials: Record<string, unknown>) => ({ ...credentials }),
 }));
 

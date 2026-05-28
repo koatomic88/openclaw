@@ -29,7 +29,10 @@ import { isCronSessionKey, isSubagentSessionKey } from "../../routing/session-ke
 import { resolveUserPath } from "../../utils.js";
 import { normalizeMessageChannel } from "../../utils/message-channel.js";
 import { isReasoningTagProvider } from "../../utils/provider-utils.js";
+import { createBundleLspToolRuntime } from "../agent-bundle-lsp-runtime.js";
+import { createBundleMcpToolRuntime } from "../agent-bundle-mcp-tools.js";
 import type { AgentMessage } from "../agent-core-contract.js";
+import { createPreparedEmbeddedAgentSettingsManager } from "../agent-project-settings.js";
 import {
   resolveAgentDir,
   resolveRunModelFallbacksOverride,
@@ -77,26 +80,15 @@ import { isFallbackSummaryError, runWithModelFallback } from "../model-fallback.
 import { supportsModelTools } from "../model-tool-support.js";
 import { ensureOpenClawModelCatalog } from "../models-config.js";
 import { resolveContextConfigProviderForRuntime } from "../openai-codex-routing.js";
-import { createBundleLspToolRuntime } from "../pi-bundle-lsp-runtime.js";
-import { createBundleMcpToolRuntime } from "../pi-bundle-mcp-tools.js";
 import {
   createAgentSession,
   DefaultResourceLoader,
   estimateTokens,
 } from "../pi-coding-agent-contract.js";
-import { ensureSessionHeader } from "../pi-embedded-helpers.js";
-import { pickFallbackThinkingLevel } from "../pi-embedded-helpers.js";
 import {
   consumeCompactionSafeguardCancelReason,
   setCompactionSafeguardCancelReason,
 } from "../pi-hooks/compaction-safeguard-runtime.js";
-import { createPreparedEmbeddedPiSettingsManager } from "../pi-project-settings.js";
-import {
-  applyPiAutoCompactionGuard,
-  applyPiCompactionSettingsFromConfig,
-  isSilentOverflowProneModel,
-} from "../pi-settings.js";
-import { createOpenClawCodingTools, resolveProcessToolScopeKey } from "../pi-tools.js";
 import { wrapStreamFnTextTransforms } from "../plugin-text-transforms.js";
 import { resolveAgentPromptSurfaceForSessionKey } from "../prompt-surface.js";
 import { registerProviderStreamForModel } from "../provider-stream.js";
@@ -104,7 +96,6 @@ import { collectRuntimeChannelCapabilities } from "../runtime-capabilities.js";
 import { buildAgentRuntimePlan } from "../runtime-plan/build.js";
 import type { AgentRuntimePlan } from "../runtime-plan/types.js";
 import { ensureRuntimePluginsLoaded } from "../runtime-plugins.js";
-import type { AgentMessage } from "../runtime/index.js";
 import { resolveSandboxContext } from "../sandbox.js";
 import { guardSessionManager } from "../session-tool-result-guard-wrapper.js";
 import { sanitizeToolUseResultPairing } from "../session-transcript-repair.js";
@@ -1063,7 +1054,7 @@ async function compactEmbeddedAgentSessionDirectOnce(
         sessionId: params.sessionId,
       });
       compactionSessionManager = sessionManager;
-      const settingsManager = createPreparedEmbeddedPiSettingsManager({
+      const settingsManager = createPreparedEmbeddedAgentSettingsManager({
         cwd: effectiveWorkspace,
         agentDir,
         cfg: params.config,

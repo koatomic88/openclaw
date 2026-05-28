@@ -1,1 +1,1 @@
-export { convertMessages } from "@earendil-works/pi-ai/openai-completions";
+export { convertMessages } from "../llm/providers/openai-completions.js";

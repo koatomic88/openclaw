@@ -88,7 +88,7 @@ function normalizeSessionEntryDelivery(entry: SessionEntry): SessionEntry {
 
 // resolvedSkills carries the full parsed Skill[] (including each SKILL.md body)
 // and is only used as an in-turn cache by the runtime — see
-// src/agents/pi-embedded-runner/skills-runtime.ts. Persisting it bloats session
+// src/agents/embedded-agent-runner/skills-runtime.ts. Persisting it bloats session
 // rows by orders of magnitude when many sessions are active.
 function stripPersistedSkillsCache(entry: SessionEntry): SessionEntry {
   const snapshot = entry.skillsSnapshot;

@@ -1,4 +1,3 @@
-import type { AgentSessionEvent } from "@earendil-works/pi-coding-agent";
 import type { HeartbeatToolResponse } from "../auto-reply/heartbeat-tool-response.js";
 import type { ReplyDirectiveParseResult } from "../auto-reply/reply/reply-directives.js";
 import type { ReasoningLevel } from "../auto-reply/thinking.js";
@@ -6,7 +5,7 @@ import type { InlineCodeState } from "../markdown/code-spans.js";
 import type { HookRunner } from "../plugins/hooks.js";
 import type { AcceptedSessionSpawn } from "./accepted-session-spawn.js";
 import type { AgentMessage } from "./agent-core-contract.js";
-import type { EmbeddedBlockChunker } from "./pi-embedded-block-chunker.js";
+import type { EmbeddedBlockChunker } from "./embedded-agent-block-chunker.js";
 import type {
   MessagingToolSend,
   MessagingToolSourceReplyPayload,
@@ -19,7 +18,6 @@ import type {
   SubscribeEmbeddedAgentSessionParams,
 } from "./embedded-agent-subscribe.types.js";
 import type { AgentRunTimeoutPhase } from "./run-timeout-attribution.js";
-import type { AgentMessage } from "./runtime/index.js";
 import type { AgentSessionEvent } from "./sessions/index.js";
 import type { ToolErrorSummary } from "./tool-error-summary.js";
 import type { NormalizedUsage } from "./usage.js";

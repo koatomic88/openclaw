@@ -331,7 +331,7 @@ async function loadFreshFollowupRunnerModuleForTest() {
     "../../agents/model-fallback.js",
     async () => await import("../../test-utils/model-fallback.mock.js"),
   );
-  vi.doMock("../../agents/pi-embedded.js", () => ({
+  vi.doMock("../../agents/embedded-agent.js", () => ({
     abortEmbeddedPiRun: vi.fn(async () => false),
     compactEmbeddedPiSession: (params: unknown) => compactEmbeddedPiSessionMock(params),
     isEmbeddedPiRunActive: vi.fn(() => false),

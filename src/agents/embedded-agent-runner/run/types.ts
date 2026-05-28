@@ -11,18 +11,15 @@ import type { PluginHookBeforeAgentStartResult } from "../../../plugins/hook-bef
 import type { AgentHarnessTaskRuntimeScope } from "../../../tasks/agent-harness-task-runtime-scope.js";
 import type { AcceptedSessionSpawn } from "../../accepted-session-spawn.js";
 import type { AgentMessage } from "../../agent-core-contract.js";
+import type { ToolOutcomeObserver } from "../../agent-tools.before-tool-call.js";
 import type { AuthProfileStore } from "../../auth-profiles/types.js";
-import type { ModelRegistry } from "../../model-registry-contract.js";
-import type { Api, AssistantMessage, Model } from "../../pi-ai-contract.js";
-import type { AuthStorage } from "../../pi-coding-agent-contract.js";
 import type {
   MessagingToolSend,
   MessagingToolSourceReplyPayload,
-} from "../../pi-embedded-messaging.types.js";
-import type { ToolOutcomeObserver } from "../../pi-tools.before-tool-call.js";
+} from "../../embedded-agent-messaging.types.js";
+import type { Api } from "../../pi-ai-contract.js";
 import type { AgentRunTimeoutPhase } from "../../run-timeout-attribution.js";
 import type { AgentRuntimePlan } from "../../runtime-plan/types.js";
-import type { AgentMessage } from "../../runtime/index.js";
 import type { AuthStorage, ModelRegistry } from "../../sessions/index.js";
 import type { ToolErrorSummary } from "../../tool-error-summary.js";
 import type { NormalizedUsage } from "../../usage.js";

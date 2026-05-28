@@ -16,23 +16,7 @@ import {
 } from "../shared/string-coerce.js";
 import { resolveGatewayMessageChannel } from "../utils/message-channel.js";
 import { resolveAgentConfig } from "./agent-scope.js";
-import { createApplyPatchTool } from "./apply-patch.js";
-import type { AuthProfileStore } from "./auth-profiles/types.js";
-import { describeExecTool, describeProcessTool } from "./bash-tools.descriptions.js";
-import type { ExecToolDefaults } from "./bash-tools.exec-types.js";
-import type { ProcessToolDefaults } from "./bash-tools.process.js";
-import { execSchema, processSchema } from "./bash-tools.schemas.js";
-import { listChannelAgentTools } from "./channel-tools.js";
-import { shouldSuppressManagedWebSearchTool } from "./codex-native-web-search.js";
-import type { AgentFilesystem, AgentToolArtifactStore } from "./filesystem/agent-filesystem.js";
-import { createVirtualAgentFsProjection } from "./filesystem/virtual-agent-fs-projection.js";
-import { resolveImageSanitizationLimits } from "./image-sanitization.js";
-import { filterLocalModelLeanTools } from "./local-model-lean.js";
-import type { ModelAuthMode } from "./model-auth.js";
-import { resolveOpenClawPluginToolsForOptions } from "./openclaw-plugin-tools.js";
-import { createOpenClawTools } from "./openclaw-tools.js";
-import { createCodingTools, createReadTool } from "./pi-coding-agent-contract.js";
-import { wrapToolWithAbortSignal } from "./pi-tools.abort.js";
+import { wrapToolWithAbortSignal } from "./agent-tools.abort.js";
 import {
   type ToolOutcomeObserver,
   wrapToolWithBeforeToolCallHook,
@@ -76,6 +60,8 @@ import type { ProcessToolDefaults } from "./bash-tools.process.js";
 import { execSchema, processSchema } from "./bash-tools.schemas.js";
 import { listChannelAgentTools } from "./channel-tools.js";
 import { shouldSuppressManagedWebSearchTool } from "./codex-native-web-search.js";
+import type { AgentFilesystem, AgentToolArtifactStore } from "./filesystem/agent-filesystem.js";
+import { createVirtualAgentFsProjection } from "./filesystem/virtual-agent-fs-projection.js";
 import { resolveImageSanitizationLimits } from "./image-sanitization.js";
 import { filterLocalModelLeanTools } from "./local-model-lean.js";
 import type { ModelAuthMode } from "./model-auth.js";

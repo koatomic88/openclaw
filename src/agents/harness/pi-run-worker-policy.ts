@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { formatErrorMessage } from "../../infra/errors.js";
-import type { RunEmbeddedPiAgentParams } from "../pi-embedded-runner/run/params.js";
+import type { RunEmbeddedPiAgentParams } from "../embedded-agent-runner/run/params.js";
 import { createSerializableRunParamsSnapshot } from "./prepared-run.ts";
 import {
   AGENT_RUN_PARENT_CALLBACK_FIELDS,

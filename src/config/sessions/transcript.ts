@@ -1,7 +1,6 @@
 import nodePath from "node:path";
 import { redactTranscriptMessage } from "../../agents/transcript-redact.js";
 import type { PersistableSessionMessage } from "../../agents/transcript/session-transcript-types.js";
-import { formatErrorMessage } from "../../infra/errors.js";
 import {
   DEFAULT_AGENT_ID,
   normalizeAgentId,
@@ -11,11 +10,11 @@ import { emitSessionTranscriptUpdate } from "../../sessions/transcript-events.js
 import { extractAssistantVisibleText } from "../../shared/chat-message-content.js";
 import { resolveOpenClawAgentSqlitePath } from "../../state/openclaw-agent-db.js";
 import type { OpenClawConfig } from "../types.openclaw.js";
+import {
+  appendAssistantMessageToRuntimeSession,
+  openRuntimeSessionHandle,
+} from "./runtime-session-handle.js";
 import { resolveAndPersistSessionTranscriptScope } from "./session-scope.js";
-import { getSessionEntry, normalizeSessionRowKey } from "./store.js";
-import { appendSessionTranscriptMessage } from "./transcript-append.js";
-import { createSessionTranscriptHeader } from "./transcript-header.js";
-import { writeJsonlEntry } from "./transcript-jsonl.js";
 import { resolveMirroredTranscriptText } from "./transcript-mirror.js";
 import {
   hasSqliteSessionTranscriptEvents,
@@ -49,7 +48,7 @@ type TranscriptQueryScope = {
 
 type TranscriptSessionStoreTarget = {
   agentId: string;
-  path?: string;
+  databasePath?: string;
 };
 
 function parseCanonicalSessionStorePath(
@@ -91,7 +90,7 @@ function resolveTranscriptSessionStoreTarget(params: {
   if (parsed) {
     return {
       agentId: parsed.agentId,
-      path: resolveOpenClawAgentSqlitePath({
+      databasePath: resolveOpenClawAgentSqlitePath({
         agentId: parsed.agentId,
         env: {
           ...process.env,
@@ -105,7 +104,7 @@ function resolveTranscriptSessionStoreTarget(params: {
   }
   return {
     agentId,
-    path: storePath,
+    databasePath: storePath,
   };
 }
 
@@ -335,30 +334,14 @@ export async function appendExactAssistantMessageToSessionTranscript(params: {
   const agentId = normalizeAgentId(
     params.agentId ?? resolveAgentIdFromSessionKey(sessionKey) ?? DEFAULT_AGENT_ID,
   );
-  const normalizedKey = normalizeSessionRowKey(sessionKey);
   const target = resolveTranscriptSessionStoreTarget({ agentId, storePath: params.storePath });
-  const entry = getSessionEntry({
+  const handle = await openRuntimeSessionHandle({
     agentId: target.agentId,
-    ...(target.path ? { path: target.path } : {}),
-    sessionKey: normalizedKey,
+    ...(target.databasePath ? { databasePath: target.databasePath } : {}),
+    sessionKey,
   });
-  if (!entry?.sessionId) {
+  if (!handle) {
     return { ok: false, reason: `unknown sessionKey: ${sessionKey}` };
-  }
-
-  try {
-    await resolveAndPersistSessionTranscriptScope({
-      sessionId: entry.sessionId,
-      sessionKey: normalizedKey,
-      sessionEntry: entry,
-      agentId: target.agentId,
-      ...(target.path ? { path: target.path } : {}),
-    });
-  } catch (err) {
-    return {
-      ok: false,
-      reason: formatErrorMessage(err),
-    };
   }
 
   const explicitIdempotencyKey =
@@ -376,30 +359,28 @@ export async function appendExactAssistantMessageToSessionTranscript(params: {
         ) as unknown as SessionTranscriptAssistantMessage,
       )
     : null;
-  const { messageId, message: appendedMessage } = await appendSessionTranscriptMessage({
-    agentId: target.agentId,
-    ...(target.path ? { path: target.path } : {}),
+  const { messageId, message: appendedMessage } = await appendAssistantMessageToRuntimeSession({
+    handle,
     ...(dedupeLatestAssistantText ? { dedupeLatestAssistantText } : {}),
     message,
-    sessionId: entry.sessionId,
     config: params.config,
   });
 
   switch (params.updateMode ?? "inline") {
     case "inline":
       emitSessionTranscriptUpdate({
-        agentId: target.agentId,
-        sessionId: entry.sessionId,
-        sessionKey,
+        agentId: handle.agentId,
+        sessionId: handle.sessionId,
+        sessionKey: handle.sessionKey,
         message: appendedMessage,
         messageId,
       });
       break;
     case "signal-only":
       emitSessionTranscriptUpdate({
-        agentId: target.agentId,
-        sessionId: entry.sessionId,
-        sessionKey,
+        agentId: handle.agentId,
+        sessionId: handle.sessionId,
+        sessionKey: handle.sessionKey,
       });
       break;
     case "none":

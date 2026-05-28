@@ -2,10 +2,10 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
+import { resolvePiCredentialMapFromStore } from "./agent-auth-credentials.js";
+import { addEnvBackedPiCredentials } from "./agent-auth-discovery-core.js";
+import { discoverAuthStorage } from "./agent-model-discovery.js";
 import { saveAuthProfileStore, type AuthProfileStore } from "./auth-profiles.js";
-import { resolvePiCredentialMapFromStore } from "./pi-auth-credentials.js";
-import { addEnvBackedPiCredentials } from "./pi-auth-discovery-core.js";
-import { discoverAuthStorage } from "./pi-model-discovery.js";
 
 vi.mock("./model-auth-env-vars.js", () => ({
   listProviderEnvAuthLookupKeys: () => ["mistral", "workspace-cloud"],

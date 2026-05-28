@@ -1,4 +1,4 @@
-import type { AgentMessage } from "@earendil-works/pi-agent-core";
+import type { AgentMessage } from "../../agents/agent-core-contract.js";
 import { redactTranscriptMessage } from "../../agents/transcript-redact.js";
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
 import { redactSecrets } from "../../logging/redact.js";
@@ -53,12 +53,6 @@ export async function appendSessionTranscriptMessage(params: {
   });
   return { messageId, message };
 }
-
-type AppendSessionTranscriptMessageResult<TMessage> = {
-  messageId: string;
-  message: TMessage;
-  appended: boolean;
-};
 
 function isTranscriptAgentMessage(value: unknown): value is AgentMessage {
   return (

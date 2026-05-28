@@ -4,7 +4,7 @@ import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ModelCatalogEntry } from "../../agents/model-catalog.types.js";
 import { CURRENT_SESSION_VERSION } from "../../agents/transcript/session-transcript-contract.js";
-import { readTranscriptStateForSession } from "../../agents/transcript/transcript-state.js";
+import { readTranscriptStateForSession } from "../../agents/transcript/transcript-persistence.js";
 import { setReplyPayloadMetadata } from "../../auto-reply/reply-payload.js";
 import type { MsgContext } from "../../auto-reply/templating.js";
 import { appendSessionTranscriptMessage } from "../../config/sessions/transcript-append.js";

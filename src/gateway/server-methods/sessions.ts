@@ -2,11 +2,11 @@ import { randomUUID } from "node:crypto";
 import { resolveModelAgentRuntimeMetadata } from "../../agents/agent-runtime-metadata.js";
 import { resolveAgentWorkspaceDir, resolveDefaultAgentId } from "../../agents/agent-scope.js";
 import {
-  abortEmbeddedPiRun,
-  isEmbeddedPiRunActive,
-  waitForEmbeddedPiRunEnd,
-} from "../../agents/pi-embedded-runner/runs.js";
-import { compactEmbeddedPiSession } from "../../agents/pi-embedded.js";
+  abortEmbeddedAgentRun,
+  compactEmbeddedAgentSession as compactEmbeddedPiSession,
+  isEmbeddedAgentRunActive,
+  waitForEmbeddedAgentRunEnd,
+} from "../../agents/embedded-agent.js";
 import { CURRENT_SESSION_VERSION } from "../../agents/transcript/session-transcript-contract.js";
 import { clearSessionQueues } from "../../auto-reply/reply/queue/cleanup.js";
 import { normalizeReasoningLevel, normalizeThinkLevel } from "../../auto-reply/thinking.js";
@@ -1533,7 +1533,7 @@ export const sessionsHandlers: GatewayRequestHandlers = {
       nextSessionId: branchedSession.sessionId,
       label,
       parentSessionKey: canonicalKey,
-      totalTokens: forkSource.totalTokens,
+      totalTokens: checkpoint.tokensBefore,
     });
 
     upsertSessionEntry({

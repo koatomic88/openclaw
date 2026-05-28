@@ -1,6 +1,6 @@
 import { vi } from "vitest";
 import type { AgentToolResult } from "../../../agents/agent-core-contract.js";
-import { resetAdjustedParamsByToolCallIdForTests } from "../../../agents/pi-tools.before-tool-call.state.js";
+import { resetAdjustedParamsByToolCallIdForTests } from "../../../agents/agent-tools.before-tool-call.state.js";
 import type {
   CodexAppServerExtensionFactory,
   CodexAppServerToolResultEvent,

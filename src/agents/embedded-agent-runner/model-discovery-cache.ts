@@ -11,7 +11,6 @@ import { authProfileStoreKey } from "../auth-profiles/persisted.js";
 import { hasAnyRuntimeAuthProfileStoreSource } from "../auth-profiles/runtime-snapshots.js";
 import { readAuthProfileStorePayloadResult } from "../auth-profiles/sqlite-storage.js";
 import { readStoredModelsConfigRaw } from "../models-config-store.js";
-import { discoverAuthStorage, discoverModels } from "../pi-model-discovery.js";
 
 type DiscoveryStores = {
   authStorage: AuthStorage;

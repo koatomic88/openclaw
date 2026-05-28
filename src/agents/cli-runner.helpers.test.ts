@@ -13,8 +13,8 @@ import {
   writeCliImages,
   writeCliSystemPromptFile,
 } from "./cli-runner/helpers.js";
+import * as promptImageUtils from "./embedded-agent-runner/run/images.js";
 import type { ImageContent } from "./pi-ai-contract.js";
-import * as promptImageUtils from "./pi-embedded-runner/run/images.js";
 import type { SandboxFsBridge } from "./sandbox/fs-bridge.js";
 import { SYSTEM_PROMPT_CACHE_BOUNDARY } from "./system-prompt-cache-boundary.js";
 import * as toolImages from "./tool-images.js";

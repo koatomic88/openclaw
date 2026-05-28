@@ -5,14 +5,13 @@ import { streamWithPayloadPatch } from "../../llm/providers/stream-wrappers/stre
 import type { Model } from "../../llm/types.js";
 import { normalizeOptionalString } from "../../shared/string-coerce.js";
 import type { StreamFn } from "../agent-core-contract.js";
-import type { Api, Model } from "../pi-ai-contract.js";
+import type { Api } from "../pi-ai-contract.js";
 import { buildGuardedModelFetch } from "../provider-transport-fetch.js";
 import { stableStringify } from "../stable-stringify.js";
 import { stripSystemPromptCacheBoundary } from "../system-prompt-cache-boundary.js";
 import { mergeTransportHeaders, sanitizeTransportPayloadText } from "../transport-stream-shared.js";
 import { log } from "./logger.js";
 import { isGooglePromptCacheEligible, resolveCacheRetention } from "./prompt-cache-retention.js";
-import { streamWithPayloadPatch } from "./stream-payload-utils.js";
 
 const GOOGLE_PROMPT_CACHE_CUSTOM_TYPE = "openclaw.google-prompt-cache";
 const GOOGLE_PROMPT_CACHE_RETRY_BACKOFF_MS = 10 * 60_000;

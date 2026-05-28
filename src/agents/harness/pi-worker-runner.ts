@@ -1,5 +1,5 @@
-import type { RunEmbeddedPiAgentParams } from "../pi-embedded-runner/run/params.js";
-import type { EmbeddedPiRunResult } from "../pi-embedded-runner/types.js";
+import type { RunEmbeddedPiAgentParams } from "../embedded-agent-runner/run/params.js";
+import type { EmbeddedPiRunResult } from "../embedded-agent-runner/types.js";
 import type { AgentRunResult, PreparedAgentRun } from "../runtime-backend.js";
 import type { AgentFilesystemMode } from "../runtime-backend.js";
 import type { AgentWorkerPermissionMode } from "../runtime-worker-permissions.js";

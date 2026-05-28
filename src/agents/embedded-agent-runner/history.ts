@@ -3,7 +3,6 @@ import type { OpenClawConfig } from "../../config/types.openclaw.js";
 import { normalizeOptionalString } from "../../shared/string-coerce.js";
 import type { AgentMessage } from "../agent-core-contract.js";
 import { normalizeProviderId } from "../provider-id.js";
-import type { AgentMessage } from "../runtime/index.js";
 
 export type HistoryLimitSessionRouting = {
   channel?: string;

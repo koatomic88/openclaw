@@ -1,10 +1,10 @@
-import {
-  loadSqliteSessionTranscriptEvents,
-  replaceSqliteSessionTranscriptEvents,
-} from "../../config/sessions/transcript-store.sqlite.js";
 import { normalizeAgentId } from "../../routing/session-key.js";
 import type { AgentMessage } from "../agent-core-contract.js";
 import type { SessionEntry, SessionHeader } from "../transcript/session-transcript-contract.js";
+import {
+  readTranscriptStateForSessionSync,
+  replaceTranscriptStateForSession,
+} from "../transcript/transcript-persistence.js";
 import { TranscriptState } from "../transcript/transcript-state.js";
 
 type CompactionEntry = Extract<SessionEntry, { type: "compaction" }>;
@@ -83,15 +83,16 @@ export async function hardenManualCompactionBoundary(params: {
   if (!scope.sessionId) {
     throw new Error("SQLite transcript scope requires a session id.");
   }
-  const events = loadSqliteSessionTranscriptEvents(scope).map((entry) => entry.event);
-  const transcriptEntries = events.filter((event): event is SessionEntry | SessionHeader =>
-    Boolean(event && typeof event === "object"),
-  );
-  const header = transcriptEntries.find((entry) => entry?.type === "session") ?? null;
-  const entries = transcriptEntries.filter(
-    (entry): entry is SessionEntry => entry?.type !== "session",
-  );
-  const state = new TranscriptState({ header, entries });
+  let state: TranscriptState;
+  try {
+    state = readTranscriptStateForSessionSync(scope);
+  } catch {
+    return {
+      applied: false,
+      messages: [],
+    };
+  }
+  const header = state.getHeader();
   if (!header) {
     return {
       applied: false,
@@ -155,10 +156,7 @@ export async function hardenManualCompactionBoundary(params: {
     header,
     entries: replacedEntries,
   });
-  replaceSqliteSessionTranscriptEvents({
-    ...scope,
-    events: [header, ...replacedEntries],
-  });
+  replaceTranscriptStateForSession({ scope, state: replacedState });
 
   const replacedSessionContext = replacedState.buildSessionContext();
   return {

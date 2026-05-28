@@ -8,7 +8,7 @@ import { closeOpenClawStateDatabaseForTest } from "../../state/openclaw-state-db
 import { makeAgentAssistantMessage } from "../test-helpers/agent-message-fixtures.js";
 import { openTranscriptSessionManagerForSession } from "../transcript/session-manager.js";
 import type { SessionManager } from "../transcript/session-transcript-contract.js";
-import { readTranscriptStateForSession } from "../transcript/transcript-state.js";
+import { readTranscriptStateForSession } from "../transcript/transcript-persistence.js";
 import {
   rotateTranscriptAfterCompaction,
   rotateSqliteTranscriptAfterCompaction,
@@ -109,6 +109,13 @@ function createCompactedSession(sessionDir: string): {
   return { manager, scope, firstKeptId, oldUserId };
 }
 
+function persistedParentScope(scope: { agentId: string; sessionId: string }) {
+  return {
+    agentId: scope.agentId,
+    sessionId: scope.sessionId,
+  };
+}
+
 describe("rotateTranscriptAfterCompaction", () => {
   it("can rotate a persisted transcript without opening a manager", async () => {
     const dir = await createTmpDir();
@@ -127,7 +134,7 @@ describe("rotateTranscriptAfterCompaction", () => {
       sessionId: result.sessionId!,
     });
     expect(successor.getHeader()).toMatchObject({
-      parentTranscriptScope: sourceScope,
+      parentTranscriptScope: persistedParentScope(sourceScope),
       cwd: dir,
     });
     const messages = successor.buildSessionContext().messages;
@@ -180,7 +187,7 @@ describe("rotateTranscriptAfterCompaction", () => {
     });
     expect(successor.getHeader()).toMatchObject({
       id: result.sessionId,
-      parentTranscriptScope: sourceScope,
+      parentTranscriptScope: persistedParentScope(sourceScope),
       cwd: dir,
     });
     expect(successor.getEntries().length).toBeLessThan(originalEntryCount);

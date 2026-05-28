@@ -70,6 +70,7 @@ import {
   getOrCreateSessionMcpRuntime,
   materializeBundleMcpToolsForRun,
 } from "../../agent-bundle-mcp-tools.js";
+import type { AgentMessage } from "../../agent-core-contract.js";
 import { createPreparedEmbeddedAgentSettingsManager } from "../../agent-project-settings.js";
 import { resolveAgentDir, resolveSessionAgentIds } from "../../agent-scope.js";
 import {
@@ -130,6 +131,8 @@ import { DEFAULT_CONTEXT_TOKENS } from "../../defaults.js";
 import { resolveOpenClawReferencePaths } from "../../docs-path.js";
 import type { EmbeddedContextFile } from "../../embedded-agent-helpers.js";
 import {
+  downgradeOpenAIFunctionCallReasoningPairs,
+  downgradeOpenAIReasoningBlocks,
   isCloudCodeAssistFormatError,
   resolveBootstrapMaxChars,
   resolveBootstrapPromptTruncationWarningMode,
@@ -145,6 +148,10 @@ import { filterLocalModelLeanTools, isLocalModelLeanEnabled } from "../../local-
 import { resolveModelAuthMode } from "../../model-auth.js";
 import { resolveDefaultModelForAgent } from "../../model-selection.js";
 import { supportsModelTools } from "../../model-tool-support.js";
+import {
+  createAgentSession as createPiAgentSession,
+  DefaultResourceLoader,
+} from "../../pi-coding-agent-contract.js";
 import { wrapStreamFnTextTransforms } from "../../plugin-text-transforms.js";
 import { resolveAgentPromptSurfaceForSessionKey } from "../../prompt-surface.js";
 import { describeProviderRequestRoutingSummary } from "../../provider-attribution.js";
@@ -155,7 +162,6 @@ import {
   logAgentRuntimeToolDiagnostics,
   normalizeAgentRuntimeTools,
 } from "../../runtime-plan/tools.js";
-import type { AgentMessage } from "../../runtime/index.js";
 import { resolveSandboxContext } from "../../sandbox.js";
 import { resolveSandboxRuntimeStatus } from "../../sandbox/runtime-status.js";
 import { repairSessionFileIfNeeded } from "../../session-file-repair.js";
@@ -169,7 +175,7 @@ import {
   resolveSessionLockMaxHoldFromTimeout,
   resolveSessionWriteLockOptions,
 } from "../../session-write-lock.js";
-import { createAgentSession, type AgentSession, SessionManager } from "../../sessions/index.js";
+import { type AgentSession, SessionManager } from "../../sessions/index.js";
 import { detectRuntimeShell } from "../../shell-utils.js";
 import {
   applySkillEnvOverrides,
@@ -212,6 +218,10 @@ import {
   type ToolSearchTargetTranscriptProjection,
 } from "../../tool-search.js";
 import { shouldAllowProviderOwnedThinkingReplay } from "../../transcript-policy.js";
+import { repairTranscriptSessionStateIfNeeded } from "../../transcript-state-repair.js";
+import { openTranscriptSessionManagerForSession } from "../../transcript/session-manager.js";
+import type { SessionTranscriptScope } from "../../transcript/session-transcript-types.js";
+import { removeTailEntriesFromSqliteTranscript } from "../../transcript/transcript-persistence.js";
 import { normalizeUsage, type NormalizedUsage } from "../../usage.js";
 import { DEFAULT_BOOTSTRAP_FILENAME, type WorkspaceBootstrapFile } from "../../workspace.js";
 import { isRunnerAbortError } from "../abort.js";
@@ -2565,7 +2575,7 @@ export async function runEmbeddedAttempt(
     armExternalAbortSignal();
 
     let sessionManager: ReturnType<typeof guardSessionManager> | undefined;
-    let session: Awaited<ReturnType<typeof createAgentSession>>["session"] | undefined;
+    let session: Awaited<ReturnType<typeof createPiAgentSession>>["session"] | undefined;
     let removeToolResultContextGuard: (() => void) | undefined;
     let trajectoryRecorder: ReturnType<typeof createTrajectoryRuntimeRecorder> | null = null;
     let trajectoryEndRecorded = false;
@@ -2860,10 +2870,12 @@ export async function runEmbeddedAttempt(
       );
 
       const createdSession = await createEmbeddedAgentSessionWithResourceLoader<
-        Awaited<ReturnType<typeof createAgentSession>>
+        Awaited<ReturnType<typeof createPiAgentSession>>
       >({
         createAgentSession: async (options) =>
-          await createAgentSession(options as unknown as Parameters<typeof createAgentSession>[0]),
+          await createPiAgentSession(
+            options as unknown as Parameters<typeof createPiAgentSession>[0],
+          ),
         options: {
           cwd: effectiveCwd,
           agentDir,

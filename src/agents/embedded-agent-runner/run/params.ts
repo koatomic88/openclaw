@@ -14,15 +14,14 @@ import type { InputProvenance } from "../../../sessions/input-provenance.js";
 import type { AgentMessage } from "../../agent-core-contract.js";
 import type { ExecElevatedDefaults, ExecToolDefaults } from "../../bash-tools.exec-types.js";
 import type { AgentStreamParams, ClientToolDefinition } from "../../command/shared-types.js";
-import type { AgentFilesystem } from "../../filesystem/agent-filesystem.js";
-import type { AgentInternalEvent } from "../../internal-events.js";
-import type { ImageContent } from "../../pi-ai-contract.js";
-import type { BlockReplyPayload } from "../../pi-embedded-payloads.js";
+import type { BlockReplyPayload } from "../../embedded-agent-payloads.js";
 import type {
   BlockReplyChunking,
   ToolProgressDetailMode,
   ToolResultFormat,
-} from "../../pi-embedded-subscribe.shared-types.js";
+} from "../../embedded-agent-subscribe.shared-types.js";
+import type { AgentFilesystem } from "../../filesystem/agent-filesystem.js";
+import type { AgentInternalEvent } from "../../internal-events.js";
 import type { PreparedAgentRunInitialVfsEntry } from "../../runtime-backend.js";
 import type { SkillSnapshot } from "../../skills.js";
 import type { SilentReplyPromptMode } from "../../system-prompt.types.js";

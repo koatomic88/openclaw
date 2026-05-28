@@ -1,7 +1,3 @@
-import type {
-  ExtensionContext as PiExtensionContext,
-  ExtensionUIContext as PiExtensionUIContext,
-} from "@earendil-works/pi-coding-agent";
 import type { Static, TSchema } from "typebox";
 import type {
   AgentMessage,
@@ -17,6 +13,10 @@ import type {
   SimpleStreamOptions,
   TextContent,
 } from "./pi-ai-contract.js";
+import type {
+  ExtensionContext as OpenClawExtensionContext,
+  ExtensionUIContext,
+} from "./sessions/extensions/types.js";
 import type { CompactionEntry, SessionEntry } from "./transcript/session-transcript-contract.js";
 
 export type ToolExecutionMode = "sequential" | "parallel";
@@ -78,10 +78,10 @@ export type CompactOptions = {
 
 export type ExtensionContext = {
   cwd: string;
-  sessionManager: PiExtensionContext["sessionManager"];
-  modelRegistry: PiExtensionContext["modelRegistry"];
+  sessionManager: OpenClawExtensionContext["sessionManager"];
+  modelRegistry: OpenClawExtensionContext["modelRegistry"];
   model: Model<Api> | undefined;
-  ui: PiExtensionUIContext;
+  ui: ExtensionUIContext;
   hasUI: boolean;
   isIdle(): boolean;
   signal: AbortSignal | undefined;

@@ -1,8 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { loadOpenRouterModelCapabilities } from "../../../agents/pi-embedded-runner/openrouter-model-capabilities.js";
-import { getOpenRouterModelCapabilities } from "../../../agents/pi-embedded-runner/openrouter-model-capabilities.js";
+import { loadOpenRouterModelCapabilities } from "../../../agents/embedded-agent-runner/openrouter-model-capabilities.js";
+import { getOpenRouterModelCapabilities } from "../../../agents/embedded-agent-runner/openrouter-model-capabilities.js";
 import { closeOpenClawStateDatabaseForTest } from "../../../state/openclaw-state-db.js";
 import { withStateDirEnv } from "../../../test-helpers/state-dir-env.js";
 import {

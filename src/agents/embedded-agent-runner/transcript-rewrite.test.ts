@@ -1,11 +1,11 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { replaceSqliteSessionTranscriptEvents } from "../../config/sessions/transcript-store.sqlite.js";
 import { closeOpenClawAgentDatabasesForTest } from "../../state/openclaw-agent-db.js";
 import { closeOpenClawStateDatabaseForTest } from "../../state/openclaw-state-db.js";
+import type { AgentMessage } from "../agent-core-contract.js";
 import {
   CURRENT_SESSION_VERSION,
   type SessionEntry,
@@ -15,7 +15,7 @@ import {
 import {
   readTranscriptStateForSession,
   type TranscriptState,
-} from "../transcript/transcript-state.js";
+} from "../transcript/transcript-persistence.js";
 
 let rewriteTranscriptEntriesInSqliteTranscript: typeof import("./transcript-rewrite.js").rewriteTranscriptEntriesInSqliteTranscript;
 let onSessionTranscriptUpdate: typeof import("../../sessions/transcript-events.js").onSessionTranscriptUpdate;

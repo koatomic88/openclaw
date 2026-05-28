@@ -11,11 +11,6 @@ import {
   isLiveTestEnabled,
 } from "./live-test-helpers.js";
 import { completeSimple, getModel, streamSimple } from "./pi-ai-contract.js";
-import {
-  isBillingErrorMessage,
-  isOverloadedErrorMessage,
-} from "./pi-embedded-helpers/failover-matches.js";
-import { applyExtraParamsToAgent } from "./pi-embedded-runner.js";
 import { createWebSearchTool } from "./tools/web-search.js";
 
 const XAI_KEY = process.env.XAI_API_KEY ?? "";

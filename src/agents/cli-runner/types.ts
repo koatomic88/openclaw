@@ -17,8 +17,7 @@ import type {
 import type { BootstrapContextMode } from "../bootstrap-files.js";
 import type { ResolvedCliBackend } from "../cli-backends.js";
 import type { ContextWindowInfo } from "../context-window-guard.js";
-import type { ImageContent } from "../pi-ai-contract.js";
-import type { EmbeddedAgentExecutionPhase } from "../pi-embedded-runner/execution-phase.js";
+import type { EmbeddedAgentExecutionPhase } from "../embedded-agent-runner/execution-phase.js";
 import type {
   CurrentInboundPromptContext,
   EmbeddedRunTrigger,

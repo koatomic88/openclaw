@@ -1,7 +1,6 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   loadSqliteSessionTranscriptEvents,
@@ -9,6 +8,7 @@ import {
 } from "../../config/sessions/transcript-store.sqlite.js";
 import { closeOpenClawAgentDatabasesForTest } from "../../state/openclaw-agent-db.js";
 import { closeOpenClawStateDatabaseForTest } from "../../state/openclaw-state-db.js";
+import type { AgentMessage } from "../agent-core-contract.js";
 import type { AssistantMessage } from "../pi-ai-contract.js";
 import {
   CURRENT_SESSION_VERSION,

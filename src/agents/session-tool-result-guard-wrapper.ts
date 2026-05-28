@@ -9,9 +9,8 @@ import {
   type PersistedUserTurnMessage,
 } from "../sessions/user-turn-transcript.js";
 import type { AgentMessage } from "./agent-core-contract.js";
-import { resolveLiveToolResultMaxChars } from "./pi-embedded-runner/tool-result-truncation.js";
+import { resolveLiveToolResultMaxChars } from "./embedded-agent-runner/tool-result-truncation.js";
 import { installSessionToolResultGuard } from "./session-tool-result-guard.js";
-import type { SessionManager } from "./sessions/index.js";
 import { redactTranscriptMessage } from "./transcript-redact.js";
 import type { SessionManager } from "./transcript/session-transcript-contract.js";
 

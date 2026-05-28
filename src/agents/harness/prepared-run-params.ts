@@ -3,7 +3,7 @@ import type {
   ReplyBackendHandle,
   ReplyOperation,
 } from "../../auto-reply/reply/reply-run-registry.js";
-import type { RunEmbeddedPiAgentParams } from "../pi-embedded-runner/run/params.js";
+import type { RunEmbeddedPiAgentParams } from "../embedded-agent-runner/run/params.js";
 import type {
   AgentRuntimeContext,
   AgentRunEventStream,

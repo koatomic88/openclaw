@@ -12,9 +12,9 @@ import {
   savePersistedAuthProfileState,
 } from "./auth-profiles/state.js";
 import type { AuthProfileSecretsStore } from "./auth-profiles/types.js";
+import { buildAttemptReplayMetadata } from "./embedded-agent-runner/run/incomplete-turn.js";
+import type { EmbeddedRunAttemptResult } from "./embedded-agent-runner/run/types.js";
 import type { AssistantMessage } from "./pi-ai-contract.js";
-import { buildAttemptReplayMetadata } from "./pi-embedded-runner/run/incomplete-turn.js";
-import type { EmbeddedRunAttemptResult } from "./pi-embedded-runner/run/types.js";
 import {
   installEmbeddedRunnerBackoffE2eMocks,
   installEmbeddedRunnerBaseE2eMocks,

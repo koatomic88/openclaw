@@ -9,7 +9,7 @@ import {
   ssrfPolicyFromHttpBaseUrlAllowedOrigin,
   type SsrFPolicy,
 } from "../infra/net/ssrf.js";
-import type { Model } from "../llm/types.js";
+import type { Api, Model } from "../llm/types.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
 import { resolveDebugProxySettings } from "../proxy-capture/env.js";
 import {
@@ -19,7 +19,6 @@ import {
 } from "../shared/net/ip.js";
 import { emitModelTransportDebug } from "./model-transport-debug.js";
 import { formatModelTransportDebugUrl } from "./model-transport-url.js";
-import type { Api, Model } from "./pi-ai-contract.js";
 import {
   ensureModelProviderLocalService,
   type ProviderLocalServiceLease,

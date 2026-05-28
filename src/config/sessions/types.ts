@@ -628,7 +628,7 @@ export type SessionSkillSnapshot = {
    * each SKILL.md body) so the embedded runner can skip a workspace skill
    * scan within a turn. Stripped from persistent session entries on every
    * read and write via normalizeSessionEntries in the SQLite row layer. On a cold session resume
-   * this is undefined and src/agents/pi-embedded-runner/skills-runtime.ts
+   * this is undefined and src/agents/embedded-agent-runner/skills-runtime.ts
    * rebuilds it by reloading skill entries from disk.
    */
   resolvedSkills?: Skill[];

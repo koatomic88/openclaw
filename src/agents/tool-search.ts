@@ -14,13 +14,11 @@ import type {
   AgentToolResult,
   AgentToolUpdateCallback,
 } from "./agent-core-contract.js";
-import type { ToolDefinition } from "./pi-coding-agent-contract.js";
 import {
   isToolWrappedWithBeforeToolCallHook,
   type HookContext,
   wrapToolWithBeforeToolCallHook,
 } from "./agent-tools.before-tool-call.js";
-import type { AgentMessage, AgentToolResult, AgentToolUpdateCallback } from "./runtime/index.js";
 import type { ToolDefinition } from "./sessions/index.js";
 import { asToolParamsRecord, jsonResult, ToolInputError } from "./tools/common.js";
 import type { AnyAgentTool } from "./tools/common.js";

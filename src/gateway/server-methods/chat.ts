@@ -7,12 +7,12 @@ import {
 } from "openclaw/plugin-sdk/reply-payload";
 import type { AgentMessage } from "../../agents/agent-core-contract.js";
 import { resolveAgentWorkspaceDir, resolveSessionAgentId } from "../../agents/agent-scope.js";
+import { rewriteTranscriptEntriesInSqliteTranscript } from "../../agents/embedded-agent-runner/transcript-rewrite.js";
 import { runAgentHarnessBeforeMessageWriteHook } from "../../agents/harness/hook-helpers.js";
-import { rewriteTranscriptEntriesInSqliteTranscript } from "../../agents/pi-embedded-runner/transcript-rewrite.js";
 import { resolveProviderIdForAuth } from "../../agents/provider-auth-aliases.js";
 import { ensureSandboxWorkspaceForSession } from "../../agents/sandbox/context.js";
 import { resolveAgentTimeoutMs } from "../../agents/timeout.js";
-import { readTranscriptStateForSession } from "../../agents/transcript/transcript-state.js";
+import { readTranscriptStateForSession } from "../../agents/transcript/transcript-persistence.js";
 import { dispatchInboundMessage } from "../../auto-reply/dispatch.js";
 import { getReplyPayloadMetadata, type ReplyPayload } from "../../auto-reply/reply-payload.js";
 import { createReplyDispatcher } from "../../auto-reply/reply/reply-dispatcher.js";

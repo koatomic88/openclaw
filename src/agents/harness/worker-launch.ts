@@ -1,4 +1,4 @@
-import type { RunEmbeddedPiAgentParams } from "../pi-embedded-runner/run/params.js";
+import type { RunEmbeddedPiAgentParams } from "../embedded-agent-runner/run/params.js";
 import type { AgentFilesystemMode, AgentRunEvent, PreparedAgentRun } from "../runtime-backend.js";
 import {
   createAgentWorkerPermissionProfile,

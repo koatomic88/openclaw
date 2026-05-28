@@ -9,9 +9,12 @@ import {
   discoverModels,
   normalizeDiscoveredAgentModel,
 } from "./agent-model-discovery.js";
+import { normalizeDiscoveredPiModel } from "./agent-model-discovery.js";
 import { resolveDefaultAgentDir } from "./agent-scope.js";
 import { externalCliDiscoveryForProviders } from "./auth-profiles/external-cli-discovery.js";
 import { isRateLimitErrorMessage } from "./embedded-agent-helpers/errors.js";
+import { isCloudflareOrHtmlErrorPage } from "./embedded-agent-helpers/errors.js";
+import { isAuthErrorMessage } from "./embedded-agent-helpers/failover-matches.js";
 import { collectAnthropicApiKeys } from "./live-auth-keys.js";
 import { isModelNotFoundErrorMessage } from "./live-model-errors.js";
 import {
@@ -53,16 +56,6 @@ import { getApiKeyForModel, requireApiKey } from "./model-auth.js";
 import { shouldSuppressBuiltInModel } from "./model-suppression.js";
 import { ensureOpenClawModelCatalog } from "./models-config.js";
 import { type Api, completeSimple, type Model } from "./pi-ai-contract.js";
-import {
-  isCloudflareOrHtmlErrorPage,
-  isRateLimitErrorMessage,
-} from "./pi-embedded-helpers/errors.js";
-import { isAuthErrorMessage } from "./pi-embedded-helpers/failover-matches.js";
-import {
-  discoverAuthStorage,
-  discoverModels,
-  normalizeDiscoveredPiModel,
-} from "./pi-model-discovery.js";
 
 const LIVE = isLiveTestEnabled();
 const DIRECT_ENABLED = Boolean(process.env.OPENCLAW_LIVE_MODELS?.trim());

@@ -2,7 +2,6 @@ import type { AgentToolResult } from "./agent-core-contract.js";
 import type { ProcessSession } from "./bash-process-registry.js";
 import { deriveSessionName } from "./bash-tools.shared.js";
 import { encodeKeySequence, hasCursorModeSensitiveKeys } from "./pty-keys.js";
-import type { AgentToolResult } from "./runtime/index.js";
 
 export type WritableStdin = {
   write: (data: string, cb?: (err?: Error | null) => void) => void;

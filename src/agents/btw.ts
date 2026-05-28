@@ -19,6 +19,10 @@ import { resolveAgentWorkspaceDir, resolveSessionAgentId } from "./agent-scope.j
 import { resolveExternalCliAuthOverlayScopeFromSelection } from "./auth-profiles/external-cli-auth-selection.js";
 import { resolveSessionAuthProfileOverride } from "./auth-profiles/session-override.js";
 import { readBtwTranscriptMessages } from "./btw-transcript.js";
+import { EmbeddedBlockChunker, type BlockReplyChunking } from "./embedded-agent-block-chunker.js";
+import { resolveModelWithRegistry } from "./embedded-agent-runner/model.js";
+import { getActiveEmbeddedRunSnapshot } from "./embedded-agent-runner/runs.js";
+import { resolveEmbeddedAgentStreamFn } from "./embedded-agent-runner/stream-resolution.js";
 import { resolveAgentHarnessPolicy, selectAgentHarness } from "./harness/selection.js";
 import {
   resolveImageSanitizationLimits,
@@ -27,21 +31,7 @@ import {
 import { getApiKeyForModel, requireApiKey } from "./model-auth.js";
 import { ensureOpenClawModelCatalog } from "./models-config.js";
 import { listOpenAIAuthProfileProvidersForAgentRuntime } from "./openai-codex-routing.js";
-import {
-  streamSimple,
-  type Api,
-  type AssistantMessageEvent,
-  type ImageContent,
-  type Message,
-  type Model,
-  type TextContent,
-} from "./pi-ai-contract.js";
-import { EmbeddedBlockChunker, type BlockReplyChunking } from "./pi-embedded-block-chunker.js";
-import { resolveModelWithRegistry } from "./pi-embedded-runner/model.js";
-import { getActiveEmbeddedRunSnapshot } from "./pi-embedded-runner/runs.js";
-import { streamWithPayloadPatch } from "./pi-embedded-runner/stream-payload-utils.js";
-import { resolveEmbeddedAgentStreamFn } from "./pi-embedded-runner/stream-resolution.js";
-import { discoverAuthStorage, discoverModels } from "./pi-model-discovery.js";
+import { type Api } from "./pi-ai-contract.js";
 import { registerProviderStreamForModel } from "./provider-stream.js";
 import { stripToolResultDetails } from "./session-transcript-repair.js";
 import { sanitizeImageBlocks } from "./tool-images.js";

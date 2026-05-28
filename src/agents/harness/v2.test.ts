@@ -7,8 +7,8 @@ import {
   type DiagnosticEventMetadata,
   type DiagnosticEventPayload,
 } from "../../infra/diagnostic-events.js";
+import type { EmbeddedRunAttemptResult } from "../embedded-agent-runner/run/types.js";
 import type { Api, Model } from "../pi-ai-contract.js";
-import type { EmbeddedRunAttemptResult } from "../pi-embedded-runner/run/types.js";
 import { createPiAgentHarness } from "./builtin-pi.js";
 import type { AgentHarness, AgentHarnessAttemptParams } from "./types.js";
 import type { AgentHarnessV2 } from "./v2.js";

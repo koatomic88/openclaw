@@ -10,9 +10,8 @@ import { buildCodeSpanIndex, createInlineCodeState } from "../markdown/code-span
 import { normalizeOptionalString } from "../shared/string-coerce.js";
 import { findFinalTagMatches } from "../shared/text/final-tags.js";
 import { hasOrphanReasoningCloseBoundary } from "../shared/text/reasoning-tags.js";
-import { mediaUrlsFromGeneratedAttachments } from "./generated-attachments.js";
 import type { AgentMessage } from "./agent-core-contract.js";
-import { EmbeddedBlockChunker } from "./pi-embedded-block-chunker.js";
+import { EmbeddedBlockChunker } from "./embedded-agent-block-chunker.js";
 import {
   isMessagingToolDuplicateNormalized,
   normalizeTextForComparison,
@@ -48,7 +47,6 @@ import type { SubscribeEmbeddedAgentSessionParams } from "./embedded-agent-subsc
 import { stripDowngradedToolCallText, THINKING_TAG_SCAN_RE } from "./embedded-agent-utils.js";
 import { mediaUrlsFromGeneratedAttachments } from "./generated-attachments.js";
 import type { AgentRunTimeoutPhase } from "./run-timeout-attribution.js";
-import type { AgentMessage } from "./runtime/index.js";
 import { hasNonzeroUsage, normalizeUsage, type UsageLike } from "./usage.js";
 
 const STREAM_STRIPPED_BLOCK_TAG_NAMES = [

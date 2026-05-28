@@ -17,8 +17,8 @@ import {
 import {
   installEmbeddedRunnerBaseE2eMocks,
   installEmbeddedRunnerFastRunE2eMocks,
-} from "./test-helpers/pi-embedded-runner-e2e-mocks.js";
-import { readTranscriptStateForSession } from "./transcript/transcript-state.js";
+} from "./test-helpers/embedded-agent-runner-e2e-mocks.js";
+import { readTranscriptStateForSession } from "./transcript/transcript-persistence.js";
 
 type EmbeddedRunnerModelResolution =
   | ReturnType<typeof createResolvedEmbeddedRunnerModel>
@@ -164,7 +164,7 @@ const installRunEmbeddedMocks = () => {
   });
 };
 
-let runEmbeddedPiAgent: typeof import("./pi-embedded-runner/run.js").runEmbeddedPiAgent;
+let runEmbeddedPiAgent: typeof import("./embedded-agent-runner/run.js").runEmbeddedPiAgent;
 let e2eWorkspace: EmbeddedPiRunnerTestWorkspace | undefined;
 let agentDir: string;
 let workspaceDir: string;
@@ -180,7 +180,7 @@ beforeAll(async () => {
   ({ agentDir, workspaceDir } = e2eWorkspace);
   previousStateDir = process.env.OPENCLAW_STATE_DIR;
   process.env.OPENCLAW_STATE_DIR = e2eWorkspace.stateDir;
-  ({ runEmbeddedPiAgent } = await import("./pi-embedded-runner/run.js"));
+  ({ runEmbeddedPiAgent } = await import("./embedded-agent-runner/run.js"));
 }, 180_000);
 
 afterAll(async () => {

@@ -3,9 +3,7 @@ import type { Api, Model } from "../llm/types.js";
 import { resolveProviderStreamFn } from "../plugins/provider-runtime.js";
 import type { StreamFn } from "./agent-core-contract.js";
 import { ensureCustomApiRegistered } from "./custom-api-registry.js";
-import type { Api, Model } from "./pi-ai-contract.js";
 import { createTransportAwareStreamFnForModel } from "./provider-transport-stream.js";
-import type { StreamFn } from "./runtime/index.js";
 
 export function registerProviderStreamForModel<TApi extends Api>(params: {
   model: Model<TApi>;

@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { afterAll, beforeAll, beforeEach, expect, vi } from "vitest";
 import type { AssistantMessage, UserMessage } from "../../agents/pi-ai-contract.js";
-import { readTranscriptStateForSession } from "../../agents/transcript/transcript-state.js";
+import { readTranscriptStateForSession } from "../../agents/transcript/transcript-persistence.js";
 import type { SessionEntry } from "../../config/sessions.js";
 import { replaceSqliteSessionTranscriptEvents } from "../../config/sessions/transcript-store.sqlite.js";
 import type { InternalHookEvent } from "../../hooks/internal-hooks.js";
@@ -255,8 +255,10 @@ export function setupGatewaySessionsTestHarness() {
   });
 
   afterAll(async () => {
-    await harness.close();
-    await fs.rm(sharedSessionFixtureDir, { recursive: true, force: true });
+    await harness?.close();
+    if (sharedSessionFixtureDir) {
+      await fs.rm(sharedSessionFixtureDir, { recursive: true, force: true });
+    }
   });
 
   beforeEach(async () => {

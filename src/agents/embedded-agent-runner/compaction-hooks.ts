@@ -6,7 +6,6 @@ import { getActiveMemorySearchManager } from "../../plugins/memory-runtime.js";
 import { emitSessionTranscriptUpdate } from "../../sessions/transcript-events.js";
 import type { AgentMessage } from "../agent-core-contract.js";
 import { resolveMemorySearchConfig } from "../memory-search.js";
-import type { AgentMessage } from "../runtime/index.js";
 import { log } from "./logger.js";
 
 type TranscriptScope = {

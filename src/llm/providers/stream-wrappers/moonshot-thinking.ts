@@ -1,7 +1,7 @@
 import type { StreamFn } from "../../../agents/agent-core-contract.js";
-import type { ThinkLevel } from "../../auto-reply/thinking.js";
-import { createLazyImportLoader } from "../../shared/lazy-promise.js";
-import { normalizeOptionalLowercaseString } from "../../shared/string-coerce.js";
+import type { ThinkLevel } from "../../../auto-reply/thinking.js";
+import { createLazyImportLoader } from "../../../shared/lazy-promise.js";
+import { normalizeOptionalLowercaseString } from "../../../shared/string-coerce.js";
 import { streamWithPayloadPatch } from "./stream-payload-utils.js";
 
 type MoonshotThinkingType = "enabled" | "disabled";
@@ -10,7 +10,7 @@ const MOONSHOT_THINKING_KEEP_MODEL_ID = "kimi-k2.6";
 const piAiRuntimeLoader = createLazyImportLoader(() => import("../../../agents/pi-ai-contract.js"));
 
 async function loadDefaultStreamFn(): Promise<StreamFn> {
-  const runtime = await llmRuntimeLoader.load();
+  const runtime = await piAiRuntimeLoader.load();
   return runtime.streamSimple;
 }
 

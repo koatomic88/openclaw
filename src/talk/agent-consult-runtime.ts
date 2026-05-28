@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { RunEmbeddedPiAgentParams } from "../agents/pi-embedded-runner/run/params.js";
+import type { RunEmbeddedPiAgentParams } from "../agents/embedded-agent-runner/run/params.js";
 import {
   forkSessionFromParent,
   resolveParentForkDecision,

@@ -4,7 +4,7 @@ import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { listDiagnosticEvents } from "../infra/diagnostic-events-store.js";
 import { closeOpenClawStateDatabaseForTest } from "../state/openclaw-state-db.js";
-import { appendRawStream } from "./pi-embedded-subscribe.raw-stream.js";
+import { appendRawStream } from "./embedded-agent-subscribe.raw-stream.js";
 
 describe("appendRawStream", () => {
   afterEach(() => {

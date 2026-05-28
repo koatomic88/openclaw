@@ -4,7 +4,7 @@ import {
   parseOpenRouterModelCapabilitiesCachePayload,
   writeOpenRouterModelCapabilitiesCacheSnapshot,
   type OpenRouterModelCapabilities,
-} from "../../../agents/pi-embedded-runner/openrouter-model-capabilities.js";
+} from "../../../agents/embedded-agent-runner/openrouter-model-capabilities.js";
 import { resolveStateDir } from "../../../config/paths.js";
 
 const LEGACY_JSON_CACHE_FILENAME = "openrouter-models.json";

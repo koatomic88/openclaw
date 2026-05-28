@@ -30,13 +30,9 @@ import type { ProviderRuntimeModel } from "../../plugins/provider-runtime-model.
 import type { StreamFn } from "../agent-core-contract.js";
 import { canonicalizeMaxTokensParam, resolveMaxTokensParam } from "../model-max-tokens-params.js";
 import { legacyModelKey, modelKey } from "../model-selection-normalize.js";
-import type { SimpleStreamOptions } from "../pi-ai-contract.js";
-import { streamSimple } from "../pi-ai-contract.js";
-import type { SettingsManager } from "../pi-coding-agent-contract.js";
 import { supportsGptParallelToolCallsPayload } from "../provider-api-families.js";
 import { resolveProviderRequestPolicyConfig } from "../provider-request-config.js";
 import type { AgentRuntimeTransport } from "../runtime-plan/types.js";
-import type { StreamFn } from "../runtime/index.js";
 import type { SettingsManager } from "../sessions/index.js";
 import { log } from "./logger.js";
 import { resolveCacheRetention } from "./prompt-cache-retention.js";

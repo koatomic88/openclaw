@@ -2,9 +2,9 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
+import type { AnyAgentTool } from "../../agent-tools.types.js";
 import type { Api, Model } from "../../pi-ai-contract.js";
 import type { AuthStorage, ModelRegistry } from "../../pi-coding-agent-contract.js";
-import type { AnyAgentTool } from "../../pi-tools.types.js";
 import { buildEmbeddedAttemptToolRunContext } from "./attempt.tool-run-context.js";
 
 const MEMORY_RELATIVE_PATH = "memory/2026-03-24.md";

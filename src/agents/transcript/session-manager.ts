@@ -1,10 +1,4 @@
 import { randomUUID } from "node:crypto";
-import {
-  appendSqliteSessionTranscriptMessage,
-  appendSqliteSessionTranscriptEvent,
-  loadSqliteSessionTranscriptEvents,
-  replaceSqliteSessionTranscriptEvents,
-} from "../../config/sessions/transcript-store.sqlite.js";
 import { CURRENT_SESSION_VERSION } from "./session-transcript-format.js";
 import type {
   SessionContext,
@@ -13,8 +7,14 @@ import type {
   SessionManager,
   SessionTranscriptScope,
   SessionTreeNode,
-  TranscriptEntry,
 } from "./session-transcript-types.js";
+import {
+  appendEntryToTranscriptSession,
+  appendMessageToTranscriptSession,
+  loadOrCreateTranscriptStateForSession,
+  readTranscriptStateForSessionSync,
+  replaceTranscriptStateForSession,
+} from "./transcript-persistence.js";
 import { TranscriptState } from "./transcript-state.js";
 
 function createSessionHeader(params: { id?: string; cwd: string }): SessionHeader {
@@ -27,62 +27,18 @@ function createSessionHeader(params: { id?: string; cwd: string }): SessionHeade
   };
 }
 
-function normalizeTranscriptScopeId(value: string, label: string): string {
-  const trimmed = value.trim();
-  if (!trimmed) {
-    throw new Error(`SQLite transcript ${label} is required`);
-  }
-  return trimmed;
+function persistFullTranscriptState(scope: SessionTranscriptScope, state: TranscriptState): void {
+  replaceTranscriptStateForSession({ scope, state });
 }
 
-function createTranscriptScope(params: {
-  agentId: string;
-  path?: string;
-  sessionId: string;
-}): SessionTranscriptScope {
-  const agentId = normalizeTranscriptScopeId(params.agentId, "agent id");
-  const sessionId = normalizeTranscriptScopeId(params.sessionId, "session id");
-  return {
-    agentId,
-    ...(params.path ? { path: params.path } : {}),
-    sessionId,
-  };
-}
-
-function createTranscriptStateFromEvents(events: unknown[]): TranscriptState {
-  const transcriptEntries = events.filter((event): event is TranscriptEntry =>
-    Boolean(event && typeof event === "object"),
-  );
-  const header =
-    transcriptEntries.find((entry): entry is SessionHeader => entry.type === "session") ?? null;
-  const entries = transcriptEntries.filter(
-    (entry): entry is SessionEntry => entry.type !== "session",
-  );
-  return new TranscriptState({ header, entries });
-}
-
-function persistFullTranscriptStateToSqlite(
-  scope: SessionTranscriptScope,
-  state: TranscriptState,
-): void {
-  replaceSqliteSessionTranscriptEvents({
-    agentId: scope.agentId,
-    path: scope.path,
-    sessionId: scope.sessionId,
-    events: [...(state.header ? [state.header] : []), ...state.entries],
-  });
-}
-
-function appendTranscriptEntryToSqlite(
+function appendTranscriptEntry(
   scope: SessionTranscriptScope,
   entry: SessionEntry,
   options?: { parentMode?: "database-tail" },
 ): void {
-  appendSqliteSessionTranscriptEvent({
-    agentId: scope.agentId,
-    path: scope.path,
-    sessionId: scope.sessionId,
-    event: entry,
+  appendEntryToTranscriptSession({
+    scope,
+    entry,
     ...(options?.parentMode ? { parentMode: options.parentMode } : {}),
   });
 }
@@ -96,23 +52,7 @@ function loadTranscriptStateForSession(params: {
   state: TranscriptState;
   scope: SessionTranscriptScope;
 } {
-  const scope = createTranscriptScope({
-    agentId: params.agentId,
-    path: params.path,
-    sessionId: params.sessionId,
-  });
-  const sqliteEvents = loadSqliteSessionTranscriptEvents(scope).map((entry) => entry.event);
-  if (sqliteEvents.length > 0) {
-    return { state: createTranscriptStateFromEvents(sqliteEvents), scope };
-  }
-
-  const header = createSessionHeader({
-    id: scope.sessionId,
-    cwd: params.cwd ?? process.cwd(),
-  });
-  const state = new TranscriptState({ header, entries: [] });
-  persistFullTranscriptStateToSqlite(scope, state);
-  return { state, scope };
+  return loadOrCreateTranscriptStateForSession(params);
 }
 
 class TranscriptSessionManager implements SessionManager {
@@ -158,16 +98,14 @@ class TranscriptSessionManager implements SessionManager {
 
   appendMessage(message: Parameters<SessionManager["appendMessage"]>[0]): string {
     if (this.persist && this.sqliteScope && !this.explicitBranchSelection) {
-      const result = appendSqliteSessionTranscriptMessage({
-        agentId: this.sqliteScope.agentId,
-        path: this.sqliteScope.path,
-        sessionId: this.sqliteScope.sessionId,
+      const messageId = appendMessageToTranscriptSession({
+        scope: this.sqliteScope,
         sessionVersion: this.state.getHeader()?.version ?? CURRENT_SESSION_VERSION,
         cwd: this.state.getCwd(),
         message,
       });
       this.reloadPersistedState();
-      return result.messageId;
+      return messageId;
     }
     return this.persistAppendedEntry(this.state.appendMessage(message));
   }
@@ -275,7 +213,7 @@ class TranscriptSessionManager implements SessionManager {
   ): number {
     const removed = this.state.removeTailEntries(shouldRemove, options);
     if (removed > 0 && this.persist && this.sqliteScope) {
-      persistFullTranscriptStateToSqlite(this.sqliteScope, this.state);
+      persistFullTranscriptState(this.sqliteScope, this.state);
       this.explicitBranchSelection = false;
     }
     return removed;
@@ -300,7 +238,7 @@ class TranscriptSessionManager implements SessionManager {
     if (!this.persist || !this.sqliteScope) {
       return entry.id;
     }
-    appendTranscriptEntryToSqlite(
+    appendTranscriptEntry(
       this.sqliteScope,
       entry,
       options?.preserveParent || this.explicitBranchSelection
@@ -317,9 +255,7 @@ class TranscriptSessionManager implements SessionManager {
     if (!this.sqliteScope) {
       return;
     }
-    this.state = createTranscriptStateFromEvents(
-      loadSqliteSessionTranscriptEvents(this.sqliteScope).map((entry) => entry.event),
-    );
+    this.state = readTranscriptStateForSessionSync(this.sqliteScope);
   }
 }
 

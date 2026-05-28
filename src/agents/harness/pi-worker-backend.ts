@@ -1,6 +1,6 @@
-import { runEmbeddedPiAgent } from "../pi-embedded-runner/run.js";
-import type { RunEmbeddedPiAgentParams } from "../pi-embedded-runner/run/params.js";
-import type { EmbeddedPiRunResult } from "../pi-embedded-runner/types.js";
+import { runEmbeddedPiAgent } from "../embedded-agent-runner/run.js";
+import type { RunEmbeddedPiAgentParams } from "../embedded-agent-runner/run/params.js";
+import type { EmbeddedPiRunResult } from "../embedded-agent-runner/types.js";
 import type { AgentRuntimeBackend, AgentRunResult, PreparedAgentRun } from "../runtime-backend.js";
 import { createRunParamsFromPreparedAgentRun } from "./prepared-run-params.js";
 

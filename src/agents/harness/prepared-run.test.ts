@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { RunEmbeddedPiAgentParams } from "../pi-embedded-runner/run/params.js";
-import type { EmbeddedRunAttemptParams } from "../pi-embedded-runner/run/types.js";
+import type { RunEmbeddedPiAgentParams } from "../embedded-agent-runner/run/params.js";
+import type { EmbeddedRunAttemptParams } from "../embedded-agent-runner/run/types.js";
 import {
   createPreparedAgentRunFromAttempt,
   createPreparedAgentRunFromRunParams,

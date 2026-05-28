@@ -9,20 +9,25 @@ import {
   stripCompletionMessagesToRoleContent,
 } from "../../../agents/openai-completions-string-content.js";
 import { resolveOpenAIReasoningEffortForModel } from "../../../agents/openai-reasoning-effort.js";
-import type { SimpleStreamOptions } from "../../../agents/pi-ai-contract.js";
-import { streamSimple } from "../../../agents/pi-ai-contract.js";
-import type { ThinkLevel } from "../../auto-reply/thinking.js";
-import type { OpenClawConfig } from "../../config/types.openclaw.js";
-import { isRecord } from "../../shared/record-coerce.js";
-import { normalizeOptionalLowercaseString, readStringValue } from "../../shared/string-coerce.js";
 import {
   applyOpenAIResponsesPayloadPolicy,
   resolveOpenAIResponsesPayloadPolicy,
-} from "../openai-responses-payload-policy.js";
-import { resolveOpenAITextVerbosity, type OpenAITextVerbosity } from "../openai-text-verbosity.js";
-import { createOpenAIResponsesTransportStreamFn } from "../openai-transport-stream.js";
-import { resolveProviderRequestPolicyConfig } from "../provider-request-config.js";
-import { log } from "./logger.js";
+} from "../../../agents/openai-responses-payload-policy.js";
+import {
+  resolveOpenAITextVerbosity,
+  type OpenAITextVerbosity,
+} from "../../../agents/openai-text-verbosity.js";
+import { createOpenAIResponsesTransportStreamFn } from "../../../agents/openai-transport-stream.js";
+import type { SimpleStreamOptions } from "../../../agents/pi-ai-contract.js";
+import { streamSimple } from "../../../agents/pi-ai-contract.js";
+import { resolveProviderRequestPolicyConfig } from "../../../agents/provider-request-config.js";
+import type { ThinkLevel } from "../../../auto-reply/thinking.js";
+import type { OpenClawConfig } from "../../../config/types.openclaw.js";
+import { createSubsystemLogger } from "../../../logging/subsystem.js";
+import {
+  normalizeOptionalLowercaseString,
+  readStringValue,
+} from "../../../shared/string-coerce.js";
 import { mapThinkingLevelToReasoningEffort } from "./reasoning-effort-utils.js";
 import { streamWithPayloadPatch } from "./stream-payload-utils.js";
 

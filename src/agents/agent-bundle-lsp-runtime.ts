@@ -10,13 +10,12 @@ import { setPluginToolMeta } from "../plugins/tools.js";
 import { killProcessTree } from "../process/kill-tree.js";
 import { normalizeOptionalLowercaseString } from "../shared/string-coerce.js";
 import type { AgentToolResult } from "./agent-core-contract.js";
-import { loadEmbeddedPiLspConfig } from "./embedded-pi-lsp.js";
+import { loadEmbeddedAgentLspConfig } from "./embedded-agent-lsp.js";
 import {
   resolveStdioMcpServerLaunchConfig,
   describeStdioMcpServerLaunchConfig,
   type StdioMcpServerLaunchConfig,
 } from "./mcp-stdio.js";
-import type { AgentToolResult } from "./runtime/index.js";
 import type { AnyAgentTool } from "./tools/common.js";
 
 // Minimal LSP JSON-RPC framing over stdio (Content-Length header + JSON body).

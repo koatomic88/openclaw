@@ -39,7 +39,7 @@ const allowedPiPackageImportFiles = new Set([
 ]);
 const allowedPiPackageStringFiles = new Set([
   ...allowedPiPackageImportFiles,
-  "src/agents/pi-model-discovery.compat.e2e.test.ts",
+  "src/agents/agent-model-discovery.compat.e2e.test.ts",
   "src/plugins/pi-package-graph.test.ts",
 ]);
 

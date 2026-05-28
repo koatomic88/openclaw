@@ -412,7 +412,7 @@ async function prewarmConfiguredPrimaryModel(params: {
     import("../agents/agent-scope.js"),
     import("../agents/defaults.js"),
     import("../agents/model-selection.js"),
-    import("../agents/pi-embedded-runner/runtime.js"),
+    import("../agents/embedded-agent-runner/runtime.js"),
   ]);
   const { provider, model } = resolveConfiguredModelRef({
     cfg: params.cfg,

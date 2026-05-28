@@ -30,9 +30,9 @@ import {
 } from "../plugins/types.js";
 import { createLazyRuntimeSurface } from "../shared/lazy-runtime.js";
 import { isPlainObject } from "../utils.js";
+import { adjustedParamsByToolCallId } from "./agent-tools.before-tool-call.state.js";
 import { copyChannelAgentToolMeta, getChannelAgentToolMeta } from "./channel-tools.js";
 import type { AgentToolArtifactStore } from "./filesystem/agent-filesystem.js";
-import { adjustedParamsByToolCallId } from "./pi-tools.before-tool-call.state.js";
 import type { SandboxFsBridge } from "./sandbox/fs-bridge.js";
 import { resolveSkillTelemetrySource, resolveSkillTelemetrySourceValue } from "./skills/source.js";
 import type { SkillSnapshot, SkillTelemetrySource } from "./skills/types.js";

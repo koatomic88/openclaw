@@ -14,6 +14,11 @@ import {
   saveAuthProfileStore,
 } from "../agents/auth-profiles/store.js";
 import type { AuthProfileStore } from "../agents/auth-profiles/types.js";
+import { isRateLimitErrorMessage } from "../agents/embedded-agent-helpers/errors.js";
+import {
+  isAuthErrorMessage,
+  isBillingErrorMessage,
+} from "../agents/embedded-agent-helpers/failover-matches.js";
 import { collectAnthropicApiKeys } from "../agents/live-auth-keys.js";
 import { isModelNotFoundErrorMessage } from "../agents/live-model-errors.js";
 import {
@@ -46,12 +51,6 @@ import {
   type Model,
   type ModelThinkingLevel,
 } from "../agents/pi-ai-contract.js";
-import { isRateLimitErrorMessage } from "../agents/pi-embedded-helpers/errors.js";
-import {
-  isAuthErrorMessage,
-  isBillingErrorMessage,
-} from "../agents/pi-embedded-helpers/failover-matches.js";
-import { discoverAuthStorage, discoverModels } from "../agents/pi-model-discovery.js";
 import { STREAM_ERROR_FALLBACK_TEXT } from "../agents/stream-message-shared.js";
 import { clearRuntimeConfigSnapshot, getRuntimeConfig } from "../config/io.js";
 import type { ModelsConfig, ModelProviderConfig, OpenClawConfig } from "../config/types.js";

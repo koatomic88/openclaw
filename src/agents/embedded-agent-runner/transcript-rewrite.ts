@@ -10,7 +10,7 @@ import {
   persistTranscriptStateMutationForSession,
   readTranscriptStateForSession,
   type TranscriptState,
-} from "../transcript/transcript-state.js";
+} from "../transcript/transcript-persistence.js";
 import { log } from "./logger.js";
 
 type SessionBranchEntry = ReturnType<TranscriptState["getBranch"]>[number];

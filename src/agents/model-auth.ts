@@ -48,8 +48,8 @@ import {
 } from "./model-auth-markers.js";
 import { type ResolvedProviderAuth } from "./model-auth-runtime-shared.js";
 import { normalizeProviderId } from "./model-selection.js";
+import { type Api } from "./pi-ai-contract.js";
 import { resolveProviderAuthAliasMap } from "./provider-auth-aliases.js";
-import { type Api, type Model } from "./pi-ai-contract.js";
 
 export {
   ensureAuthProfileStore,

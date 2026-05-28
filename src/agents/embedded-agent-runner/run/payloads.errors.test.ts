@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { formatBillingErrorMessage } from "../../embedded-agent-helpers.js";
 import type { AssistantMessage } from "../../pi-ai-contract.js";
-import { formatBillingErrorMessage } from "../../pi-embedded-helpers.js";
 import { makeAssistantMessageFixture } from "../../test-helpers/assistant-message-fixtures.js";
 import {
   buildPayloads,

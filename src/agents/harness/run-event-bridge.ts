@@ -1,6 +1,6 @@
 import type { ReplyPayload } from "../../auto-reply/reply-payload.js";
 import type { AgentMessage } from "../agent-core-contract.js";
-import type { BlockReplyPayload } from "../pi-embedded-payloads.js";
+import type { BlockReplyPayload } from "../embedded-agent-payloads.js";
 import type { AgentRunEvent } from "../runtime-backend.js";
 
 export const AGENT_RUN_PARENT_CALLBACK_FIELDS = [

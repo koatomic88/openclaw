@@ -82,4 +82,7 @@ export function resolveAgentCredentialsForDiscovery(
   return credentials;
 }
 
-export { addEnvBackedPiCredentials } from "./pi-auth-discovery-core.js";
+export {
+  addEnvBackedAgentCredentials,
+  addEnvBackedAgentCredentials as addEnvBackedPiCredentials,
+} from "./agent-auth-discovery-core.js";

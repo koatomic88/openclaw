@@ -1,8 +1,4 @@
 import { randomUUID } from "node:crypto";
-import {
-  loadSqliteSessionTranscriptEvents,
-  replaceSqliteSessionTranscriptEvents,
-} from "../../config/sessions/transcript-store.sqlite.js";
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
 import { normalizeAgentId } from "../../routing/session-key.js";
 import {
@@ -11,6 +7,10 @@ import {
   type SessionEntry,
   type SessionHeader,
 } from "../transcript/session-transcript-contract.js";
+import {
+  readTranscriptStateForSessionSync,
+  replaceTranscriptStateForSession,
+} from "../transcript/transcript-persistence.js";
 import { TranscriptState } from "../transcript/transcript-state.js";
 import { collectDuplicateUserMessageEntryIdsForCompaction } from "./compaction-duplicate-user-messages.js";
 
@@ -70,13 +70,16 @@ export async function rotateTranscriptAfterCompaction(params: {
     cwd: params.sessionManager.getCwd(),
     parentTranscriptScope: { agentId, sessionId: sourceSessionId },
   });
-  replaceSqliteSessionTranscriptEvents({
-    agentId,
-    path: params.path,
-    sessionId,
-    events: [header, ...successorEntries],
+  const successorState = new TranscriptState({ header, entries: successorEntries });
+  replaceTranscriptStateForSession({
+    scope: {
+      agentId,
+      ...(params.path ? { path: params.path } : {}),
+      sessionId,
+    },
+    state: successorState,
   });
-  new TranscriptState({ header, entries: successorEntries }).buildSessionContext();
+  successorState.buildSessionContext();
 
   return {
     rotated: true,
@@ -116,22 +119,15 @@ function loadTranscriptStateFromSqlite(params: {
     return null;
   }
   const agentId = normalizeAgentId(params.agentId);
-  const events = loadSqliteSessionTranscriptEvents({ agentId, path: params.path, sessionId }).map(
-    (entry) => entry.event,
-  );
-  if (events.length === 0) {
+  try {
+    return readTranscriptStateForSessionSync({
+      agentId,
+      ...(params.path ? { path: params.path } : {}),
+      sessionId,
+    });
+  } catch {
     return null;
   }
-  const transcriptEntries = events.filter((event): event is SessionHeader | SessionEntry =>
-    Boolean(event && typeof event === "object"),
-  );
-  const header = transcriptEntries.find(
-    (entry): entry is SessionHeader => entry.type === "session",
-  );
-  return new TranscriptState({
-    header: header ?? null,
-    entries: transcriptEntries.filter((entry): entry is SessionEntry => entry.type !== "session"),
-  });
 }
 
 function findLatestCompactionIndex(entries: SessionEntry[]): number {

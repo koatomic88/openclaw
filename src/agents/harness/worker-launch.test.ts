@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { RunEmbeddedPiAgentParams } from "../pi-embedded-runner/run/params.js";
+import type { RunEmbeddedPiAgentParams } from "../embedded-agent-runner/run/params.js";
 import type { AgentHarnessAttemptParams } from "./types.js";
 import {
   createAgentHarnessWorkerLaunchRequest,

@@ -6,6 +6,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { OpenClawConfig } from "../config/config.js";
 import { listDiagnosticEvents } from "../infra/diagnostic-events-store.js";
 import { closeOpenClawStateDatabaseForTest } from "../state/openclaw-state-db.js";
+import { runEmbeddedPiAgent } from "./embedded-agent-runner.js";
+import { compactEmbeddedPiSessionDirect } from "./embedded-agent-runner/compact.runtime.js";
 import {
   buildAssistantHistoryTurn as buildTypedAssistantHistoryTurn,
   buildStableCachePrefix,
@@ -18,8 +20,6 @@ import {
   withLiveCacheHeartbeat,
 } from "./live-cache-test-support.js";
 import type { AssistantMessage, Message, Tool } from "./pi-ai-contract.js";
-import { runEmbeddedPiAgent } from "./pi-embedded-runner.js";
-import { compactEmbeddedPiSessionDirect } from "./pi-embedded-runner/compact.runtime.js";
 import { buildZeroUsage } from "./stream-message-shared.js";
 
 const describeCacheLive = LIVE_CACHE_TEST_ENABLED ? describe : describe.skip;

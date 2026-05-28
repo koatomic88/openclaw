@@ -1,7 +1,7 @@
 import "./isolated-agent.mocks.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { clearAllBootstrapSnapshots } from "../agents/bootstrap-cache.js";
-import { runEmbeddedPiAgent } from "../agents/pi-embedded.js";
+import { runEmbeddedPiAgent } from "../agents/embedded-agent.js";
 import { resetAgentRunContextForTest } from "../infra/agent-events.js";
 import { createCliDeps, mockAgentPayloads } from "./isolated-agent.delivery.test-helpers.js";
 import { runCronIsolatedAgentTurn } from "./isolated-agent.js";
@@ -52,7 +52,7 @@ describe("runCronIsolatedAgentTurn lane selection", () => {
     // Shared-worker runs can start collecting the next file before the generic
     // runner cleanup resets env and session-store globals.
     restoreSnapshotEnv();
-    vi.doUnmock("../agents/pi-embedded.js");
+    vi.doUnmock("../agents/embedded-agent.js");
     vi.doUnmock("../agents/model-catalog.js");
     vi.doUnmock("../agents/model-selection.js");
     vi.doUnmock("../agents/subagent-announce.js");

@@ -1,6 +1,6 @@
 import { resolveAgentIdFromSessionKey } from "../../routing/session-key.js";
-import type { RunEmbeddedPiAgentParams } from "../pi-embedded-runner/run/params.js";
-import type { EmbeddedRunAttemptParams } from "../pi-embedded-runner/run/types.js";
+import type { RunEmbeddedPiAgentParams } from "../embedded-agent-runner/run/params.js";
+import type { EmbeddedRunAttemptParams } from "../embedded-agent-runner/run/types.js";
 import {
   assertPreparedAgentRunSerializable,
   type AgentFilesystemMode,

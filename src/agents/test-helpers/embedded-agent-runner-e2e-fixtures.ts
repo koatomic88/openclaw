@@ -2,9 +2,9 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
+import { buildAttemptReplayMetadata } from "../embedded-agent-runner/run/incomplete-turn.js";
+import type { EmbeddedRunAttemptResult } from "../embedded-agent-runner/run/types.js";
 import type { AssistantMessage } from "../pi-ai-contract.js";
-import { buildAttemptReplayMetadata } from "../pi-embedded-runner/run/incomplete-turn.js";
-import type { EmbeddedRunAttemptResult } from "../pi-embedded-runner/run/types.js";
 
 export type EmbeddedAgentRunnerTestWorkspace = {
   tempRoot: string;

@@ -167,7 +167,7 @@ export async function reconcileSessionRowCompactionCountAfterSuccess(params: {
   now?: number;
 }): Promise<number | undefined> {
   const { reconcileSessionRowCompactionCountAfterSuccess: reconcile } =
-    await import("./pi-embedded-subscribe.handlers.compaction.runtime.js");
+    await import("./embedded-agent-subscribe.handlers.compaction.runtime.js");
   return reconcile(params);
 }
 

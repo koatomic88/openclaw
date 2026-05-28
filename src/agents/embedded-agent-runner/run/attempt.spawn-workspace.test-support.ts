@@ -19,17 +19,16 @@ import {
   normalizeOptionalLowercaseString,
 } from "../../../shared/string-coerce.js";
 import type { AgentMessage } from "../../agent-core-contract.js";
-import type { Api, Model } from "../../pi-ai-contract.js";
-import type { EmbeddedContextFile } from "../../pi-embedded-helpers.js";
+import type { EmbeddedContextFile } from "../../embedded-agent-helpers.js";
 import type {
   MessagingToolSend,
   MessagingToolSourceReplyPayload,
 } from "../../embedded-agent-messaging.types.js";
-import type { AgentMessage } from "../../runtime/index.js";
+import type { Api, Model } from "../../pi-ai-contract.js";
 import type { WorkspaceBootstrapFile } from "../../workspace.js";
 
 type SubscribeEmbeddedPiSessionFn =
-  typeof import("../../pi-embedded-subscribe.js").subscribeEmbeddedPiSession;
+  typeof import("../../embedded-agent-subscribe.js").subscribeEmbeddedPiSession;
 type ShouldPreemptivelyCompactBeforePromptFn =
   typeof import("./preemptive-compaction.js").shouldPreemptivelyCompactBeforePrompt;
 

@@ -8,7 +8,6 @@ import type { PinnedDispatcherPolicy } from "../infra/net/ssrf.js";
 import type { Api } from "../llm/types.js";
 import { normalizeLowercaseStringOrEmpty } from "../shared/string-coerce.js";
 import { COPILOT_INTEGRATION_ID, buildCopilotIdeHeaders } from "./copilot-dynamic-headers.js";
-import type { Api } from "./pi-ai-contract.js";
 import type {
   ProviderRequestCapabilities,
   ProviderRequestCapability,

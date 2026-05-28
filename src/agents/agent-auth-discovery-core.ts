@@ -1,4 +1,5 @@
 import type { OpenClawConfig } from "../config/types.openclaw.js";
+import type { AgentCredentialMap } from "./agent-auth-credentials.js";
 import {
   listProviderEnvAuthLookupKeys,
   resolveProviderEnvAuthLookupMaps,
@@ -51,3 +52,5 @@ export function addEnvBackedAgentCredentials(
   }
   return next;
 }
+
+export { addEnvBackedAgentCredentials as addEnvBackedPiCredentials };

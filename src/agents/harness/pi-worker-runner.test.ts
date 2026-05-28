@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { closeOpenClawStateDatabaseForTest } from "../../state/openclaw-state-db.js";
-import type { RunEmbeddedPiAgentParams } from "../pi-embedded-runner/run/params.js";
+import type { RunEmbeddedPiAgentParams } from "../embedded-agent-runner/run/params.js";
 import type { PreparedAgentRun } from "../runtime-backend.js";
 import { runPreparedAgentInWorker } from "../runtime-worker.js";
 import {

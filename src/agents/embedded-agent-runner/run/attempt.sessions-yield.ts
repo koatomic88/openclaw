@@ -1,6 +1,6 @@
 import type { AgentMessage } from "../../agent-core-contract.js";
 import type { SessionTranscriptScope } from "../../transcript/session-transcript-types.js";
-import { removeTailEntriesFromSqliteTranscript } from "../../transcript/transcript-state.js";
+import { removeTailEntriesFromSqliteTranscript } from "../../transcript/transcript-persistence.js";
 import { log } from "../logger.js";
 
 const SESSIONS_YIELD_INTERRUPT_CUSTOM_TYPE = "openclaw.sessions_yield_interrupt";

@@ -95,6 +95,8 @@ export function resolveAgentCredentialMapFromStore(
   return credentials;
 }
 
+export { resolveAgentCredentialMapFromStore as resolvePiCredentialMapFromStore };
+
 export function agentCredentialsEqual(a: AgentCredential | undefined, b: AgentCredential): boolean {
   if (!a || typeof a !== "object") {
     return false;
