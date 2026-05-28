@@ -1912,7 +1912,7 @@ describe("subagent registry seam flow", () => {
     expect(discarded).toHaveLength(41);
     expect(stillSuspended).toHaveLength(10);
     expect(discarded[0]?.runId).toBe("run-suspended-pressure-0");
-    expect(runs[40]?.deliveryDiscardReason).toBe("pressure-pruned");
+    expect(runs[40]?.delivery?.discardReason).toBe("pressure-pruned");
     expect(runs[41]?.pendingFinalDelivery).toBe(true);
     expect(mocks.persistSubagentRunsToState).toHaveBeenCalled();
   });

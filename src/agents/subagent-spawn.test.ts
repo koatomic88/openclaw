@@ -267,7 +267,7 @@ describe("spawnSubagentDirect seam flow", () => {
 
   it("keeps spawn cwd separate from inherited agent workspace", async () => {
     let persistedStore: Record<string, Record<string, unknown>> | undefined;
-    installSessionStoreCaptureMock(hoisted.updateSessionStoreMock, {
+    installSessionEntryCaptureMock(hoisted.upsertSessionEntryMock, {
       onStore: (store) => {
         persistedStore = store;
       },

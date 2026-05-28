@@ -205,15 +205,14 @@ describe("spawnSubagentDirect filename validation", () => {
     );
     const expectedCwd = path.join(homeDir, "task-repo");
     let persistedStore: Record<string, Record<string, unknown>> | undefined;
-    const store: Record<string, Record<string, unknown>> = {};
-    updateSessionStoreMock.mockImplementation(async (_storePath: unknown, mutator: unknown) => {
-      if (typeof mutator !== "function") {
-        throw new Error("missing session store mutator");
-      }
-      await mutator(store);
-      persistedStore = store;
-      return store;
-    });
+    upsertSessionEntryMock.mockImplementation(
+      (options: { sessionKey: string; entry: Record<string, unknown> }) => {
+        persistedStore = {
+          ...(persistedStore ?? {}),
+          [options.sessionKey]: options.entry,
+        };
+      },
+    );
     try {
       vi.stubEnv("HOME", homeDir);
       const { spawnSubagentDirect } = subagentSpawnModule;

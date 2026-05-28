@@ -1368,9 +1368,7 @@ describe("steerControlledSubagentRun", () => {
     });
 
     setSubagentControlDepsForTest({
-      callGateway: async <T = Record<string, unknown>>(
-        request: CallGatewayOptions,
-      ) => {
+      callGateway: async <T = Record<string, unknown>>(request: CallGatewayOptions) => {
         if (request.method === "agent.wait") {
           return {} as T;
         }
@@ -1382,7 +1380,7 @@ describe("steerControlledSubagentRun", () => {
     });
 
     const result = await steerControlledSubagentRun({
-      cfg: cfgWithSessionStore(),
+      cfg: cfgForSubagentControl(),
       controller: {
         controllerSessionKey: "agent:main:main",
         callerSessionKey: "agent:main:main",

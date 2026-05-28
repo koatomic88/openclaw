@@ -3,6 +3,7 @@ import * as sessions from "../config/sessions.js";
 import type { SessionEntry } from "../config/sessions/types.js";
 import * as gateway from "../gateway/call.js";
 import * as sessionUtils from "../gateway/session-transcript-readers.js";
+import { resolveInternalSessionEffectsTranscriptPath } from "./internal-session-effects.js";
 import * as announceDelivery from "./subagent-announce-delivery.js";
 import {
   recoverOrphanedSubagentSessions,
