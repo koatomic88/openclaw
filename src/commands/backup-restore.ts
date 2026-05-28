@@ -236,6 +236,9 @@ async function stageDatabaseSnapshots(params: {
       snapshot,
       params.restoredAssets,
     );
+    if (path.resolve(extractedPath) === path.resolve(targetPath)) {
+      continue;
+    }
     await fs.mkdir(path.dirname(targetPath), { recursive: true });
     await fs.copyFile(extractedPath, targetPath);
   }

@@ -285,6 +285,13 @@ describe("backupRestoreCommand", () => {
     await createSqliteDb(path.join(restoredStateDir, "state", "openclaw.sqlite"), "restored");
     await createBackupArchive({ archivePath, sourceStateDir, restoredStateDir });
     vi.stubEnv("OPENCLAW_STATE_DIR", sourceStateDir);
+    const realCopyFile = fs.copyFile.bind(fs);
+    vi.spyOn(fs, "copyFile").mockImplementation(async (from, to) => {
+      if (path.resolve(String(from)) === path.resolve(String(to))) {
+        throw new Error("self-copy should not be attempted");
+      }
+      return await realCopyFile(from, to);
+    });
 
     const runtime = createRuntime();
     const result = await backupRestoreCommand(runtime, { archive: archivePath, yes: true });
