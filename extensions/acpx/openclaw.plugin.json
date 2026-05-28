@@ -15,6 +15,11 @@
         "type": "string",
         "minLength": 1
       },
+      "stateDir": {
+        "type": "string",
+        "deprecated": true,
+        "description": "Legacy option accepted for compatibility and ignored; ACPX state follows the OpenClaw state directory."
+      },
       "probeAgent": {
         "type": "string",
         "minLength": 1

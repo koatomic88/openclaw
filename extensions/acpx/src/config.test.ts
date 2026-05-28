@@ -41,6 +41,17 @@ describe("embedded acpx plugin config", () => {
     expect(resolved.timeoutSeconds).toBe(300);
   });
 
+  it("accepts legacy stateDir config without changing the resolved cwd", () => {
+    const resolved = resolveAcpxPluginConfig({
+      rawConfig: {
+        stateDir: "/tmp/legacy-acpx-state",
+      },
+      workspaceDir: "/tmp/openclaw-acpx",
+    });
+
+    expect(resolved.cwd).toBe("/tmp/openclaw-acpx");
+  });
+
   it("keeps explicit probeAgent config", () => {
     const resolved = resolveAcpxPluginConfig({
       rawConfig: {
@@ -212,6 +223,12 @@ describe("embedded acpx plugin config", () => {
         cwd: {
           type: "string",
           minLength: 1,
+        },
+        stateDir: {
+          type: "string",
+          deprecated: true,
+          description:
+            "Legacy option accepted for compatibility and ignored; ACPX state follows the OpenClaw state directory.",
         },
         permissionMode: {
           type: "string",
