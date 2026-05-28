@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
+import type { AssistantMessage } from "openclaw/plugin-sdk/llm";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { OpenClawConfig } from "../../config/types.openclaw.js";
 import { MALFORMED_STREAMING_FRAGMENT_ERROR_MESSAGE } from "../../shared/assistant-error-format.js";
-import type { AssistantMessage } from "../pi-ai-contract.js";
 import { makeAssistantMessageFixture } from "../test-helpers/assistant-message-fixtures.js";
 import { formatAssistantErrorText, isLikelyContextOverflowError } from "./errors.js";
 

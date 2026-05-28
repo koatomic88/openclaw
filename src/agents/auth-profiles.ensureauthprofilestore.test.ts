@@ -171,8 +171,7 @@ describe("ensureAuthProfileStore", () => {
 
   it("does not create the SQLite state database during read-only auth loads", () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "openclaw-auth-readonly-state-"));
-    const { agentDir, previousStateDir, previousAgentDir, previousPiAgentDir } =
-      configureMainAuthTestDirs(root);
+    const { agentDir, previousStateDir, previousAgentDir } = configureMainAuthTestDirs(root);
     try {
       const sqlitePath = path.join(root, "state", "openclaw.sqlite");
       expect(fs.existsSync(sqlitePath)).toBe(false);
@@ -182,7 +181,7 @@ describe("ensureAuthProfileStore", () => {
       expect(store.profiles).toEqual({});
       expect(fs.existsSync(sqlitePath)).toBe(false);
     } finally {
-      restoreAgentDirEnv({ previousStateDir, previousAgentDir, previousPiAgentDir });
+      restoreAgentDirEnv({ previousStateDir, previousAgentDir });
       fs.rmSync(root, { recursive: true, force: true });
     }
   });

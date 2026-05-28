@@ -2,8 +2,8 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { resolvePiCredentialMapFromStore } from "./agent-auth-credentials.js";
-import { addEnvBackedPiCredentials } from "./agent-auth-discovery-core.js";
+import { resolveAgentCredentialMapFromStore } from "./agent-auth-credentials.js";
+import { addEnvBackedAgentCredentials } from "./agent-auth-discovery-core.js";
 import { discoverAuthStorage } from "./agent-model-discovery.js";
 import { saveAuthProfileStore, type AuthProfileStore } from "./auth-profiles.js";
 
