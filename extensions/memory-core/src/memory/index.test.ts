@@ -37,7 +37,7 @@ afterAll(() => {
 
 let embedBatchCalls = 0;
 let embedBatchInputCalls = 0;
-let providerInitGate: Promise<void> | null = null;
+let providerInitGate: Promise<void> = Promise.resolve();
 let providerCalls: Array<{ provider?: string; model?: string; outputDimensionality?: number }> = [];
 let forceNoProvider = false;
 

@@ -107,13 +107,13 @@ describe("topic-name-cache", () => {
     await expect(getTopicName("-100123", "42")).resolves.toBe("StringKeys");
   });
 
-  it("evicts the oldest entry when cache exceeds the SQLite state budget", () => {
+  it("evicts the oldest entry when cache exceeds the SQLite state budget", async () => {
     for (let i = 0; i < 901; i++) {
-      updateTopicName(-100000, i, { name: `Topic ${i}` });
+      await updateTopicName(-100000, i, { name: `Topic ${i}` });
     }
     expect(topicNameCacheSize()).toBe(900);
-    expect(getTopicName(-100000, 0)).toBeUndefined();
-    expect(getTopicName(-100000, 900)).toBe("Topic 900");
+    await expect(getTopicName(-100000, 0)).resolves.toBeUndefined();
+    await expect(getTopicName(-100000, 900)).resolves.toBe("Topic 900");
   });
 
   it("refreshes recency on read so active topics survive eviction", async () => {
@@ -121,31 +121,31 @@ describe("topic-name-cache", () => {
     await updateTopicName(-100000, 1, { name: "Active" });
     await vi.advanceTimersByTimeAsync(10);
     for (let i = 2; i <= 900; i++) {
-      updateTopicName(-100000, i, { name: `Topic ${i}` });
+      await updateTopicName(-100000, i, { name: `Topic ${i}` });
     }
-    getTopicName(-100000, 1);
-    updateTopicName(-100000, 9999, { name: "Newcomer" });
-    expect(getTopicName(-100000, 1)).toBe("Active");
+    await getTopicName(-100000, 1);
+    await updateTopicName(-100000, 9999, { name: "Newcomer" });
+    await expect(getTopicName(-100000, 1)).resolves.toBe("Active");
     expect(topicNameCacheSize()).toBe(900);
   });
 
-  it("reloads persisted entries from plugin state", () => {
+  it("reloads persisted entries from plugin state", async () => {
     const scopeKey = "telegram-topic-names:test-account";
-    updateTopicName(-100123, 42, { name: "Deployments" }, scopeKey);
+    await updateTopicName(-100123, 42, { name: "Deployments" }, scopeKey);
 
     resetTopicNameCacheForTest();
 
-    expect(getTopicName(-100123, 42, scopeKey)).toBe("Deployments");
+    await expect(getTopicName(-100123, 42, scopeKey)).resolves.toBe("Deployments");
   });
 
-  it("keeps separate stores for separate SQLite scope keys", () => {
+  it("keeps separate stores for separate SQLite scope keys", async () => {
     const firstScope = "telegram-topic-names:first";
     const secondScope = "telegram-topic-names:second";
 
-    updateTopicName(-100123, 42, { name: "Deployments" }, firstScope);
-    updateTopicName(-200456, 84, { name: "Incidents" }, secondScope);
+    await updateTopicName(-100123, 42, { name: "Deployments" }, firstScope);
+    await updateTopicName(-200456, 84, { name: "Incidents" }, secondScope);
 
-    expect(getTopicName(-100123, 42, firstScope)).toBe("Deployments");
-    expect(getTopicName(-200456, 84, secondScope)).toBe("Incidents");
+    await expect(getTopicName(-100123, 42, firstScope)).resolves.toBe("Deployments");
+    await expect(getTopicName(-200456, 84, secondScope)).resolves.toBe("Incidents");
   });
 });

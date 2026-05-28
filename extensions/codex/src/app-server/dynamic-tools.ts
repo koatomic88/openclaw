@@ -1,5 +1,4 @@
 import type { AgentToolResult } from "openclaw/plugin-sdk/agent-core";
-import { emitTrustedDiagnosticEvent } from "openclaw/plugin-sdk/diagnostic-runtime";
 import {
   createAgentToolResultMiddlewareRunner,
   createCodexAppServerToolResultExtensionRunner,
@@ -21,6 +20,7 @@ import {
   type MessagingToolSourceReplyPayload,
   wrapToolWithBeforeToolCallHook,
 } from "openclaw/plugin-sdk/agent-harness-runtime";
+import { emitTrustedDiagnosticEvent } from "openclaw/plugin-sdk/diagnostic-runtime";
 import type { ImageContent, TextContent } from "openclaw/plugin-sdk/provider-ai";
 import { normalizeAgentId } from "openclaw/plugin-sdk/routing";
 import {
@@ -580,7 +580,7 @@ function isToolResultYield(result: AgentToolResult): boolean {
   return details.status.trim().toLowerCase() === "yielded";
 }
 
-function isAsyncStartedToolResult(result: AgentToolResult<unknown>): boolean {
+function isAsyncStartedToolResult(result: AgentToolResult): boolean {
   const details = result.details;
   return isRecord(details) && details.async === true && details.status === "started";
 }
