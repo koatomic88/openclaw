@@ -820,6 +820,16 @@ export function moveSqliteSessionEntryKey(options: MoveSqliteSessionEntryKeyOpti
   const updatedAt = resolveNow(options);
   return runOpenClawAgentWriteTransaction((database) => {
     const db = getNodeSqliteKysely<SessionEntriesDatabase>(database.db);
+    const sourceRoute = executeSqliteQueryTakeFirstSync(
+      database.db,
+      db
+        .selectFrom("session_routes")
+        .select("session_id")
+        .where("session_key", "=", options.fromSessionKey),
+    );
+    if (!sourceRoute) {
+      return false;
+    }
     const currentEntry =
       options.entry ?? readProjectedSqliteSessionEntry(database, options.fromSessionKey);
     if (!currentEntry) {
@@ -853,6 +863,7 @@ export function moveSqliteSessionEntryKey(options: MoveSqliteSessionEntryKeyOpti
       database.db,
       db.deleteFrom("session_routes").where("session_key", "=", options.fromSessionKey),
     );
+    deleteReboundSessionRootIfEmpty(database, db, sourceRoute.session_id);
     return true;
   }, options);
 }

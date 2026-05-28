@@ -22,6 +22,7 @@ import {
   deleteSessionEntry,
   getSessionEntry,
   listSessionEntries,
+  moveSessionEntryKey,
   patchSessionEntry,
   recordSessionMetaFromInbound,
   updateLastRoute,
@@ -160,6 +161,57 @@ describe("SQLite session row backend", () => {
     ).rows.map((row) => row.session_id);
 
     expect(sessionIds).toEqual(["new-session"]);
+  });
+
+  it("removes the old session root when moving a key to a different session id", () => {
+    const stateDir = createTempDir();
+    const env = { OPENCLAW_STATE_DIR: stateDir };
+
+    upsertSessionEntry({
+      agentId: "ops",
+      env,
+      sessionKey: "discord:old",
+      entry: {
+        sessionId: "old-session",
+        updatedAt: 100,
+        chatType: "direct",
+        deliveryContext: {
+          channel: "discord",
+          to: "U1",
+          accountId: "work",
+        },
+      },
+    });
+
+    expect(
+      moveSessionEntryKey({
+        agentId: "ops",
+        env,
+        fromSessionKey: "discord:old",
+        toSessionKey: "discord:new",
+        entry: {
+          sessionId: "new-session",
+          updatedAt: 200,
+        },
+      }),
+    ).toBe(true);
+
+    const database = openOpenClawAgentDatabase({ agentId: "ops", env });
+    const db = getNodeSqliteKysely<SessionEntriesTestDatabase>(database.db);
+    const sessionIds = executeSqliteQuerySync(
+      database.db,
+      db.selectFrom("sessions").select("session_id").orderBy("session_id", "asc"),
+    ).rows.map((row) => row.session_id);
+    const oldConversationLinks = executeSqliteQuerySync(
+      database.db,
+      db
+        .selectFrom("session_conversations")
+        .select("session_id")
+        .where("session_id", "=", "old-session"),
+    ).rows;
+
+    expect(sessionIds).toEqual(["new-session"]);
+    expect(oldConversationLinks).toEqual([]);
   });
 
   it("converts legacy origin routing into delivery context before stripping shadows", () => {

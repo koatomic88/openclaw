@@ -3,6 +3,7 @@ import path from "node:path";
 import { listAgentIds } from "../agents/agent-scope.js";
 import { resolveBundledSkillsDir } from "../agents/skills/bundled-dir.js";
 import { resolveStateDir } from "../config/paths.js";
+import { hydrateSessionStoreSkillPromptRefs } from "../config/sessions/skill-prompt-blobs.js";
 import type { SessionEntry } from "../config/sessions/types.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { expandHomePrefix } from "../infra/home-dir.js";
@@ -266,7 +267,11 @@ function resolveSessionStorePaths(params: {
 
 function loadSessionStoreForSnapshotScan(storePath: string): Record<string, SessionEntry> {
   const parsed = JSON.parse(fs.readFileSync(storePath, "utf-8")) as unknown;
-  return isRecord(parsed) ? (parsed as Record<string, SessionEntry>) : {};
+  if (!isRecord(parsed)) {
+    return {};
+  }
+  hydrateSessionStoreSkillPromptRefs({ storePath, store: parsed });
+  return parsed as Record<string, SessionEntry>;
 }
 
 export async function noteSessionSnapshotHealth(params?: {
