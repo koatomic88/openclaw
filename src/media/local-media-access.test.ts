@@ -1,8 +1,8 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { describe, expect, it } from "vitest";
-import { assertLocalMediaAllowed } from "./local-media-access.js";
+import { describe, expect, it, vi } from "vitest";
+import { assertLocalMediaAllowed, LocalMediaAccessError } from "./local-media-access.js";
 import { saveMediaBuffer } from "./store.js";
 
 const { hoistedRoots } = vi.hoisted(() => ({ hoistedRoots: [] as string[] }));
