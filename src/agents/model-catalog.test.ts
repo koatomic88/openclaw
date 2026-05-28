@@ -247,7 +247,8 @@ describe("loadModelCatalog", () => {
     vi.doMock("../plugins/plugin-metadata-snapshot.js", () => ({
       loadPluginMetadataSnapshot: loadPluginMetadataSnapshotMock,
       resolvePluginMetadataSnapshot: (...args: unknown[]) =>
-        currentPluginMetadataSnapshotMock(...args) ?? loadPluginMetadataSnapshotMock(...args),
+        (currentPluginMetadataSnapshotMock as (...callArgs: unknown[]) => unknown)(...args) ??
+        (loadPluginMetadataSnapshotMock as (...callArgs: unknown[]) => unknown)(...args),
     }));
 
     ({
@@ -404,7 +405,7 @@ describe("loadModelCatalog", () => {
   });
 
   it("does not prepare the stored model catalog or import provider discovery when loading fallback catalog in read-only mode", async () => {
-    const importPiSdk = vi.fn(async () => {
+    const importAgentDiscoveryModule = vi.fn(async () => {
       throw new Error("provider discovery should not load");
     });
     setModelCatalogImportForTest(
@@ -442,7 +443,7 @@ describe("loadModelCatalog", () => {
     const entry = requireCatalogEntry(result, "openai", "gpt-test");
     expect(entry.name).toBe("GPT Test");
     expect(ensureOpenClawModelCatalogMock).not.toHaveBeenCalled();
-    expect(importPiSdk).not.toHaveBeenCalled();
+    expect(importAgentDiscoveryModule).not.toHaveBeenCalled();
     expect(loadPluginMetadataSnapshotMock).not.toHaveBeenCalled();
   });
 
@@ -552,7 +553,7 @@ describe("loadModelCatalog", () => {
       },
     ]);
     expect(ensureOpenClawModelCatalogMock).not.toHaveBeenCalled();
-    expect(importPiSdk).not.toHaveBeenCalled();
+    expect(importAgentDiscoveryModule).not.toHaveBeenCalled();
   });
 
   it("preserves registry defaults for minimal persisted read-only catalog rows", async () => {
