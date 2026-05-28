@@ -4,6 +4,10 @@ import type { AddressInfo } from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  createNoisyPngBuffer as createNoisyPngFixtureBuffer,
+  createSolidPngBuffer,
+} from "../../test/helpers/image-fixtures.js";
 import { upsertSessionEntry } from "../config/sessions/store.js";
 import { replaceSqliteSessionTranscriptEvents } from "../config/sessions/transcript-store.sqlite.js";
 import {
