@@ -1087,83 +1087,75 @@ describe("runReplyAgent typing (heartbeat)", () => {
       responseUsage: "tokens",
     };
     const sessionStore = { main: sessionEntry };
-    const storeRoot = await mkdtemp(join(tmpdir(), "openclaw-internal-fallback-"));
-    const storePath = join(storeRoot, "sessions.json");
-    await writeFile(storePath, JSON.stringify(sessionStore), "utf-8");
-    try {
-      state.runEmbeddedAgentMock.mockResolvedValueOnce({
-        payloads: [{ text: "subagent timed out" }],
-        meta: {
-          agentMeta: {
-            usage: {
-              input: 100,
-              output: 50,
-            },
+    state.runEmbeddedAgentMock.mockResolvedValueOnce({
+      payloads: [{ text: "subagent timed out" }],
+      meta: {
+        agentMeta: {
+          usage: {
+            input: 100,
+            output: 50,
           },
         },
+      },
+    });
+    vi.spyOn(modelFallbackModule, "runWithModelFallback").mockImplementationOnce(async (args) => {
+      const { run, onFallbackStep } = args;
+      await onFallbackStep?.({
+        fallbackStepType: "fallback_step",
+        fallbackStepFromModel: "openai/gpt-5.5",
+        fallbackStepToModel: "google/gemini-2.5-flash",
+        fallbackStepFromFailureReason: "timeout",
+        fallbackStepFinalOutcome: "succeeded",
       });
-      vi.spyOn(modelFallbackModule, "runWithModelFallback").mockImplementationOnce(async (args) => {
-        const { run, onFallbackStep } = args;
-        await onFallbackStep?.({
-          fallbackStepType: "fallback_step",
-          fallbackStepFromModel: "openai/gpt-5.5",
-          fallbackStepToModel: "google/gemini-2.5-flash",
-          fallbackStepFromFailureReason: "timeout",
-          fallbackStepFinalOutcome: "succeeded",
-        });
-        return {
-          result: await run("google", "gemini-2.5-flash"),
-          provider: "google",
-          model: "gemini-2.5-flash",
-          attempts: [
-            {
-              provider: "openai-codex",
-              model: "gpt-5.5",
-              error: "codex app-server attempt timed out",
-              reason: "timeout",
-            },
-          ],
-        };
-      });
-
-      const { run } = createMinimalRun({
-        sessionEntry,
-        sessionStore,
-        sessionKey: "main",
-        storePath,
-        runOverrides: {
-          inputProvenance: {
-            kind: "inter_session",
-            sourceSessionKey: "agent:codex:subagent:c34fca91",
-            sourceChannel: "__internal__",
-            sourceTool: "subagent_announce",
+      return {
+        result: await run("google", "gemini-2.5-flash"),
+        provider: "google",
+        model: "gemini-2.5-flash",
+        attempts: [
+          {
+            provider: "openai-codex",
+            model: "gpt-5.5",
+            error: "codex app-server attempt timed out",
+            reason: "timeout",
           },
-        },
-      });
-      const res = await run();
+        ],
+      };
+    });
 
-      expect(sessionEntry.modelProvider).toBe("openai-codex");
-      expect(sessionEntry.model).toBe("gpt-5.5");
-      expect(sessionEntry.providerOverride).toBeUndefined();
-      expect(sessionEntry.modelOverride).toBeUndefined();
-      expect(sessionEntry.modelOverrideSource).toBeUndefined();
-      expect(sessionEntry.fallbackNoticeSelectedModel).toBeUndefined();
-      expect(sessionEntry.fallbackNoticeActiveModel).toBeUndefined();
-      expect(sessionEntry.fallbackNoticeReason).toBeUndefined();
-      const persistedStore = JSON.parse(await readFile(storePath, "utf-8"));
-      expect(persistedStore.main.modelProvider).toBe("openai-codex");
-      expect(persistedStore.main.model).toBe("gpt-5.5");
-      expect(persistedStore.main.providerOverride).toBeUndefined();
-      expect(persistedStore.main.modelOverride).toBeUndefined();
-      expect(persistedStore.main.modelOverrideSource).toBeUndefined();
-      expect(persistedStore.main.fallbackNoticeSelectedModel).toBeUndefined();
-      expect(persistedStore.main.fallbackNoticeActiveModel).toBeUndefined();
-      const payloads = Array.isArray(res) ? res : res ? [res] : [];
-      expect(payloads.some((payload) => payload.text?.includes("Model Fallback:"))).toBe(false);
-      expect(payloads.some((payload) => payload.text?.includes("Usage:"))).toBe(false);
-    } finally {
-      await rm(storeRoot, { recursive: true, force: true });
-    }
+    const { run } = createMinimalRun({
+      sessionEntry,
+      sessionStore,
+      sessionKey: "main",
+      runOverrides: {
+        inputProvenance: {
+          kind: "inter_session",
+          sourceSessionKey: "agent:codex:subagent:c34fca91",
+          sourceChannel: "__internal__",
+          sourceTool: "subagent_announce",
+        },
+      },
+    });
+    const res = await run();
+
+    expect(sessionEntry.modelProvider).toBe("openai-codex");
+    expect(sessionEntry.model).toBe("gpt-5.5");
+    expect(sessionEntry.providerOverride).toBeUndefined();
+    expect(sessionEntry.modelOverride).toBeUndefined();
+    expect(sessionEntry.modelOverrideSource).toBeUndefined();
+    expect(sessionEntry.fallbackNoticeSelectedModel).toBeUndefined();
+    expect(sessionEntry.fallbackNoticeActiveModel).toBeUndefined();
+    expect(sessionEntry.fallbackNoticeReason).toBeUndefined();
+    const persistedStore = sessionStore;
+    expect(persistedStore.main.modelProvider).toBe("openai-codex");
+    expect(persistedStore.main.model).toBe("gpt-5.5");
+    expect(persistedStore.main.providerOverride).toBeUndefined();
+    expect(persistedStore.main.modelOverride).toBeUndefined();
+    expect(persistedStore.main.modelOverrideSource).toBeUndefined();
+    expect(persistedStore.main.fallbackNoticeSelectedModel).toBeUndefined();
+    expect(persistedStore.main.fallbackNoticeActiveModel).toBeUndefined();
+    const payloads = Array.isArray(res) ? res : res ? [res] : [];
+    expect(payloads.some((payload) => payload.text?.includes("Model Fallback:"))).toBe(false);
+    expect(payloads.some((payload) => payload.text?.includes("Usage:"))).toBe(false);
   });
 
   it("surfaces empty internal fallback failures without persisting visible fallback state", async () => {

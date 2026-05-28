@@ -1527,7 +1527,6 @@ describe("runAgentTurnWithFallback", () => {
       commandBody: "runtime prompt",
       transcriptCommandBody: "display prompt",
       activeSessionStore,
-      storePath: "/tmp/sessions.json",
       getActiveSessionEntry: () => activeSessionStore.main,
     });
 
@@ -5459,7 +5458,6 @@ describe("runAgentTurnWithFallback", () => {
     const followupRun = createFollowupRun();
     followupRun.run.provider = "openai";
     followupRun.run.model = "gpt-4o";
-    followupRun.run.hasOneTurnModelOverride = true;
 
     const sessionEntry: SessionEntry = {
       sessionId: "session",

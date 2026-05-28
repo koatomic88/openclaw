@@ -1524,9 +1524,7 @@ describe("runPreparedReply media-only handling", () => {
       baseParams({
         provider: "openai",
         model: "gpt-4o",
-        defaultProvider: "anthropic",
         defaultModel: "claude-opus-4-1",
-        hasAppliedImageModelOverride: true,
         isNewSession: false,
         sessionId: "session-image-auth",
         sessionEntry,
@@ -1571,9 +1569,7 @@ describe("runPreparedReply media-only handling", () => {
       baseParams({
         provider: "openai",
         model: "gpt-4o",
-        defaultProvider: "openai",
         defaultModel: "gpt-4o-mini",
-        hasAppliedImageModelOverride: true,
         isNewSession: false,
         sessionId: "session-image-default-provider-auth",
         sessionEntry,
@@ -1617,10 +1613,7 @@ describe("runPreparedReply media-only handling", () => {
       baseParams({
         provider: "openai",
         model: "gpt-4o",
-        defaultProvider: "openai",
         defaultModel: "gpt-4o-mini",
-        hasAppliedImageModelOverride: true,
-        imageModelOverrideBaseProvider: "anthropic",
         isNewSession: false,
         sessionId: "session-image-runtime-provider-auth",
         sessionEntry,

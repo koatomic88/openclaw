@@ -16,6 +16,7 @@ import {
   upsertSessionEntry,
 } from "../../config/sessions/store.js";
 import { replaceSqliteSessionTranscriptEvents } from "../../config/sessions/transcript-store.sqlite.js";
+import type { OpenClawConfig } from "../../config/types.openclaw.js";
 import {
   onInternalDiagnosticEvent,
   resetDiagnosticEventsForTest,
