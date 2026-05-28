@@ -4,8 +4,11 @@ import {
   resetOpenClawOwnedToolHooks,
   textToolResult,
 } from "openclaw/plugin-sdk/agent-runtime-test-contracts";
+import type { ExtensionContext } from "openclaw/plugin-sdk/agent-sessions";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { ExtensionContext } from "./agent-extension-contract.js";
+import { toToolDefinitions } from "./agent-tool-definition-adapter.js";
+import { createBaseToolHandlerState } from "./agent-tool-handler-state.test-helpers.js";
+import { wrapToolWithBeforeToolCallHook } from "./agent-tools.before-tool-call.js";
 import type { MessagingToolSend } from "./embedded-agent-messaging.types.js";
 import {
   handleToolExecutionEnd,
