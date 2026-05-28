@@ -88,8 +88,8 @@ vi.mock("./subagent-announce-delivery.runtime.js", () =>
     getSessionEntry: (params: { sessionKey: string }) => sessionStore[params.sessionKey],
     resolveAgentIdFromSessionKey: () => "main",
     resolveMainSessionKey: () => "agent:main:main",
-    isEmbeddedPiRunActive: (sessionId: string) => isEmbeddedPiRunActiveMock(sessionId),
-    queueEmbeddedPiMessageWithOutcome: (sessionId: string) => ({
+    isEmbeddedAgentRunActive: (sessionId: string) => isEmbeddedAgentRunActiveMock(sessionId),
+    queueEmbeddedAgentMessageWithOutcome: (sessionId: string) => ({
       queued: false,
       sessionId,
       reason: "not_streaming",

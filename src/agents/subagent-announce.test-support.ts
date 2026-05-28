@@ -10,8 +10,8 @@ type DeliveryRuntimeMockOptions = {
   getSessionEntry: (params: { agentId: string; sessionKey: string }) => unknown;
   resolveAgentIdFromSessionKey: (sessionKey: string) => string;
   resolveMainSessionKey: (cfg: unknown) => string;
-  isEmbeddedPiRunActive: (sessionId: string) => boolean;
-  queueEmbeddedPiMessageWithOutcome: (
+  isEmbeddedAgentRunActive: (sessionId: string) => boolean;
+  queueEmbeddedAgentMessageWithOutcome: (
     sessionId: string,
     text: string,
     options?: EmbeddedAgentQueueMessageOptions,
@@ -69,9 +69,9 @@ export function createSubagentAnnounceDeliveryRuntimeMock(options: DeliveryRunti
     getSessionEntry: options.getSessionEntry,
     resolveAgentIdFromSessionKey: options.resolveAgentIdFromSessionKey,
     resolveMainSessionKey: options.resolveMainSessionKey,
-    isEmbeddedPiRunActive: options.isEmbeddedPiRunActive,
-    queueEmbeddedPiMessageWithOutcome: options.queueEmbeddedPiMessageWithOutcome,
-    formatEmbeddedPiQueueFailureSummary: (outcome: { reason?: string; sessionId?: string }) =>
+    isEmbeddedAgentRunActive: options.isEmbeddedAgentRunActive,
+    queueEmbeddedAgentMessageWithOutcome: options.queueEmbeddedAgentMessageWithOutcome,
+    formatEmbeddedAgentQueueFailureSummary: (outcome: { reason?: string; sessionId?: string }) =>
       outcome.reason && outcome.sessionId
         ? `queue_message_failed reason=${outcome.reason} sessionId=${outcome.sessionId} gatewayHealth=live`
         : undefined,

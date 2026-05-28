@@ -68,8 +68,8 @@ vi.mock("./subagent-announce.runtime.js", () => ({
   resolveAgentIdFromSessionKey: (sessionKey: string) =>
     resolveAgentIdFromSessionKeyMock(sessionKey),
   resolveMainSessionKey: (cfg: unknown) => resolveMainSessionKeyMock(cfg),
-  waitForEmbeddedPiRunEnd: (sessionId: string, timeoutMs?: number) =>
-    waitForEmbeddedPiRunEndMock(sessionId, timeoutMs),
+  waitForEmbeddedAgentRunEnd: (sessionId: string, timeoutMs?: number) =>
+    waitForEmbeddedAgentRunEndMock(sessionId, timeoutMs),
 }));
 
 vi.mock("./tools/agent-step.js", () => ({
@@ -85,9 +85,9 @@ vi.mock("./subagent-announce-delivery.runtime.js", () =>
     resolveAgentIdFromSessionKey: (sessionKey: string) =>
       resolveAgentIdFromSessionKeyMock(sessionKey),
     resolveMainSessionKey: (cfg: unknown) => resolveMainSessionKeyMock(cfg),
-    isEmbeddedPiRunActive: (sessionId: string) => isEmbeddedPiRunActiveMock(sessionId),
-    queueEmbeddedPiMessageWithOutcome: (sessionId: string, text: string, options?: unknown) =>
-      queueEmbeddedPiMessageWithOutcomeMock(sessionId, text, options),
+    isEmbeddedAgentRunActive: (sessionId: string) => isEmbeddedAgentRunActiveMock(sessionId),
+    queueEmbeddedAgentMessageWithOutcome: (sessionId: string, text: string, options?: unknown) =>
+      queueEmbeddedAgentMessageWithOutcomeMock(sessionId, text, options),
   }),
 );
 
@@ -404,7 +404,7 @@ describe("subagent announce seam flow", () => {
     });
 
     expect(didAnnounce).toBe(true);
-    const queuedCall = queueEmbeddedPiMessageWithOutcomeMock.mock.calls[0];
+    const queuedCall = requireQueuedMessageCall();
     expect(queuedCall?.[0]).toBe("session-typed-channel-steer");
     expect(queuedCall?.[1]).toContain("[Internal task completion event]");
     expect(queuedCall?.[1]).toContain("task: do thing");
