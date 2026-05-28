@@ -1176,8 +1176,7 @@ describe("dispatchTelegramMessage draft streaming", () => {
   });
 
   it("records streamed final replies into the prompt context cache", async () => {
-    const storePath = `/tmp/openclaw-telegram-stream-context-${process.pid}-${Date.now()}.json`;
-    const persistedScopeKey = resolveTelegramMessageCacheScopeKey(storePath);
+    const persistedScopeKey = resolveTelegramMessageCacheScopeKey("default");
     setupDraftStreams({ answerMessageId: 1497 });
     dispatchReplyWithBufferedBlockDispatcher.mockImplementation(async ({ dispatcherOptions }) => {
       await dispatcherOptions.deliver(
@@ -1189,7 +1188,6 @@ describe("dispatchTelegramMessage draft streaming", () => {
 
     await dispatchWithContext({
       context: createContext(),
-      cfg: { session: { store: storePath } },
       telegramDeps: {
         ...telegramDepsForTest,
         recordOutboundMessageForPromptContext: recordOutboundMessageForPromptContextActual,
@@ -1487,7 +1485,7 @@ describe("dispatchTelegramMessage draft streaming", () => {
     });
 
     expect(answerDraftStream.update).toHaveBeenCalledWith(
-      "Cracking...\n`🛠️ Exec`\n`🛠️ git rev-parse --abbrev-ref HEAD`",
+      "Cracking\n\n`🛠️ Exec`\n`🛠️ git rev-parse --abbrev-ref HEAD`",
     );
     expect(answerDraftStream.update).not.toHaveBeenCalledWith("Branch is up to date");
     expect(answerDraftStream.forceNewMessage).toHaveBeenCalledTimes(1);
@@ -1542,7 +1540,7 @@ describe("dispatchTelegramMessage draft streaming", () => {
     expect(firstChunk.length).toBeLessThanOrEqual(80);
     expectRecordFields(mockCallArg(recordOutboundMessageForPromptContext), {
       messageId: 2001,
-      text: firstChunk,
+      text: longText,
     });
     expect(deliverReplies).toHaveBeenCalled();
     const followUpTexts = deliverReplies.mock.calls.flatMap((call: unknown[]) =>
@@ -1623,7 +1621,7 @@ describe("dispatchTelegramMessage draft streaming", () => {
       telegramCfg: { streaming: { mode: "progress", progress: { label: "Shelling" } } },
     });
 
-    expect(draftStream.update).toHaveBeenCalledWith("Shelling\n`🛠️ Exec`");
+    expect(draftStream.update).toHaveBeenCalledWith("Shelling\n\n`🛠️ Exec`");
     expect(draftStream.flush).toHaveBeenCalled();
   });
 
@@ -1645,7 +1643,7 @@ describe("dispatchTelegramMessage draft streaming", () => {
       const updateBeforeStatusReaction = draftStream.update.mock.calls.at(-1)?.[0];
       releaseSetTool?.();
       await pendingToolStart;
-      expect(updateBeforeStatusReaction).toMatch(/^Shelling\n`🛠️ Exec`$/);
+      expect(updateBeforeStatusReaction).toMatch(/^Shelling\n\n`🛠️ Exec`$/);
       return { queuedFinal: false };
     });
 
@@ -1682,7 +1680,7 @@ describe("dispatchTelegramMessage draft streaming", () => {
     });
 
     expect(draftStream.update).toHaveBeenCalledWith(
-      "Shelling\n`🔎 Web Search: docs lookup`\n• `tests passed`",
+      "Shelling\n\n`🔎 Web Search: docs lookup`\n• `tests passed`",
     );
     expect(draftStream.forceNewMessage).toHaveBeenCalledTimes(1);
     expect(draftStream.materialize).not.toHaveBeenCalled();
@@ -1764,7 +1762,7 @@ describe("dispatchTelegramMessage draft streaming", () => {
 
     await dispatchWithContext({ context: createReasoningStreamContext() });
 
-    expect(reasoningDraftStream.update).toHaveBeenCalledWith("Reasoning:\n_Thinking_");
+    expect(reasoningDraftStream.update).toHaveBeenCalledWith("Thinking\n\n_Thinking_");
     expect(answerDraftStream.update).toHaveBeenCalledWith("Answer");
     expect(deliverReplies).not.toHaveBeenCalled();
   });
@@ -1792,7 +1790,7 @@ describe("dispatchTelegramMessage draft streaming", () => {
       },
     });
 
-    expect(reasoningDraftStream.update).toHaveBeenCalledWith("Reasoning:\n_Thinking_");
+    expect(reasoningDraftStream.update).toHaveBeenCalledWith("Thinking\n\n_Thinking_");
     expect(answerDraftStream.update).toHaveBeenCalledWith("Answer");
   });
 

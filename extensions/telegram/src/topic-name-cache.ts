@@ -243,7 +243,6 @@ export function topicNameCacheSize(scope?: string): number {
 
 export function resetTopicNameCacheForTest(): void {
   getTopicNameCacheState().stores.clear();
-  TOPIC_NAME_STORE.clear();
 }
 
 type TopicNamePersistentStore = {

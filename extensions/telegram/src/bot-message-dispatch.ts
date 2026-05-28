@@ -1353,6 +1353,15 @@ export const dispatchTelegramMessage = async ({
         isGroup: deliveryBaseOptions.mirrorIsGroup,
         groupId: deliveryBaseOptions.mirrorGroupId,
       });
+      await telegramDeps.recordOutboundMessageForPromptContext?.({
+        cfg,
+        account: { accountId: route.accountId },
+        chatId: deliveryBaseOptions.chatId,
+        message: {},
+        messageId: result.delivery.messageId,
+        text: result.delivery.content,
+        ...(threadSpec.id !== undefined ? { messageThreadId: threadSpec.id } : {}),
+      });
     };
     const deliverLaneText = createLaneTextDeliverer({
       lanes,

@@ -624,7 +624,7 @@ describe("sendMessageTelegram", () => {
 
   it("records sent text messages into the Telegram prompt context cache", async () => {
     const storePath = `/tmp/openclaw-telegram-send-context-${process.pid}-${Date.now()}.json`;
-    const persistedScopeKey = resolveTelegramMessageCacheScopeKey(storePath);
+    const persistedScopeKey = resolveTelegramMessageCacheScopeKey("default");
     const cfg = { session: { store: storePath } };
     try {
       botApi.sendMessage.mockResolvedValueOnce({
