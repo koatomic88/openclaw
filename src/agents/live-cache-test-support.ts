@@ -181,7 +181,7 @@ export async function resolveLiveDirectModelPool(params: {
     (model) => normalizeProviderId(model.provider) === params.provider && model.api === params.api,
   );
 
-  let resolvedModel: Model<Api> | undefined;
+  let resolvedModel: Model | undefined;
   if (parsed) {
     resolvedModel = candidates.find(
       (model) =>

@@ -1905,7 +1905,7 @@ function toGatewayLiveModel(params: {
 async function loadProviderScopedConfiguredModels(params: {
   agentDir: string;
   providerList: readonly string[];
-}): Promise<Array<Model<Api>>> {
+}): Promise<Array<Model>> {
   let parsed: { providers?: Record<string, ModelProviderConfig> };
   try {
     const stored = readStoredModelsConfigRaw(params.agentDir);
@@ -1950,11 +1950,11 @@ async function loadProviderScopedConfiguredModels(params: {
 function loadProviderScopedBuiltInModels(params: {
   agentDir: string;
   providerList: readonly string[];
-}): Array<Model<Api>> {
+}): Array<Model> {
   const registryModels = discoverModels(discoverAuthStorage(params.agentDir), params.agentDir, {
     normalizeModels: false,
   }).getAll();
-  const models: Array<Model<Api>> = [];
+  const models: Array<Model> = [];
   const seen = new Set<string>();
   for (const rawProvider of params.providerList) {
     const provider = normalizeProviderId(rawProvider);
@@ -1979,7 +1979,7 @@ function loadProviderScopedBuiltInModels(params: {
 async function loadProviderScopedModels(params: {
   agentDir: string;
   providerList: readonly string[];
-}): Promise<Array<Model<Api>>> {
+}): Promise<Array<Model>> {
   const configured = await loadProviderScopedConfiguredModels(params);
   if (configured.length > 0) {
     return configured;

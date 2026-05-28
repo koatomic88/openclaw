@@ -42,7 +42,7 @@ const tempDirs: string[] = [];
 function firstPlugin(snapshot: ReturnType<typeof loadPluginMetadataSnapshot>) {
   const plugin = snapshot.plugins[0];
   expect(plugin).toBeDefined();
-  return plugin!;
+  return plugin;
 }
 
 function tempStateDir(): string {

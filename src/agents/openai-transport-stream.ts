@@ -118,7 +118,7 @@ type BaseStreamOptions = {
   sessionId?: string;
   promptCacheKey?: string;
   authProfileId?: string;
-  onPayload?: (payload: unknown, model: Model<Api>) => unknown;
+  onPayload?: (payload: unknown, model: Model) => unknown;
   headers?: Record<string, string>;
   openclawCodeModeToolSurface?: boolean;
   responseFormat?: Record<string, unknown>;
@@ -818,7 +818,7 @@ function hashOptionalReplayContextValue(value: string | undefined): string | und
 }
 
 function buildOpenAIResponsesReplayContext(
-  model: Model<Api>,
+  model: Model,
   options?: Pick<BaseStreamOptions, "authProfileId" | "sessionId">,
 ): OpenAIResponsesReplayContext {
   return {
@@ -832,7 +832,7 @@ function buildOpenAIResponsesReplayContext(
 }
 
 function buildOpenAIResponsesReasoningReplayMetadata(
-  model: Model<Api>,
+  model: Model,
   options?: Pick<BaseStreamOptions, "authProfileId" | "sessionId">,
 ): OpenAIResponsesReasoningReplayMetadata {
   return {
@@ -844,7 +844,7 @@ function buildOpenAIResponsesReasoningReplayMetadata(
 
 function tagOpenAIResponsesReasoningReplayItem(
   item: Record<string, unknown>,
-  model: Model<Api>,
+  model: Model,
   options?: Pick<BaseStreamOptions, "authProfileId" | "sessionId">,
 ): Record<string, unknown> {
   if (!("encrypted_content" in item)) {
@@ -924,7 +924,7 @@ async function createResponsesStreamWithEncryptedContentRetry(params: {
   client: ResponsesClientLike;
   request: OpenAIResponsesRequestParams;
   requestOptions: unknown;
-  model: Model<Api>;
+  model: Model;
 }): Promise<AsyncIterable<unknown>> {
   try {
     return (await params.client.responses.create(
@@ -1305,7 +1305,7 @@ function shouldLogOpenAIStrictToolDowngradeDiagnostic(
   return true;
 }
 
-function createResponsesFirstEventTimeoutError(model: Model<Api>, timeoutMs: number): Error {
+function createResponsesFirstEventTimeoutError(model: Model, timeoutMs: number): Error {
   return new Error(
     `Azure OpenAI Responses stream did not deliver a first event within ${timeoutMs}ms after HTTP streaming headers. ` +
       `provider=${model.provider} model=${model.id}. ` +

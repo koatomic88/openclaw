@@ -208,7 +208,7 @@ describe("spawnSubagentDirect filename validation", () => {
     upsertSessionEntryMock.mockImplementation(
       (options: { sessionKey: string; entry: Record<string, unknown> }) => {
         persistedStore = {
-          ...(persistedStore ?? {}),
+          ...persistedStore,
           [options.sessionKey]: options.entry,
         };
       },

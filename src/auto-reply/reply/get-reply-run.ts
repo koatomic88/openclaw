@@ -889,7 +889,7 @@ export async function runPreparedReply(
         inlineMode: perMessageQueueMode,
         inlineOptions: perMessageQueueOptions,
       });
-  const internalOpts = opts as InternalGetReplyOptions | undefined;
+  const internalOpts = opts;
   const providedReplyOperation = internalOpts?.replyOperation;
   const embeddedAgentRuntime = useFastReplyRuntime
     ? null

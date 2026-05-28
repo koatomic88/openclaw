@@ -97,7 +97,7 @@ function logProgress(message: string): void {
   writeSync(2, `[live] ${message}\n`);
 }
 
-function loadPrioritizedHighSignalModels(): Model<Api>[] {
+function loadPrioritizedHighSignalModels(): Model[] {
   const idsByProvider = new Map<string, Set<string>>();
   for (const ref of listPrioritizedHighSignalLiveModelRefs()) {
     const bucket = idsByProvider.get(ref.provider);
@@ -112,7 +112,7 @@ function loadPrioritizedHighSignalModels(): Model<Api>[] {
   const registryModels = discoverModels(discoverAuthStorage(agentDir), agentDir, {
     normalizeModels: false,
   }).getAll();
-  const models: Model<Api>[] = [];
+  const models: Model[] = [];
   const seen = new Set<string>();
   for (const [provider, ids] of idsByProvider) {
     for (const model of registryModels) {

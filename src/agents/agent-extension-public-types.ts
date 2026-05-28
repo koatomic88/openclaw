@@ -40,7 +40,7 @@ export type ExtensionContext = {
   cwd: string;
   sessionManager: object;
   modelRegistry: unknown;
-  model: Model<Api> | undefined;
+  model: Model | undefined;
   isIdle(): boolean;
   signal: AbortSignal | undefined;
   abort(): void;

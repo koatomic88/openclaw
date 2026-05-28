@@ -36,7 +36,7 @@ export {
 
 // NOTE(steipete): Upstream read now does file-magic MIME detection; we keep the wrapper
 // to sanitize oversized images before they hit providers.
-type ToolContentBlock = AgentToolResult<unknown>["content"][number];
+type ToolContentBlock = AgentToolResult["content"][number];
 type ImageContentBlock = Extract<ToolContentBlock, { type: "image" }>;
 type TextContentBlock = Extract<ToolContentBlock, { type: "text" }>;
 
@@ -212,7 +212,7 @@ function emptyReadResult(): AgentToolResult {
   return { content: [textBlock], details: undefined };
 }
 
-function missingDailyMemoryReadResult(relativePath: string): AgentToolResult<unknown> {
+function missingDailyMemoryReadResult(relativePath: string): AgentToolResult {
   return {
     content: [
       {

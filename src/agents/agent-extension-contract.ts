@@ -80,7 +80,7 @@ export type ExtensionContext = {
   cwd: string;
   sessionManager: OpenClawExtensionContext["sessionManager"];
   modelRegistry: OpenClawExtensionContext["modelRegistry"];
-  model: Model<Api> | undefined;
+  model: Model | undefined;
   ui: ExtensionUIContext;
   hasUI: boolean;
   isIdle(): boolean;
@@ -192,7 +192,7 @@ export type ProviderConfig = {
   baseUrl?: string;
   apiKey?: string;
   api?: Api;
-  streamSimple?: (model: Model<Api>, context: unknown, options?: SimpleStreamOptions) => unknown;
+  streamSimple?: (model: Model, context: unknown, options?: SimpleStreamOptions) => unknown;
   headers?: Record<string, string>;
   authHeader?: boolean;
   models?: Array<{
@@ -217,7 +217,7 @@ export type ProviderConfig = {
     login(callbacks: OAuthLoginCallbacks): Promise<OAuthCredentials>;
     refreshToken(credentials: OAuthCredentials): Promise<OAuthCredentials>;
     getApiKey(credentials: OAuthCredentials): string;
-    modifyModels?(models: Model<Api>[], credentials: OAuthCredentials): Model<Api>[];
+    modifyModels?(models: Model[], credentials: OAuthCredentials): Model[];
   };
 };
 
