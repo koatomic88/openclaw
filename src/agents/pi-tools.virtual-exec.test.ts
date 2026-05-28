@@ -3,8 +3,8 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { closeOpenClawStateDatabaseForTest } from "../state/openclaw-state-db.js";
+import { createOpenClawCodingTools } from "./agent-tools.js";
 import { createSqliteVirtualAgentFs } from "./filesystem/virtual-agent-fs.sqlite.js";
-import { createOpenClawCodingTools } from "./pi-tools.js";
 
 function createTempDbPath(): string {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "openclaw-vfs-exec-tool-"));
