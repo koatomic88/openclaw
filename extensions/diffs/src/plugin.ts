@@ -18,6 +18,7 @@ import { DiffArtifactStore, type DiffBlobMetadata } from "./store.js";
 import { createDiffsTool } from "./tool.js";
 
 const MAX_DIFF_ARTIFACT_BLOBS = 512;
+const DIFFS_LANGUAGE_PACK_PLUGIN_ID = "diffs-language-pack";
 
 export function registerDiffsPlugin(api: OpenClawPluginApi): void {
   const store = new DiffArtifactStore({

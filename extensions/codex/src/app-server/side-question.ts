@@ -23,6 +23,8 @@ import {
   codexSandboxPolicyForTurn,
   readCodexPluginConfig,
   resolveCodexAppServerRuntimeOptions,
+  shouldAutoApproveCodexAppServerApprovals,
+  type CodexAppServerRuntimeOptions,
 } from "./config.js";
 import {
   emitDynamicToolErrorDiagnostic,

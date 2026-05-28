@@ -184,7 +184,7 @@ export function createAnthropicVertexStreamFn(
       opts.thinkingEnabled = false;
     }
 
-    return deps.streamAnthropic(transportModel, context, opts);
+    return deps.streamAnthropic(transportModel, context, opts as ProviderStreamOptions);
   };
 }
 

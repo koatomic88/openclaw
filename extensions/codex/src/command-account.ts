@@ -141,7 +141,7 @@ function resolveDisplayAuthOrder(params: {
     resolveOrder(params.config?.auth?.order, OPENAI_PROVIDER_ID) ??
     resolveOrder(params.config?.auth?.order, OPENAI_CODEX_PROVIDER_ID);
   if (configured && configured.length > 0) {
-    return dedupe(configured);
+    return normalizeUniqueStringEntries(configured);
   }
   return resolveAuthProfileOrder({
     cfg: params.config,

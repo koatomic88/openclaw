@@ -64,7 +64,7 @@ export async function stopCodexConversationTurn(params: {
   }
   const runtime = resolveCodexAppServerRuntimeOptions({ pluginConfig: params.pluginConfig });
   const binding = await readCodexAppServerBinding(params);
-  const client = await getSharedCodexAppServerClient({
+  const client = await getLeasedSharedCodexAppServerClient({
     startOptions: runtime.start,
     timeoutMs: runtime.requestTimeoutMs,
     authProfileId: binding?.authProfileId,
@@ -100,7 +100,7 @@ export async function steerCodexConversationTurn(params: {
   }
   const runtime = resolveCodexAppServerRuntimeOptions({ pluginConfig: params.pluginConfig });
   const binding = await readCodexAppServerBinding(params);
-  const client = await getSharedCodexAppServerClient({
+  const client = await getLeasedSharedCodexAppServerClient({
     startOptions: runtime.start,
     timeoutMs: runtime.requestTimeoutMs,
     authProfileId: binding?.authProfileId,
