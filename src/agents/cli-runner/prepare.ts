@@ -516,6 +516,7 @@ export async function prepareCliRunContext(
           config: params.config,
         }),
         prompt: preparedPrompt,
+        maxHistoryChars: autoReseedHistoryChars,
       });
   systemPrompt = applyPluginTextReplacements(systemPrompt, backendResolved.textTransforms?.input);
   const systemPromptReport = buildSystemPromptReport({

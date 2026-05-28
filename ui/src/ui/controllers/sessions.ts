@@ -56,6 +56,7 @@ export type LoadSessionsOverrides = {
   includeUnknown?: boolean;
   showArchived?: boolean;
   configuredAgentsOnly?: boolean;
+  publishChatRunStatus?: boolean;
 };
 
 type CreateSessionParams = {

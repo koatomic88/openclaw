@@ -1,5 +1,4 @@
 import { isSilentReplyText, SILENT_REPLY_TOKEN } from "../auto-reply/tokens.js";
-import { extractTextFromChatContent } from "../shared/chat-content.js";
 import { asFiniteNumber } from "../shared/number-coercion.js";
 import { readLatestAssistantReply } from "./run-wait.js";
 import { wrapPromptDataBlock } from "./sanitize-for-prompt.js";

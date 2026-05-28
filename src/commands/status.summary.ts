@@ -21,8 +21,6 @@ import {
 import { resolveRuntimeServiceVersion } from "../version.js";
 import type { HeartbeatStatus, SessionStatus, StatusSummary } from "./status.types.js";
 
-const RECENT_SESSION_LIMIT = 10;
-
 const channelSummaryModuleLoader = createLazyImportLoader(
   () => import("../infra/channel-summary.js"),
 );

@@ -1,4 +1,4 @@
-import type { Api, Model } from "../agents/pi-ai-contract.js";
+import type { Model } from "../agents/pi-ai-contract.js";
 import type { ModelCompatConfig, ModelMediaInputConfig } from "../config/types.models.js";
 
 /**

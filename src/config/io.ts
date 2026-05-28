@@ -18,7 +18,6 @@ import {
   shouldEnableShellEnvFallback,
 } from "../infra/shell-env.js";
 import {
-  loadPluginMetadataSnapshot,
   resolvePluginMetadataSnapshot,
   type PluginMetadataSnapshot,
 } from "../plugins/plugin-metadata-snapshot.js";

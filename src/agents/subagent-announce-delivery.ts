@@ -34,10 +34,7 @@ import {
   hasVisibleAgentPayload,
 } from "./embedded-agent-runner/delivery-evidence.js";
 import type { EmbeddedAgentQueueMessageOptions } from "./embedded-agent-runner/run-state.js";
-import type {
-  EmbeddedAgentQueueFailureReason,
-  EmbeddedAgentQueueMessageOutcome,
-} from "./embedded-agent-runner/runs.js";
+import type { EmbeddedAgentQueueMessageOutcome } from "./embedded-agent-runner/runs.js";
 import { mediaUrlsFromGeneratedAttachments } from "./generated-attachments.js";
 import type { AgentInternalEvent } from "./internal-events.js";
 import {

@@ -19,7 +19,6 @@ import {
   getApiKeyForModel,
   type ResolvedProviderAuth,
 } from "../../model-auth.js";
-import type { Api } from "../../pi-ai-contract.js";
 import {
   resolveProviderRequestConfig,
   sanitizeRuntimeProviderRequestOverrides,

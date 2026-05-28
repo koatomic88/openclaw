@@ -1,6 +1,6 @@
 import { normalizeAgentId } from "../../routing/session-key.js";
 import type { AgentMessage } from "../agent-core-contract.js";
-import type { SessionEntry, SessionHeader } from "../transcript/session-transcript-contract.js";
+import type { SessionEntry } from "../transcript/session-transcript-contract.js";
 import {
   readTranscriptStateForSessionSync,
   replaceTranscriptStateForSession,

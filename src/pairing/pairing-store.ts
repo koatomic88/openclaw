@@ -8,7 +8,6 @@ import { resolveOAuthDir, resolveStateDir } from "../config/paths.js";
 import { resolveRequiredHomeDir } from "../infra/home-dir.js";
 import { executeSqliteQuerySync, getNodeSqliteKysely } from "../infra/kysely-sync.js";
 import { DEFAULT_ACCOUNT_ID } from "../routing/session-key.js";
-import { isRecord } from "../shared/record-coerce.js";
 import {
   normalizeLowercaseStringOrEmpty,
   normalizeNullableString,

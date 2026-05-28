@@ -52,7 +52,7 @@ Reply with ONLY the slug, nothing else. Examples: "vendor-pitch", "api-design", 
     });
     const timeoutMs = resolveSlugGeneratorTimeoutMs(params.cfg);
 
-    const result = await runEmbeddedPiAgent({
+    const result = await runEmbeddedAgent({
       sessionId,
       sessionKey: "temp:slug-generator",
       agentId,

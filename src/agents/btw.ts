@@ -35,7 +35,6 @@ import {
 import { getApiKeyForModel, requireApiKey } from "./model-auth.js";
 import { ensureOpenClawModelCatalog } from "./models-config.js";
 import { listOpenAIAuthProfileProvidersForAgentRuntime } from "./openai-codex-routing.js";
-import { type Api } from "./pi-ai-contract.js";
 import { registerProviderStreamForModel } from "./provider-stream.js";
 import { stripToolResultDetails } from "./session-transcript-repair.js";
 import { sanitizeImageBlocks } from "./tool-images.js";
@@ -521,9 +520,8 @@ export async function runBtwSideQuestion(
     await blockEmitChain;
   };
 
-  const btwStream = providerStreamFn ?? streamSimple;
   const stream = await streamWithPayloadPatch(
-    btwStream,
+    streamFn,
     runtimeModel,
     {
       systemPrompt: buildBtwSystemPrompt(),

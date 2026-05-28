@@ -1,6 +1,5 @@
 import { formatEmbeddedAgentExecutionPhase } from "../../agents/embedded-agent-runner/execution-phase.js";
 import { resolveFailoverReasonFromError } from "../../agents/failover-error.js";
-import { resolveCronMaxConcurrentRuns } from "../../config/cron-limits.js";
 import { getSessionEntry } from "../../config/sessions.js";
 import type { CronConfig } from "../../config/types.cron.js";
 import type { HeartbeatRunResult } from "../../infra/heartbeat-wake.js";

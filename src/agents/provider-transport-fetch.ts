@@ -9,7 +9,7 @@ import {
   ssrfPolicyFromHttpBaseUrlAllowedOrigin,
   type SsrFPolicy,
 } from "../infra/net/ssrf.js";
-import type { Api, Model } from "../llm/types.js";
+import type { Model } from "../llm/types.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
 import { resolveDebugProxySettings } from "../proxy-capture/env.js";
 import {

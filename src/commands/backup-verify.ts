@@ -370,26 +370,6 @@ async function verifyDatabaseSnapshots(params: {
   }
 }
 
-function verifyHardlinkTargetsAgainstArchiveRoot(
-  hardlinkTargets: Array<{ entryPath: string; normalized: string }>,
-  archiveRoot: string,
-  entries: Set<string>,
-): void {
-  const normalizedRoot = normalizeArchiveRoot(archiveRoot);
-  for (const target of hardlinkTargets) {
-    if (!isArchivePathWithin(target.normalized, normalizedRoot)) {
-      throw new Error(
-        `Archive hardlink target is outside the declared archive root: ${target.entryPath} -> ${target.normalized}`,
-      );
-    }
-    if (!entries.has(target.normalized)) {
-      throw new Error(
-        `Archive hardlink target is missing from archive entries: ${target.entryPath} -> ${target.normalized}`,
-      );
-    }
-  }
-}
-
 function formatResult(result: BackupVerifyResult): string {
   return [
     `Backup archive OK: ${result.archivePath}`,

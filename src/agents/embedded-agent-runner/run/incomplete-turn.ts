@@ -309,10 +309,6 @@ function hasOnlySilentAssistantReply(assistantTexts?: readonly string[]): boolea
   );
 }
 
-function hasAsyncStartedToolActivity(toolMetas?: readonly { asyncStarted?: boolean }[]): boolean {
-  return (toolMetas ?? []).some((entry) => entry.asyncStarted === true);
-}
-
 function isToolResultRole(role: string): boolean {
   return role === "toolresult" || role === "tool_result" || role === "tool";
 }

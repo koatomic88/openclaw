@@ -285,11 +285,6 @@ function readToolResultDetailsRecord(result: unknown): Record<string, unknown> |
   return readRecordField(asOptionalObjectRecord(result)?.details);
 }
 
-function isAsyncStartedToolResult(result: unknown): boolean {
-  const details = readToolResultDetailsRecord(result);
-  return details?.async === true && details.status === "started";
-}
-
 function readExecToolDetails(result: unknown): ExecToolDetails | null {
   const details = readToolResultDetailsRecord(result);
   if (!details || typeof details.status !== "string") {

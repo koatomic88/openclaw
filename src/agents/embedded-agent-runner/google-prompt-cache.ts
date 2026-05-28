@@ -5,7 +5,6 @@ import { streamWithPayloadPatch } from "../../llm/providers/stream-wrappers/stre
 import type { Model } from "../../llm/types.js";
 import { normalizeOptionalString } from "../../shared/string-coerce.js";
 import type { StreamFn } from "../agent-core-contract.js";
-import type { Api } from "../pi-ai-contract.js";
 import { buildGuardedModelFetch } from "../provider-transport-fetch.js";
 import { stableStringify } from "../stable-stringify.js";
 import { stripSystemPromptCacheBoundary } from "../system-prompt-cache-boundary.js";
@@ -31,7 +30,6 @@ type GooglePromptCacheModel = Model & {
   provider: string;
 };
 type GooglePromptCacheContext = Parameters<StreamFn>[1];
-type GooglePromptCacheOptions = Parameters<StreamFn>[2];
 
 type GooglePromptCacheEntry = {
   timestamp: number;
@@ -183,71 +181,6 @@ function parseExpireTimeMs(expireTime: string | undefined): number | null {
   }
   const timestamp = Date.parse(expireTime);
   return Number.isFinite(timestamp) ? timestamp : null;
-}
-
-function convertManagedGoogleTools(tools: NonNullable<GooglePromptCacheContext["tools"]>) {
-  if (tools.length === 0) {
-    return undefined;
-  }
-  return [
-    {
-      functionDeclarations: tools.map((tool) => ({
-        name: tool.name,
-        description: tool.description,
-        parametersJsonSchema: tool.parameters,
-      })),
-    },
-  ];
-}
-
-function mapManagedGoogleToolChoice(
-  choice: unknown,
-): { mode: "AUTO" | "NONE" | "ANY"; allowedFunctionNames?: string[] } | undefined {
-  if (!choice) {
-    return undefined;
-  }
-  if (
-    typeof choice === "object" &&
-    choice !== null &&
-    (choice as { type?: unknown }).type === "function"
-  ) {
-    const functionName = (choice as { function?: { name?: unknown } }).function?.name;
-    return typeof functionName === "string"
-      ? { mode: "ANY", allowedFunctionNames: [functionName] }
-      : { mode: "ANY" };
-  }
-  switch (choice) {
-    case "none":
-      return { mode: "NONE" };
-    case "any":
-    case "required":
-      return { mode: "ANY" };
-    default:
-      return { mode: "AUTO" };
-  }
-}
-
-function buildManagedGooglePromptCacheConfig(
-  context: GooglePromptCacheContext,
-  options: GooglePromptCacheOptions,
-) {
-  const tools = context.tools?.length ? convertManagedGoogleTools(context.tools) : undefined;
-  const toolChoice = tools
-    ? mapManagedGoogleToolChoice((options as { toolChoice?: unknown } | undefined)?.toolChoice)
-    : undefined;
-  const toolConfig = toolChoice ? { functionCallingConfig: toolChoice } : undefined;
-  const cacheConfigDigest =
-    tools || toolConfig
-      ? stableStringify({
-          tools,
-          toolConfig,
-        })
-      : undefined;
-  return {
-    cacheConfigDigest,
-    tools,
-    toolConfig,
-  };
 }
 
 function buildManagedContextForCachedContent(context: GooglePromptCacheContext) {

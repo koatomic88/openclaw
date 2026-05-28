@@ -3,7 +3,6 @@ import {
   createProviderApiKeyResolver,
   createProviderAuthResolver,
 } from "../../agents/models-config.providers.secrets.js";
-import type { Api } from "../../agents/pi-ai-contract.js";
 import { normalizeProviderId } from "../../agents/provider-id.js";
 import type { ModelProviderConfig } from "../../config/types.models.js";
 import type { OpenClawConfig } from "../../config/types.openclaw.js";

@@ -1,7 +1,6 @@
 import { emitAgentEvent } from "../infra/agent-events.js";
 import { getGlobalHookRunner } from "../plugins/hook-runner-global.js";
 import type { EmbeddedAgentSubscribeContext } from "./embedded-agent-subscribe.handlers.types.js";
-import type { AgentSessionEvent } from "./sessions/index.js";
 import { makeZeroUsageSnapshot } from "./usage.js";
 
 type CompactionReason = "manual" | "threshold" | "overflow";

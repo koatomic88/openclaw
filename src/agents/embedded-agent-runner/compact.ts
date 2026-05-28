@@ -516,13 +516,6 @@ async function compactEmbeddedAgentSessionDirectOnce(
     agentId: params.agentId,
     config: params.config,
   });
-  const runtimeHarnessPolicy = resolveAgentHarnessPolicy({
-    provider: runtimeProvider,
-    modelId,
-    config: params.config,
-    agentId: earlyAgentIds.sessionAgentId,
-    sessionKey: params.sessionKey,
-  });
   let thinkLevel: ThinkLevel = params.thinkLevel ?? "off";
   const attemptedThinking = new Set<ThinkLevel>();
   const fail = (reason: string, err?: unknown): EmbeddedAgentCompactResult => {

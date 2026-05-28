@@ -24,7 +24,7 @@ import type {
   MessagingToolSend,
   MessagingToolSourceReplyPayload,
 } from "../../embedded-agent-messaging.types.js";
-import type { Api, Model } from "../../pi-ai-contract.js";
+import type { Model } from "../../pi-ai-contract.js";
 import type { WorkspaceBootstrapFile } from "../../workspace.js";
 
 type SubscribeEmbeddedAgentSessionFn =

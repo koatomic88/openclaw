@@ -475,11 +475,7 @@ function resolvePersistedRegistryMemoState(params: {
       }),
     ];
   });
-  const installRecordFiles = installRecordPathFingerprints(
-    params.env,
-    installRecords,
-    watchedFiles,
-  );
+  installRecordPathFingerprints(params.env, installRecords, watchedFiles);
   const managedNpmDependencyFiles = managedNpmDependencyMetadataFingerprints(npmRoot, watchedFiles);
   const watchedFilesList = [...watchedFiles].toSorted();
   return {

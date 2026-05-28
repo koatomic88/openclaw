@@ -1,3 +1,4 @@
+import path from "node:path";
 import { vi } from "vitest";
 import {
   getTestPluginRegistry,
@@ -98,10 +99,11 @@ vi.mock("../agents/agent-model-discovery.js", async () => {
   );
 
   const createActualRegistry = (...args: Parameters<typeof actual.discoverModels>) => {
+    const modelsFile = path.join(args[1], "models.json");
     const Registry = actual.ModelRegistry as unknown as {
       create?: (
         authStorage: unknown,
-        agentDir?: string,
+        modelsFile: string,
       ) => {
         getAll: () => Array<{ provider?: string; id?: string }>;
         getAvailable: () => Array<{ provider?: string; id?: string }>;
@@ -109,7 +111,7 @@ vi.mock("../agents/agent-model-discovery.js", async () => {
       };
       new (
         authStorage: unknown,
-        agentDir?: string,
+        modelsFile: string,
       ): {
         getAll: () => Array<{ provider?: string; id?: string }>;
         getAvailable: () => Array<{ provider?: string; id?: string }>;
@@ -117,17 +119,17 @@ vi.mock("../agents/agent-model-discovery.js", async () => {
       };
     };
     if (typeof Registry.create === "function") {
-      return Registry.create(args[0], args[1]);
+      return Registry.create(args[0], modelsFile);
     }
-    return new Registry(args[0], args[1]);
+    return new Registry(args[0], modelsFile);
   };
 
   class MockModelRegistry {
     private readonly actualRegistry?: ReturnType<typeof createActualRegistry>;
 
-    constructor(authStorage: unknown, agentDir: string) {
-      if (!piSdkMock.enabled) {
-        this.actualRegistry = createActualRegistry(authStorage as never, agentDir);
+    constructor(authStorage: unknown, modelsFile: string) {
+      if (!agentDiscoveryMock.enabled) {
+        this.actualRegistry = createActualRegistry(authStorage as never, path.dirname(modelsFile));
       }
     }
 

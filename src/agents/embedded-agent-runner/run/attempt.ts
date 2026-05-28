@@ -130,8 +130,6 @@ import { DEFAULT_CONTEXT_TOKENS } from "../../defaults.js";
 import { resolveOpenClawReferencePaths } from "../../docs-path.js";
 import type { EmbeddedContextFile } from "../../embedded-agent-helpers.js";
 import {
-  downgradeOpenAIFunctionCallReasoningPairs,
-  downgradeOpenAIReasoningBlocks,
   isCloudCodeAssistFormatError,
   resolveBootstrapMaxChars,
   resolveBootstrapPromptTruncationWarningMode,
@@ -147,10 +145,7 @@ import { filterLocalModelLeanTools, isLocalModelLeanEnabled } from "../../local-
 import { resolveModelAuthMode } from "../../model-auth.js";
 import { resolveDefaultModelForAgent } from "../../model-selection.js";
 import { supportsModelTools } from "../../model-tool-support.js";
-import {
-  createAgentSession as createPiAgentSession,
-  DefaultResourceLoader,
-} from "../../pi-coding-agent-contract.js";
+import { createAgentSession as createPiAgentSession } from "../../pi-coding-agent-contract.js";
 import { wrapStreamFnTextTransforms } from "../../plugin-text-transforms.js";
 import { resolveAgentPromptSurfaceForSessionKey } from "../../prompt-surface.js";
 import { describeProviderRequestRoutingSummary } from "../../provider-attribution.js";
@@ -219,10 +214,7 @@ import { shouldAllowProviderOwnedThinkingReplay } from "../../transcript-policy.
 import { repairTranscriptSessionStateIfNeeded } from "../../transcript-state-repair.js";
 import { openTranscriptSessionManagerForSession } from "../../transcript/session-manager.js";
 import type { SessionTranscriptScope } from "../../transcript/session-transcript-types.js";
-import {
-  readTranscriptStateForSessionSync,
-  removeTailEntriesFromSqliteTranscript,
-} from "../../transcript/transcript-persistence.js";
+import { readTranscriptStateForSessionSync } from "../../transcript/transcript-persistence.js";
 import { normalizeUsage, type NormalizedUsage } from "../../usage.js";
 import { DEFAULT_BOOTSTRAP_FILENAME, type WorkspaceBootstrapFile } from "../../workspace.js";
 import { isRunnerAbortError } from "../abort.js";
@@ -501,25 +493,6 @@ function logRuntimeToolSchemaQuarantine(params: {
   );
 }
 
-function collectTrustedPluginLocalMediaToolNames(params: {
-  tools: readonly Parameters<typeof getPluginToolMeta>[0][];
-}): Set<string> {
-  const names = new Set<string>();
-  for (const tool of params.tools) {
-    const name = (tool.name ?? "").trim();
-    if (name && getPluginToolMeta(tool)?.trustedLocalMedia === true) {
-      names.add(name);
-    }
-  }
-  return names;
-}
-
-function collectTrustedLocalMediaToolNames(params: {
-  coreBuiltinToolNames: ReadonlySet<string>;
-  trustedPluginToolNames: ReadonlySet<string>;
-}): Set<string> {
-  return new Set([...params.coreBuiltinToolNames, ...params.trustedPluginToolNames]);
-}
 const MAX_BTW_SNAPSHOT_MESSAGES = 100;
 const TOOL_SEARCH_CONTROL_ALLOWLIST_NAMES = [
   TOOL_SEARCH_CODE_MODE_TOOL_NAME,
@@ -1340,28 +1313,6 @@ function shouldPreservePromptErrorAfterCleanupError(params: {
     Boolean(params.promptError) &&
     params.cleanupError instanceof EmbeddedAttemptSessionTakeoverError
   );
-}
-
-function getAttemptAbortReason(signal: AbortSignal): unknown {
-  return "reason" in signal ? (signal as { reason?: unknown }).reason : undefined;
-}
-
-function createAttemptAbortError(signal: AbortSignal): Error {
-  const reason = getAttemptAbortReason(signal);
-  const err =
-    reason instanceof Error
-      ? new Error(reason.message, { cause: reason })
-      : reason
-        ? new Error("aborted", { cause: reason })
-        : new Error("aborted");
-  err.name = "AbortError";
-  return err;
-}
-
-function throwIfAttemptAbortSignalFired(signal: AbortSignal | undefined): void {
-  if (signal?.aborted === true) {
-    throw createAttemptAbortError(signal);
-  }
 }
 
 class EmbeddedAttemptPromptErrorWithCleanupTakeoverError extends Error {
@@ -2825,13 +2776,6 @@ export async function runEmbeddedAttempt(
       const coreBuiltinToolNames = collectCoreBuiltinToolNames(uncompactedEffectiveTools, {
         isPluginTool: (tool) =>
           Boolean(getPluginToolMeta(tool as Parameters<typeof getPluginToolMeta>[0])),
-      });
-      const trustedPluginLocalMediaToolNames = collectTrustedPluginLocalMediaToolNames({
-        tools: uncompactedEffectiveTools,
-      });
-      const trustedLocalMediaToolNames = collectTrustedLocalMediaToolNames({
-        coreBuiltinToolNames,
-        trustedPluginToolNames: trustedPluginLocalMediaToolNames,
       });
       const clientToolNameConflicts = findClientToolNameConflicts({
         tools: clientTools ?? [],

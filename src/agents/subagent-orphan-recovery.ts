@@ -21,14 +21,7 @@ import { callGateway } from "../gateway/call.js";
 import { readSessionMessagesAsync } from "../gateway/session-transcript-readers.js";
 import { formatErrorMessage } from "../infra/errors.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
-import { buildAnnounceIdempotencyKey } from "./announce-idempotency.js";
 import { resolveInternalSessionEffectsTranscriptPath } from "./internal-session-effects.js";
-import {
-  deliverSubagentAnnouncement,
-  isInternalAnnounceRequesterSession,
-  loadRequesterSessionEntry,
-} from "./subagent-announce-delivery.js";
-import { resolveAnnounceOrigin } from "./subagent-announce-origin.js";
 import {
   evaluateSubagentRecoveryGate,
   markSubagentRecoveryAttempt,
@@ -89,75 +82,6 @@ function buildResumeMessage(task: string, lastHumanMessage?: string): string {
 
   message += `Please continue where you left off.`;
   return message;
-}
-
-function buildRecoveryProgressPrompt(params: {
-  task: string;
-  attemptNumber: number;
-  maxAttempts: number;
-}): string {
-  const maxTaskLen = 160;
-  const taskLabel =
-    params.task.length > maxTaskLen ? `${params.task.slice(0, maxTaskLen)}...` : params.task;
-  return (
-    `A spawned subagent task was interrupted by a gateway restart or connection loss. ` +
-    `Automatic recovery is already in progress for "${taskLabel}" ` +
-    `(retry ${params.attemptNumber}/${params.maxAttempts}). ` +
-    `Send one brief update now in your normal voice: say the task was interrupted, ` +
-    `you are automatically resuming/retrying it, and you will report back when it either continues or truly fails. ` +
-    `Do not say the task has failed.`
-  );
-}
-
-async function announceRecoveryInProgress(params: {
-  runRecord: SubagentRunRecord;
-  attemptNumber: number;
-  maxAttempts: number;
-}): Promise<boolean> {
-  const requesterSessionKey = params.runRecord.requesterSessionKey?.trim();
-  if (!requesterSessionKey) {
-    return false;
-  }
-
-  const requesterOrigin = params.runRecord.requesterOrigin;
-  const requesterIsSubagent = isInternalAnnounceRequesterSession(requesterSessionKey);
-  let directOrigin = requesterOrigin;
-  if (!requesterIsSubagent) {
-    const { entry } = loadRequesterSessionEntry(requesterSessionKey);
-    directOrigin = resolveAnnounceOrigin(entry, requesterOrigin);
-  }
-
-  const prompt = buildRecoveryProgressPrompt({
-    task: params.runRecord.label || params.runRecord.task,
-    attemptNumber: params.attemptNumber,
-    maxAttempts: params.maxAttempts,
-  });
-
-  try {
-    const delivery = await deliverSubagentAnnouncement({
-      requesterSessionKey,
-      announceId: `${params.runRecord.runId}:recovery-progress`,
-      triggerMessage: prompt,
-      steerMessage: prompt,
-      summaryLine: params.runRecord.label || params.runRecord.task,
-      requesterSessionOrigin: requesterOrigin,
-      requesterOrigin,
-      completionDirectOrigin: requesterOrigin,
-      directOrigin,
-      sourceSessionKey: params.runRecord.childSessionKey,
-      sourceTool: "subagent_orphan_recovery",
-      targetRequesterSessionKey: requesterSessionKey,
-      requesterIsSubagent,
-      expectsCompletionMessage: false,
-      bestEffortDeliver: true,
-      directIdempotencyKey: buildAnnounceIdempotencyKey(
-        `${params.runRecord.runId}:recovery-progress`,
-      ),
-    });
-    return delivery.delivered;
-  } catch {
-    return false;
-  }
 }
 
 function extractMessageText(msg: unknown): string | undefined {

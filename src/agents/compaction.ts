@@ -10,7 +10,6 @@ import { isTimeoutError } from "./failover-error.js";
 
 type PartialSummaryError = Error & { partialSummary?: string };
 import { stripRuntimeContextCustomMessages } from "./internal-runtime-context.js";
-import { generateSummary as piGenerateSummary } from "./pi-coding-agent-contract.js";
 import { repairToolUseResultPairing, stripToolResultDetails } from "./session-transcript-repair.js";
 import { estimateTokens, generateSummary as agentGenerateSummary } from "./sessions/index.js";
 import { extractToolCallsFromAssistant, extractToolResultId } from "./tool-call-id.js";

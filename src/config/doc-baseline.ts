@@ -5,7 +5,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { resolveOpenClawPackageRootSync } from "../infra/openclaw-root.js";
 import { replaceFileAtomicSync } from "../infra/replace-file.js";
-import { sortUniqueStrings } from "../shared/string-normalization.js";
 import type { ConfigSchemaResponse } from "./schema.js";
 import { schemaHasChildren } from "./schema.shared.js";
 

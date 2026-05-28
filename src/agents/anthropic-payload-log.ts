@@ -4,7 +4,7 @@ import { parseBooleanValue } from "../utils/boolean.js";
 import { safeJsonStringify } from "../utils/safe-json.js";
 import type { AgentMessage, StreamFn } from "./agent-core-contract.js";
 import { sanitizeDiagnosticPayload } from "./payload-redaction.js";
-import type { Api, Model } from "./pi-ai-contract.js";
+import type { Model } from "./pi-ai-contract.js";
 import { getStateDiagnosticWriter, type StateDiagnosticWriter } from "./state-diagnostic-writer.js";
 
 type PayloadLogStage = "request" | "usage";

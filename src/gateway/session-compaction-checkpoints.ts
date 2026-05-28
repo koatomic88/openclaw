@@ -104,27 +104,6 @@ function sessionStoreCheckpoints(
   return Array.isArray(entry?.compactionCheckpoints) ? [...entry.compactionCheckpoints] : [];
 }
 
-async function statCheckpointSnapshotBytes(
-  checkpoints: readonly SessionCompactionCheckpoint[],
-): Promise<Map<string, number>> {
-  const bytesByPath = new Map<string, number>();
-  await Promise.all(
-    checkpoints.map(async (checkpoint) => {
-      const sessionFile = checkpointSnapshotPath(checkpoint);
-      if (!sessionFile || bytesByPath.has(sessionFile)) {
-        return;
-      }
-      try {
-        const stat = await fs.stat(sessionFile);
-        bytesByPath.set(sessionFile, stat.isFile() ? stat.size : 0);
-      } catch {
-        bytesByPath.set(sessionFile, 0);
-      }
-    }),
-  );
-  return bytesByPath;
-}
-
 export function resolveSessionCompactionCheckpointReason(params: {
   trigger?: "budget" | "overflow" | "manual";
   timedOut?: boolean;

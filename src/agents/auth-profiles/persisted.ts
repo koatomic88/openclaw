@@ -106,10 +106,6 @@ function hasInlineOAuthTokenMaterial(credential: OAuthCredential): boolean {
   );
 }
 
-function normalizeOptionalCredentialBoolean(value: unknown): boolean | undefined {
-  return typeof value === "boolean" ? value : undefined;
-}
-
 function normalizeExpiryField(value: unknown): number | undefined {
   if (value === undefined) {
     return undefined;

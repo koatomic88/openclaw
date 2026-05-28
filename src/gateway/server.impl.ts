@@ -72,6 +72,7 @@ import {
   listChannelPluginConfigTargetIds,
   pluginConfigTargetsChanged,
 } from "./plugin-channel-reload-targets.js";
+import { resolveGatewayPluginConfig } from "./runtime-plugin-config.js";
 import { resolveGatewayControlUiRootState } from "./server-control-ui-root.js";
 import { createLazyGatewayCronState } from "./server-cron-lazy.js";
 import { applyGatewayLaneConcurrency } from "./server-lanes.js";

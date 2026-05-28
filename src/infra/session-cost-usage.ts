@@ -11,7 +11,6 @@ import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { stripEnvelope, stripMessageIdHints } from "../shared/chat-envelope.js";
 import { asFiniteNumber } from "../shared/number-coercion.js";
 import { normalizeOptionalString } from "../shared/string-coerce.js";
-import { runTasksWithConcurrency } from "../utils/run-with-concurrency.js";
 import { countToolResults, extractToolCallNames } from "../utils/transcript-tools.js";
 import { estimateUsageCost, resolveModelCostConfig } from "../utils/usage-format.js";
 import type {

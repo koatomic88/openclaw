@@ -14,10 +14,7 @@ import { redactSensitiveText } from "../../logging/redact.js";
 import { createSubsystemLogger } from "../../logging/subsystem.js";
 import { annotateInterSessionPromptText } from "../../sessions/input-provenance.js";
 import { emitSessionTranscriptUpdate } from "../../sessions/transcript-events.js";
-import {
-  appendUserTurnTranscriptMessage,
-  type PersistedUserTurnMessage,
-} from "../../sessions/user-turn-transcript.js";
+import type { PersistedUserTurnMessage } from "../../sessions/user-turn-transcript.js";
 import { sanitizeForLog } from "../../terminal/ansi.js";
 import { resolveMessageChannel } from "../../utils/message-channel.js";
 import type { AgentMessage } from "../agent-core-contract.js";
@@ -28,7 +25,6 @@ import { runCliAgent } from "../cli-runner.js";
 import { getCliSessionBinding, setCliSessionBinding } from "../cli-session.js";
 import { runEmbeddedAgent, type EmbeddedAgentRunResult } from "../embedded-agent.js";
 import { FailoverError } from "../failover-error.js";
-import { runAgentHarnessBeforeMessageWriteHook } from "../harness/hook-helpers.js";
 import { resolveAvailableAgentHarnessPolicy } from "../harness/selection.js";
 import { resolveCliRuntimeExecutionProvider } from "../model-runtime-aliases.js";
 import { isCliProvider } from "../model-selection.js";

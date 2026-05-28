@@ -4,7 +4,6 @@ import {
   shouldSuppressBuiltInModel,
   shouldSuppressBuiltInModelFromManifest,
 } from "../../agents/model-suppression.js";
-import type { Api } from "../../agents/pi-ai-contract.js";
 import { normalizeProviderId } from "../../agents/provider-id.js";
 import type { ModelDefinitionConfig, ModelProviderConfig } from "../../config/types.models.js";
 import type { OpenClawConfig } from "../../config/types.openclaw.js";

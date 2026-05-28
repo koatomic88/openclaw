@@ -7,7 +7,6 @@ import { formatBlockedLivenessError, isBlockedLivenessState } from "../shared/ag
 import { createRunningTaskRun } from "../tasks/detached-task-runtime.js";
 import { normalizeDeliveryContext } from "../utils/delivery-context.shared.js";
 import type { DeliveryContext } from "../utils/delivery-context.types.js";
-import { removeInternalSessionEffectsTranscript } from "./internal-session-effects.js";
 import { isAbortedAgentStopReason } from "./run-termination.js";
 import { isRecoverableAgentWaitError, waitForAgentRun } from "./run-wait.js";
 import type { ensureRuntimePluginsLoaded as ensureRuntimePluginsLoadedFn } from "./runtime-plugins.js";
@@ -33,17 +32,12 @@ import {
   getSubagentSessionStartedAt,
   persistSubagentSessionTiming,
   resolveArchiveAfterMs,
-  safeRemoveAttachmentsDir,
 } from "./subagent-registry-helpers.js";
 import type { SubagentRunRecord } from "./subagent-registry.types.js";
 import type { SubagentSessionCompletion } from "./subagent-session-reconciliation.js";
 
 const log = createSubsystemLogger("agents/subagent-registry");
 const RECOVERABLE_WAIT_RETRY_DELAY_MS = process.env.OPENCLAW_TEST_FAST === "1" ? 25 : 5_000;
-
-function shouldDeleteAttachments(entry: SubagentRunRecord) {
-  return entry.cleanup === "delete" || !entry.retainAttachmentsOnKeep;
-}
 
 export function markSubagentRunPausedAfterYield(params: {
   entry: SubagentRunRecord;

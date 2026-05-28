@@ -6,7 +6,6 @@ import {
   resolveDefaultAgentId,
   resolveAgentWorkspaceDir,
 } from "../../agents/agent-scope.js";
-import { resolveTrustedGroupId } from "../../agents/agent-tools.policy.js";
 import {
   consumeExecApprovalFollowupRuntimeHandoff,
   parseExecApprovalFollowupApprovalId,
@@ -50,7 +49,7 @@ import { readSqliteSessionRoutingInfo } from "../../config/sessions/session-entr
 import { hasSqliteSessionTranscriptEvents } from "../../config/sessions/transcript-store.sqlite.js";
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
 import { registerAgentRunContext } from "../../infra/agent-events.js";
-import { formatUncaughtError, readErrorName } from "../../infra/errors.js";
+import { formatUncaughtError } from "../../infra/errors.js";
 import {
   resolveAgentDeliveryPlanWithSessionRoute,
   resolveAgentOutboundTarget,
@@ -82,7 +81,7 @@ import {
   normalizeOptionalLowercaseString,
   normalizeOptionalString,
 } from "../../shared/string-coerce.js";
-import { normalizeStringEntries, uniqueStrings } from "../../shared/string-normalization.js";
+import { uniqueStrings } from "../../shared/string-normalization.js";
 import { createRunningTaskRun, finalizeTaskRunByRunId } from "../../tasks/detached-task-runtime.js";
 import type { TaskStatus } from "../../tasks/task-registry.types.js";
 import {
@@ -1257,13 +1256,6 @@ export const agentHandlers: GatewayRequestHandlers = {
             channel: routingInfo?.channel ?? entry?.channel ?? request.channel,
           }),
         });
-        const lifecycleTimestamps = entry
-          ? resolveSessionLifecycleTimestamps({
-              entry,
-              databasePath,
-              agentId: resolveAgentIdFromSessionKey(canonicalKey),
-            })
-          : undefined;
         const freshness = entry
           ? evaluateSessionFreshness({
               updatedAt: entry.updatedAt,

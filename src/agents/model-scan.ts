@@ -10,7 +10,6 @@ import {
   type Context,
   complete,
   getEnvApiKey,
-  getModel,
   type Model,
   type OpenAICompletionsOptions,
   type Tool,

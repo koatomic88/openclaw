@@ -178,7 +178,7 @@ export function resolveProviderAuthOverview(params: {
       return { kind: "synthetic", detail: params.syntheticAuth.source };
     }
     if (customKey && isOAuthApiKeyMarker(customKey)) {
-      return { kind: "models.json", detail: formatMarkerOrSecret(customKey) };
+      return { kind: "model_catalog", detail: formatMarkerOrSecret(customKey) };
     }
     return { kind: "missing", detail: "missing" };
   })();

@@ -4,7 +4,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { resolveAgentIdByWorkspacePath, resolveDefaultAgentId } from "../agents/agent-scope.js";
 import { getRuntimeConfig, type OpenClawConfig } from "../config/config.js";
-import { isChatStopCommandText } from "../gateway/chat-abort.js";
 import type { CommandEntry } from "../gateway/protocol/index.js";
 import { registerUncaughtExceptionHandler } from "../infra/unhandled-rejections.js";
 import { setConsoleSubsystemFilter } from "../logging/console.js";

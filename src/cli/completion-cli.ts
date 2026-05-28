@@ -31,6 +31,104 @@ export function getCompletionScript(shell: CompletionShell, program: Command): s
   return generateFishCompletion(program);
 }
 
+function splitOptionFlags(flags: string): string[] {
+  return flags.split(/[ ,|]+/u).filter(Boolean);
+}
+
+function preferredCompletionFlag(flags: string): string {
+  const parts = splitOptionFlags(flags);
+  return parts.find((flag) => flag.startsWith("--")) ?? parts[0] ?? flags;
+}
+
+function fishWords(values: readonly string[]): string {
+  return values.join(" ");
+}
+
+function fishOptionFlags(options: Command["options"], wantsValue: boolean): string[] {
+  return options.flatMap((option) => {
+    if ((option.required || option.optional) !== wantsValue) {
+      return [];
+    }
+    return splitOptionFlags(option.flags).filter((flag) => flag.startsWith("-"));
+  });
+}
+
+function collectFishPathOptionFlags(
+  program: Command,
+  parents: readonly string[],
+  wantsValue: boolean,
+): string[] {
+  const flags = new Set(fishOptionFlags(program.options, wantsValue));
+  let current: Command | undefined = program;
+  for (const name of parents) {
+    current = current?.commands.find((cmd) => cmd.name() === name);
+    if (!current) {
+      break;
+    }
+    for (const flag of fishOptionFlags(current.options, wantsValue)) {
+      flags.add(flag);
+    }
+  }
+  return [...flags];
+}
+
+function generateFishPathHelper(rootCmd: string): string {
+  return `
+function __${rootCmd}_command_path_matches
+  set -l expected
+  set -l value_options
+  set -l reading_value_options 0
+  for arg in $argv
+    if test "$arg" = "--"
+      set reading_value_options 1
+      continue
+    end
+    if test $reading_value_options -eq 1
+      set -a value_options $arg
+    else
+      set -a expected $arg
+    end
+  end
+  set -l tokens (commandline -opc)
+  set -e tokens[1]
+  set -l command_tokens
+  set -l skip_next 0
+  for token in $tokens
+    if test $skip_next -eq 1
+      set skip_next 0
+      continue
+    end
+    set -l flag (string split -m1 "=" -- $token)[1]
+    if contains -- $flag $value_options
+      if not string match -q -- "*=*" $token
+        set skip_next 1
+      end
+      continue
+    end
+    if string match -q -- "-*" $token
+      continue
+    end
+    set -a command_tokens $token
+  end
+  for i in (seq (count $expected))
+    if test "$command_tokens[$i]" != "$expected[$i]"
+      return 1
+    end
+  end
+  return 0
+end
+`;
+}
+
+function fishCommandPathCondition(
+  program: Command,
+  rootCmd: string,
+  parents: readonly string[],
+): string {
+  const valueOptions = collectFishPathOptionFlags(program, parents, true);
+  return `__${rootCmd}_command_path_matches ${parents.join(" ")} -- ${fishWords(valueOptions)}`.trimEnd();
+}
+
 function writeCompletionRegistrationWarning(message: string): void {
   process.stderr.write(`[completion] ${message}\n`);
 }

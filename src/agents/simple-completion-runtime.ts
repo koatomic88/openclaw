@@ -21,7 +21,6 @@ import {
   resolveModelRefFromString,
 } from "./model-selection.js";
 import { isOpenAIProvider, OPENAI_CODEX_PROVIDER_ID } from "./openai-codex-routing.js";
-import { type Api } from "./pi-ai-contract.js";
 import { prepareModelForSimpleCompletion } from "./simple-completion-transport.js";
 
 type SimpleCompletionAuthStorage = {

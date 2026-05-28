@@ -58,9 +58,6 @@ import { isAbortError } from "../../infra/unhandled-rejections.js";
 import {
   logMessageDispatchCompleted,
   logMessageDispatchStarted,
-  logMessageProcessed,
-  logMessageQueued,
-  logSessionStateChange,
   markDiagnosticSessionProgress,
 } from "../../logging/diagnostic.js";
 import { createDiagnosticMessageLifecycle } from "../../logging/message-lifecycle.js";
