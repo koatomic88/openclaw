@@ -661,6 +661,7 @@ function pageRunLogEntries(
         [
           entry.summary ?? "",
           entry.error ?? "",
+          entry.errorReason ?? "",
           entry.diagnostics?.summary ?? "",
           ...(entry.diagnostics?.entries ?? []).map((diagnostic) => diagnostic.message),
           entry.jobId,
@@ -743,6 +744,7 @@ export async function readCronRunLogEntriesPageAllFromSqlite(
     return [
       entry.summary ?? "",
       entry.error ?? "",
+      entry.errorReason ?? "",
       entry.diagnostics?.summary ?? "",
       ...(entry.diagnostics?.entries ?? []).map((diagnostic) => diagnostic.message),
       entry.jobId,

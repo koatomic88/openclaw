@@ -2,7 +2,35 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { readCronRunLogEntriesPage } from "./run-log.js";
+import { parseAllRunLogEntries, type CronRunLogEntry } from "./run-log.js";
+
+type TestRunLogPageOptions = {
+  limit: number;
+  query?: string;
+  sortDir?: "asc" | "desc";
+};
+
+async function readLegacyCronRunLogEntriesPage(
+  file: string,
+  options: TestRunLogPageOptions,
+): Promise<{ entries: CronRunLogEntry[] }> {
+  const raw = await fs.readFile(file, "utf8");
+  const query = options.query?.trim().toLowerCase() ?? "";
+  const entries = parseAllRunLogEntries(raw)
+    .filter((entry) => {
+      if (!query) {
+        return true;
+      }
+      return [entry.summary, entry.error, entry.errorReason, entry.jobId]
+        .filter((value): value is string => typeof value === "string")
+        .join(" ")
+        .toLowerCase()
+        .includes(query);
+    })
+    .toSorted((a, b) => (options.sortDir === "asc" ? a.ts - b.ts : b.ts - a.ts))
+    .slice(0, options.limit);
+  return { entries };
+}
 
 describe("cron run log errorReason", () => {
   it("backfills errorReason from timeout error text for older entries", async () => {
@@ -20,7 +48,7 @@ describe("cron run log errorReason", () => {
       "utf8",
     );
 
-    const page = await readCronRunLogEntriesPage(file, { limit: 10 });
+    const page = await readLegacyCronRunLogEntriesPage(file, { limit: 10 });
     expect(page.entries[0]?.errorReason).toBe("timeout");
   });
 
@@ -59,7 +87,7 @@ describe("cron run log errorReason", () => {
       "utf8",
     );
 
-    const page = await readCronRunLogEntriesPage(file, { limit: 50, sortDir: "asc" });
+    const page = await readLegacyCronRunLogEntriesPage(file, { limit: 50, sortDir: "asc" });
     expect(page.entries.map((entry) => entry.errorReason)).toEqual(reasons);
   });
 
@@ -79,7 +107,7 @@ describe("cron run log errorReason", () => {
       "utf8",
     );
 
-    const page = await readCronRunLogEntriesPage(file, { limit: 10 });
+    const page = await readLegacyCronRunLogEntriesPage(file, { limit: 10 });
     expect(page.entries[0]?.errorReason).toBe("overloaded");
   });
 
@@ -99,7 +127,7 @@ describe("cron run log errorReason", () => {
       "utf8",
     );
 
-    const page = await readCronRunLogEntriesPage(file, { limit: 10 });
+    const page = await readLegacyCronRunLogEntriesPage(file, { limit: 10 });
     expect(page.entries[0]?.errorReason).toBe("billing");
   });
 
@@ -118,7 +146,7 @@ describe("cron run log errorReason", () => {
       "utf8",
     );
 
-    const page = await readCronRunLogEntriesPage(file, { limit: 10, query: "timeout" });
+    const page = await readLegacyCronRunLogEntriesPage(file, { limit: 10, query: "timeout" });
     expect(page.entries).toHaveLength(1);
     expect(page.entries[0]?.errorReason).toBe("timeout");
   });
