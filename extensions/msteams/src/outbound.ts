@@ -8,6 +8,7 @@ import {
   resolveTextChunksWithFallback,
   sendPayloadMediaSequence,
 } from "openclaw/plugin-sdk/reply-payload";
+import { normalizeStringEntries } from "openclaw/plugin-sdk/string-coerce-runtime";
 import { chunkTextForOutbound, type ChannelOutboundAdapter } from "../runtime-api.js";
 import { createMSTeamsPollStoreState } from "./polls.js";
 import { buildMSTeamsPresentationCard, MSTEAMS_PRESENTATION_CAPABILITIES } from "./presentation.js";

@@ -45,6 +45,28 @@ export function getHomeDir(): string {
 }
 
 /**
+ * Resolve the effective OpenClaw home directory.
+ *
+ * Mirrors core's `OPENCLAW_HOME` contract without importing core internals.
+ */
+function resolveOpenClawHome(): string {
+  const raw = process.env.OPENCLAW_HOME?.trim();
+  if (!raw || raw === "undefined" || raw === "null") {
+    return getHomeDir();
+  }
+
+  if (raw === "~" || raw.startsWith("~/") || raw.startsWith("~\\")) {
+    const osHome = getHomeDir();
+    if (raw === "~") {
+      return osHome;
+    }
+    return path.join(osHome, raw.slice(2));
+  }
+
+  return raw;
+}
+
+/**
  * Return a path under `<openclaw-home>/.openclaw/media/qqbot` without creating it.
  *
  * Runtime QQBot files are media materializations/downloads, not durable state.
@@ -198,8 +220,13 @@ export function resolveQQBotLocalMediaPath(p: string): string {
   const osHomeDir = getHomeDir();
   const openclawHomeDir = resolveOpenClawHome();
   const mediaRoot = getQQBotMediaPath();
-  const workspaceRoot = path.join(homeDir, ".openclaw", "workspace", "qqbot");
-  const candidateRoots = [{ from: workspaceRoot, to: mediaRoot }];
+  const workspaceRoots = Array.from(
+    new Set([
+      path.join(osHomeDir, ".openclaw", "workspace", "qqbot"),
+      path.join(openclawHomeDir, ".openclaw", "workspace", "qqbot"),
+    ]),
+  );
+  const candidateRoots = workspaceRoots.map((from) => ({ from, to: mediaRoot }));
 
   for (const { from, to } of candidateRoots) {
     if (!isPathWithinRoot(normalized, from)) {

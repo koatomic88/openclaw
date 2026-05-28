@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { loadJsonFile } from "openclaw/plugin-sdk/json-store";
+import { uniqueStrings } from "openclaw/plugin-sdk/string-coerce-runtime";
 import { getHomeDir, getQQBotMediaDir, isWindows } from "../../utils/platform.js";
 import type { SlashCommandResult } from "../slash-commands.js";
 
