@@ -16,6 +16,7 @@ import type { ModelCompatConfig } from "../config/types.models.js";
 import { getEnvApiKey } from "../llm/env-api-keys.js";
 import { calculateCost } from "../llm/model-utils.js";
 import { convertMessages } from "../llm/providers/openai-completions.js";
+import { clampOpenAIPromptCacheKey } from "../llm/providers/openai-prompt-cache.js";
 import type { Api, Context, Model } from "../llm/types.js";
 import { createAssistantMessageEventStream } from "../llm/utils/event-stream.js";
 import { parseStreamingJson } from "../llm/utils/json-parse.js";
@@ -115,6 +116,7 @@ type BaseStreamOptions = {
   apiKey?: string;
   cacheRetention?: "none" | "short" | "long";
   sessionId?: string;
+  promptCacheKey?: string;
   authProfileId?: string;
   onPayload?: (payload: unknown, model: Model<Api>) => unknown;
   headers?: Record<string, string>;
@@ -1853,6 +1855,16 @@ function getPromptCacheRetention(
   return baseUrl?.includes("api.openai.com") ? "24h" : undefined;
 }
 
+function resolvePromptCacheKey(
+  options: Pick<BaseStreamOptions, "promptCacheKey" | "sessionId"> | undefined,
+  cacheRetention: "short" | "long" | "none",
+): string | undefined {
+  if (cacheRetention === "none") {
+    return undefined;
+  }
+  return clampOpenAIPromptCacheKey(options?.promptCacheKey ?? options?.sessionId);
+}
+
 function resolveOpenAIReasoningEffort(
   options: OpenAIResponsesOptions | undefined,
 ): OpenAIApiReasoningEffort {
@@ -2041,6 +2053,7 @@ export function buildOpenAIResponsesParams(
     ensureOpenAICodexResponsesInput(messages, context);
   }
   const cacheRetention = resolveCacheRetention(options?.cacheRetention);
+  const promptCacheKey = resolvePromptCacheKey(options, cacheRetention);
   const payloadPolicy = resolveOpenAIResponsesPayloadPolicy(model, {
     storeMode: "disable",
   });
@@ -2048,7 +2061,7 @@ export function buildOpenAIResponsesParams(
     model: model.id,
     input: messages,
     stream: true,
-    prompt_cache_key: cacheRetention === "none" ? undefined : options?.sessionId,
+    prompt_cache_key: promptCacheKey,
     prompt_cache_retention: getPromptCacheRetention(model.baseUrl, cacheRetention),
     ...(isCodexResponses ? { instructions: buildOpenAICodexResponsesInstructions(context) } : {}),
     ...(metadata ? { metadata } : {}),
@@ -3493,8 +3506,9 @@ export function buildOpenAICompletionsParams(
   if (compat.supportsStore) {
     params.store = false;
   }
-  if (compat.supportsPromptCacheKey && cacheRetention !== "none" && options?.sessionId) {
-    params.prompt_cache_key = options.sessionId;
+  const promptCacheKey = resolvePromptCacheKey(options, cacheRetention);
+  if (compat.supportsPromptCacheKey && promptCacheKey) {
+    params.prompt_cache_key = promptCacheKey;
     // When the caller explicitly opted into long retention, forward the
     // canonical prompt_cache_retention value alongside the cache key so
     // OpenAI-compatible completions backends (oMLX, llama.cpp, official

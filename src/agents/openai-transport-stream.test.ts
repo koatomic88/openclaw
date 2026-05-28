@@ -1,4 +1,5 @@
 import { createServer } from "node:http";
+import type { Api, Model } from "openclaw/plugin-sdk/llm";
 import { describe, expect, it, vi } from "vitest";
 import {
   buildOpenAIResponsesParams,
@@ -9,7 +10,6 @@ import {
   sanitizeTransportPayloadText,
   testing,
 } from "./openai-transport-stream.js";
-import type { Model } from "./pi-ai-contract.js";
 import { attachModelProviderRequestTransport } from "./provider-request-config.js";
 import {
   buildTransportAwareSimpleStreamFn,
