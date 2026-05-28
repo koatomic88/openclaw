@@ -104,7 +104,7 @@ async function openSharedAuthPairingSession(
   const pairingWs = await openTrackedWs(port);
   await connectOk(pairingWs, {
     token: "secret",
-    deviceIdentityPath: operator.identityPath,
+    deviceIdentityKey: operator.identityKey,
     scopes,
   });
   return pairingWs;
@@ -154,7 +154,7 @@ async function openTrustedProxyPairingSession(
   await connectOk(pairingWs, {
     skipDefaultAuth: true,
     client: CONTROL_UI_CLIENT,
-    deviceIdentityPath: operator.identityPath,
+    deviceIdentityKey: operator.identityKey,
     scopes,
   });
   return pairingWs;

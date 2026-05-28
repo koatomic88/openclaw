@@ -297,7 +297,7 @@ describe("gateway node pairing authorization", () => {
         await connectOk(ws, {
           token: "secret",
           scopes: ["operator.pairing"],
-          deviceIdentityPath: `${await makeNodePairingStateDir()}/operator-pairing.json`,
+          deviceIdentityKey: `${await makeNodePairingStateDir()}/operator-pairing.json`,
         });
         const request = await requestNodePairing({
           nodeId: "node-rpc-approve-reject-admin",
@@ -324,7 +324,7 @@ describe("gateway node pairing authorization", () => {
         await connectOk(ws, {
           token: "secret",
           scopes: ["operator.write"],
-          deviceIdentityPath: `${await makeNodePairingStateDir()}/operator-write.json`,
+          deviceIdentityKey: `${await makeNodePairingStateDir()}/operator-write.json`,
         });
         const request = await requestNodePairing({
           nodeId: "node-rpc-approve-reject-pairing",
