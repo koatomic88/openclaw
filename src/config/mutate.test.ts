@@ -9,7 +9,11 @@ import {
   replaceConfigFile,
   transformConfigFileWithRetry,
 } from "./mutate.js";
-import { registerRuntimeConfigWriteListener, resetConfigRuntimeState } from "./runtime-snapshot.js";
+import {
+  registerRuntimeConfigWriteListener,
+  resetConfigRuntimeState,
+  setRuntimeConfigSnapshotRefreshHandler,
+} from "./runtime-snapshot.js";
 import { sourceBundledPluginTestEnv } from "./test-helpers.js";
 import type { ConfigFileSnapshot, OpenClawConfig } from "./types.js";
 
