@@ -98,7 +98,7 @@ describe("legacy session transcript migration", () => {
         type: "message",
         timestamp: "2026-05-06T00:00:02.000Z",
         message: { role: "assistant", content: "hi", timestamp: 2 },
-      } as SessionEntry,
+      } as unknown as SessionEntry,
     ];
     const first = createEntries();
     const second = createEntries();

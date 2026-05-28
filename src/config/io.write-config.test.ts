@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+import { readPersistedInstalledPluginIndex } from "../plugins/installed-plugin-index-store.js";
 import type { PluginManifestRegistry } from "../plugins/manifest-registry.js";
 import { closeOpenClawStateDatabaseForTest } from "../state/openclaw-state-db.js";
 import { createSuiteTempRootTracker } from "../test-helpers/temp-dir.js";
@@ -73,6 +74,16 @@ describe("config io write", () => {
     const home = await suiteRootTracker.make("case");
     return fn(home);
   }
+
+  const expectConfigWriteRejected = async (promise: Promise<unknown>) => {
+    try {
+      await promise;
+    } catch (error) {
+      expect((error as { code?: unknown }).code).toBe("CONFIG_WRITE_REJECTED");
+      return;
+    }
+    throw new Error("expected config write to be rejected");
+  };
 
   beforeAll(async () => {
     await suiteRootTracker.setup();
@@ -377,9 +388,7 @@ describe("config io write", () => {
         gateway: { mode: "local", port: 18790 },
       });
 
-      expect(warn.mock.calls).toContainEqual([
-        expect.stringContaining("Config write anomaly:"),
-      ]);
+      expect(warn.mock.calls).toContainEqual([expect.stringContaining("Config write anomaly:")]);
       expect(warn.mock.calls).toContainEqual([
         expect.stringContaining("missing-meta-before-write"),
       ]);

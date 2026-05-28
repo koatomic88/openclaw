@@ -417,7 +417,7 @@ describe("config observe recovery", () => {
 
   it("retries recovery on next launch after a failed copyFile restore", async () => {
     await withSuiteHome(async (home) => {
-      const { deps, configPath, auditPath, warn } = makeDeps(home);
+      const { deps, configPath, stateDir, warn } = makeDeps(home);
       await seedConfigBackup(configPath, recoverableTelegramConfig);
       const clobbered = await writeClobberedUpdateChannel(configPath);
 
@@ -437,7 +437,7 @@ describe("config observe recovery", () => {
       });
 
       expectWarnContaining(warn, "Config auto-restore from backup failed:");
-      const firstEvents = await readObserveEvents(auditPath);
+      const firstEvents = await readObserveEvents(stateDir);
       expect(firstEvents).toHaveLength(1);
       expect(firstEvents[0]?.restoredFromBackup).toBe(false);
 
@@ -450,7 +450,7 @@ describe("config observe recovery", () => {
 
       expect((retryResult.parsed as { gateway?: { mode?: string } }).gateway?.mode).toBe("local");
       await expect(fsp.readFile(configPath, "utf-8")).resolves.not.toBe(clobbered.raw);
-      const retryEvents = await readObserveEvents(auditPath);
+      const retryEvents = await readObserveEvents(stateDir);
       expect(retryEvents).toHaveLength(2);
       expect(retryEvents[1]?.restoredFromBackup).toBe(true);
     });
@@ -458,7 +458,7 @@ describe("config observe recovery", () => {
 
   it("sync recovery retries on next launch after a failed copyFileSync restore", async () => {
     await withSuiteHome(async (home) => {
-      const { deps, configPath, auditPath, warn } = makeDeps(home);
+      const { deps, configPath, stateDir, warn } = makeDeps(home);
       await seedConfigBackup(configPath, recoverableTelegramConfig);
       const clobbered = await writeClobberedUpdateChannel(configPath);
 
@@ -477,7 +477,7 @@ describe("config observe recovery", () => {
       });
 
       expectWarnContaining(warn, "Config auto-restore from backup failed:");
-      const firstEvents = await readObserveEvents(auditPath);
+      const firstEvents = await readObserveEvents(stateDir);
       expect(firstEvents).toHaveLength(1);
       expect(firstEvents[0]?.restoredFromBackup).toBe(false);
 
@@ -490,7 +490,7 @@ describe("config observe recovery", () => {
 
       expect((retryResult.parsed as { gateway?: { mode?: string } }).gateway?.mode).toBe("local");
       await expect(fsp.readFile(configPath, "utf-8")).resolves.not.toBe(clobbered.raw);
-      const retryEvents = await readObserveEvents(auditPath);
+      const retryEvents = await readObserveEvents(stateDir);
       expect(retryEvents).toHaveLength(2);
       expect(retryEvents[1]?.restoredFromBackup).toBe(true);
     });

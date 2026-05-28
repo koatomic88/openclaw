@@ -37,7 +37,15 @@ afterAll(() => {
   }
 });
 
-async function openDeviceTokenWs(): Promise<WebSocket> {
+async function openDeviceTokenWsWithDetails(
+  params: { issuerGeneration?: string; browserClient?: boolean } = {},
+): Promise<{
+  ws: WebSocket;
+  deviceId: string;
+  hello: Awaited<ReturnType<typeof connectOk>> & {
+    auth?: { deviceToken?: unknown };
+  };
+}> {
   const identityKey = `test:shared-auth:${process.pid}:${port}`;
   const { loadOrCreateDeviceIdentity, publicKeyRawBase64UrlFromPem } =
     await import("../infra/device-identity.js");
@@ -100,8 +108,9 @@ async function openDeviceTokenWs(): Promise<WebSocket> {
   await new Promise<void>((resolve) => ws.once("open", resolve));
   const hello = (await connectOk(ws, {
     skipDefaultAuth: true,
+    client,
     deviceIdentityKey: identityKey,
-    deviceToken: rotated.ok ? rotated.entry.token : "",
+    deviceToken: issuedDeviceToken,
     scopes: ["operator.admin"],
   })) as Awaited<ReturnType<typeof connectOk>> & {
     auth?: { deviceToken?: unknown };

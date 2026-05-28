@@ -108,14 +108,6 @@ describe("handleReset", () => {
     vi.stubEnv("OPENCLAW_CONFIG_PATH", profileConfigPath);
 
     const runtime = { log: vi.fn() } as unknown as RuntimeEnv;
-    const expectedTrashedPaths = [
-      profileConfigPath,
-      profileCredentialsDir,
-      profileSessionsDir,
-      workspaceDir,
-    ].map(expectedTrashSourcePath);
-    const expectedDefaultCredentialsDir = expectedTrashSourcePath(defaultCredentialsDir);
-
     try {
       await handleReset("full", workspaceDir, runtime);
     } finally {
