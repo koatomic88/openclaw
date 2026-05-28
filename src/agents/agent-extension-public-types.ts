@@ -1,5 +1,5 @@
 import type { AgentMessage, AgentToolResult } from "./agent-core-contract.js";
-import type { Api, Model } from "./pi-ai-contract.js";
+import type { Model } from "./pi-ai-contract.js";
 
 export type AgentSessionEventListener<TEvent = unknown> = {
   bivarianceHack(event: TEvent): void;

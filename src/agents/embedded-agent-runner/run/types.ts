@@ -17,7 +17,6 @@ import type {
   MessagingToolSend,
   MessagingToolSourceReplyPayload,
 } from "../../embedded-agent-messaging.types.js";
-import type { Api } from "../../pi-ai-contract.js";
 import type { AgentRunTimeoutPhase } from "../../run-timeout-attribution.js";
 import type { AgentRuntimePlan } from "../../runtime-plan/types.js";
 import type { AuthStorage, ModelRegistry } from "../../sessions/index.js";
