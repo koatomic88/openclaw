@@ -647,7 +647,7 @@ describe("gateway server chat", () => {
       await connectOk(ws);
       const sessionDir = await createSessionDir();
       const sessionStartedAt = Date.parse("2026-05-23T04:02:30.000Z");
-      await writeSessionStore({
+      await seedGatewaySessionEntries({
         entries: {
           main: {
             sessionId: "sess-main",
@@ -701,7 +701,7 @@ describe("gateway server chat", () => {
       await connectOk(ws);
       const sessionDir = await createSessionDir();
       const sessionStartedAt = Date.parse("2026-05-23T04:02:30.000Z");
-      await writeSessionStore({
+      await seedGatewaySessionEntries({
         entries: {
           main: {
             sessionId: "sess-main",

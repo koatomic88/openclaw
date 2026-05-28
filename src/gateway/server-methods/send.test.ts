@@ -1486,7 +1486,7 @@ describe("gateway send mirroring", () => {
         handleAction: async () => jsonResult({ ok: true, messageId: "tg-async-1" }),
       },
     };
-    const mirrorDeferred = createDeferred<{ ok: boolean; sessionFile: string }>();
+    const mirrorDeferred = createDeferred<{ ok: boolean; messageId: string }>();
     mocks.getChannelPlugin.mockReturnValue(telegramPlugin);
     setActivePluginRegistry(
       createTestRegistry([{ pluginId: "telegram", source: "test", plugin: telegramPlugin }]),
@@ -1526,7 +1526,7 @@ describe("gateway send mirroring", () => {
     });
     expect(respond).not.toHaveBeenCalled();
 
-    mirrorDeferred.resolve({ ok: true, sessionFile: "x" });
+    mirrorDeferred.resolve({ ok: true, messageId: "x" });
     await request;
 
     expect(firstRespondCall(respond)[0]).toBe(true);
@@ -1554,7 +1554,7 @@ describe("gateway send mirroring", () => {
         handleAction: async () => jsonResult({ ok: true, messageId: "tg-ordered" }),
       },
     };
-    const firstMirrorDeferred = createDeferred<{ ok: boolean; sessionFile: string }>();
+    const firstMirrorDeferred = createDeferred<{ ok: boolean; messageId: string }>();
     mocks.getChannelPlugin.mockReturnValue(telegramPlugin);
     setActivePluginRegistry(
       createTestRegistry([{ pluginId: "telegram", source: "test", plugin: telegramPlugin }]),
@@ -1565,7 +1565,7 @@ describe("gateway send mirroring", () => {
     );
     mocks.appendAssistantMessageToSessionTranscript
       .mockReturnValueOnce(firstMirrorDeferred.promise)
-      .mockResolvedValueOnce({ ok: true, sessionFile: "x" });
+      .mockResolvedValueOnce({ ok: true, messageId: "x" });
 
     const firstRespond = vi.fn();
     const secondRespond = vi.fn();
@@ -1624,7 +1624,7 @@ describe("gateway send mirroring", () => {
       expect.objectContaining({ text: "first visible reply" }),
     );
 
-    firstMirrorDeferred.resolve({ ok: true, sessionFile: "x" });
+    firstMirrorDeferred.resolve({ ok: true, messageId: "x" });
     await first;
     await second;
 

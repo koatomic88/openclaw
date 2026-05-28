@@ -60,14 +60,14 @@ test("sessions.reset recomputes model from defaults instead of stale runtime mod
 });
 
 test("sessions.reset clears stale estimated context budget status", async () => {
-  const { storePath } = await createSessionStoreDir();
+  await createSessionFixtureDir();
   testState.agentConfig = {
     model: {
       primary: "openai/gpt-test-a",
     },
   };
 
-  await writeSessionStore({
+  await seedGatewaySessionEntries({
     entries: {
       main: sessionStoreEntry("sess-stale-budget", {
         totalTokens: 0,
@@ -111,12 +111,9 @@ test("sessions.reset clears stale estimated context budget status", async () => 
   expect(reset.payload?.entry.contextBudgetStatus).toBeUndefined();
   expect(reset.payload?.entry.contextTokens).toBeUndefined();
 
-  const store = JSON.parse(await fs.readFile(storePath, "utf-8")) as Record<
-    string,
-    { contextBudgetStatus?: unknown; contextTokens?: number }
-  >;
-  expect(store["agent:main:main"]?.contextBudgetStatus).toBeUndefined();
-  expect(store["agent:main:main"]?.contextTokens).toBeUndefined();
+  const stored = getSessionEntry({ agentId: "main", sessionKey: "agent:main:main" });
+  expect(stored?.contextBudgetStatus).toBeUndefined();
+  expect(stored?.contextTokens).toBeUndefined();
 });
 
 test("sessions.reset drops cached skills snapshot so /new rebuilds visible skills", async () => {

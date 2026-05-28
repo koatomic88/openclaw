@@ -548,7 +548,7 @@ describe("secrets apply", () => {
       id: "codex-sidecar-ref",
       provider: "openai-codex",
     };
-    await writeJsonFile(fixture.authStorePath, {
+    writeAuthStoreFixture(fixture, {
       version: 1,
       profiles: {
         "openai:static": {
@@ -591,14 +591,13 @@ describe("secrets apply", () => {
       options: {
         scrubEnv: false,
         scrubAuthProfilesForProviderTargets: false,
-        scrubLegacyAuthJson: false,
       },
     });
 
     const result = await runSecretsApply({ plan, env: fixture.env, write: true });
 
     expect(result.changed).toBe(true);
-    const nextAuthStore = JSON.parse(await fs.readFile(fixture.authStorePath, "utf8")) as {
+    const nextAuthStore = readAuthStoreFixture(fixture) as {
       profiles: Record<
         string,
         {

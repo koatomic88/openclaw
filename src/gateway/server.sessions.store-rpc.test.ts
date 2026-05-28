@@ -5,7 +5,12 @@ import {
   loadSqliteSessionTranscriptEvents,
   replaceSqliteSessionTranscriptEvents,
 } from "../config/sessions/transcript-store.sqlite.js";
-import { piSdkMock, rpcReq, seedGatewaySessionEntries, testState } from "./test-helpers.js";
+import {
+  agentDiscoveryMock,
+  rpcReq,
+  seedGatewaySessionEntries,
+  testState,
+} from "./test-helpers.js";
 import {
   setupGatewaySessionsTestHarness,
   getGatewayConfigModule,
@@ -41,7 +46,7 @@ async function directSessionHandlerReq(
       broadcastToConnIds: vi.fn(),
       getSessionEventSubscriberConnIds: () => new Set<string>(),
       logGateway: { debug: vi.fn() },
-      loadGatewayModelCatalog: async () => piSdkMock.models,
+      loadGatewayModelCatalog: async () => agentDiscoveryMock.models,
       getRuntimeConfig,
     } as never,
     client: null,
@@ -354,8 +359,8 @@ test("lists and patches session entries via sessions.* RPC", async () => {
   });
   expect(spawnedPatchedInvalidKey.ok).toBe(false);
 
-  piSdkMock.enabled = true;
-  piSdkMock.models = [{ id: "gpt-test-a", name: "A", provider: "openai" }];
+  agentDiscoveryMock.enabled = true;
+  agentDiscoveryMock.models = [{ id: "gpt-test-a", name: "A", provider: "openai" }];
   const modelPatched = await directSessionReq<{
     ok: true;
     entry: {

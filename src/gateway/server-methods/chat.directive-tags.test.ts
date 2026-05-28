@@ -513,13 +513,14 @@ async function readActiveAssistantTranscriptMessages(): Promise<Array<Record<str
   });
   return state
     .getBranch()
-    .map((entry) => (entry.type === "message" ? entry.message : undefined))
-    .filter(
-      (message): message is Record<string, unknown> =>
+    .flatMap((entry) => (entry.type === "message" ? [entry.message as unknown] : []))
+    .filter((message): message is Record<string, unknown> => {
+      return (
         typeof message === "object" &&
         message !== null &&
-        (message as { role?: unknown }).role === "assistant",
-    );
+        (message as { role?: unknown }).role === "assistant"
+      );
+    });
 }
 
 function extractFirstTextBlock(payload: unknown): string | undefined {
@@ -623,7 +624,7 @@ function userUpdateMessage(
 }
 
 function readPersistedUserMessages(): Array<Record<string, unknown>> {
-  return readTranscriptJsonLines(mockState.transcriptPath)
+  return readTranscriptEvents()
     .map((entry) => entry.message)
     .filter(
       (candidate): candidate is Record<string, unknown> =>

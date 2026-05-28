@@ -661,6 +661,7 @@ describe("scheduleRestartSentinelWake", () => {
     } as Awaited<ReturnType<typeof mocks.readRestartSentinel>>);
     mocks.loadSessionEntry.mockReturnValue({
       cfg: {},
+      agentId: "main",
       entry: {
         sessionId: "agent:main:main",
         updatedAt: Date.now(),
@@ -668,9 +669,8 @@ describe("scheduleRestartSentinelWake", () => {
         endedAt: Date.now() - 1_000,
       },
       store: {},
-      storePath: "/tmp/sessions.json",
+      databasePath: "/tmp/openclaw-agent.sqlite",
       canonicalKey: "agent:main:main",
-      legacyKey: undefined,
     });
 
     await scheduleRestartSentinelWake({ deps: {} as never });
@@ -703,17 +703,18 @@ describe("scheduleRestartSentinelWake", () => {
   it("does not dispatch a queued agentTurn continuation after the session key changes", async () => {
     const activeEntry: LoadedSessionEntry = {
       cfg: {},
+      agentId: "main",
       entry: {
         sessionId: "old-session-id",
         updatedAt: Date.now(),
       },
       store: {},
-      storePath: "/tmp/sessions.json",
+      databasePath: "/tmp/openclaw-agent.sqlite",
       canonicalKey: "agent:main:main",
-      legacyKey: undefined,
     };
     const replacementEntry: LoadedSessionEntry = {
       cfg: {},
+      agentId: "main",
       entry: {
         sessionId: "new-session-id",
         updatedAt: Date.now(),
@@ -721,9 +722,8 @@ describe("scheduleRestartSentinelWake", () => {
         endedAt: Date.now() - 1_000,
       },
       store: {},
-      storePath: "/tmp/sessions.json",
+      databasePath: "/tmp/openclaw-agent.sqlite",
       canonicalKey: "agent:main:main",
-      legacyKey: undefined,
     };
     mocks.readRestartSentinel.mockResolvedValue({
       payload: {
@@ -789,6 +789,7 @@ describe("scheduleRestartSentinelWake", () => {
     } as Awaited<ReturnType<typeof mocks.readRestartSentinel>>);
     mocks.loadSessionEntry.mockReturnValue({
       cfg: {},
+      agentId: "main",
       entry: {
         sessionId: "agent:main:main",
         updatedAt: Date.now(),
@@ -796,9 +797,8 @@ describe("scheduleRestartSentinelWake", () => {
         endedAt: Date.now() - 1_000,
       },
       store: {},
-      storePath: "/tmp/sessions.json",
+      databasePath: "/tmp/openclaw-agent.sqlite",
       canonicalKey: "agent:main:main",
-      legacyKey: undefined,
     });
 
     await scheduleRestartSentinelWake({ deps: {} as never });

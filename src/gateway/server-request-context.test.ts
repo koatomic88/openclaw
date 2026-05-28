@@ -11,7 +11,7 @@ function makeContextParams(
   const runtimeState: Pick<GatewayServerLiveState, "cronState"> = {
     cronState: {
       cron: { start: vi.fn(), stop: vi.fn() } as never,
-      storePath: "/tmp/cron",
+      storeKey: "test",
       cronEnabled: true,
     },
   };

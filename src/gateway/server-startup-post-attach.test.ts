@@ -7,6 +7,7 @@ import type {
   PluginHookGatewayContext,
   PluginHookGatewayStartEvent,
 } from "../plugins/hook-types.js";
+import type { PluginServicesHandle } from "../plugins/services.js";
 import { closeOpenClawStateDatabaseForTest } from "../state/openclaw-state-db.js";
 import { withEnvAsync } from "../test-utils/env.js";
 
@@ -40,6 +41,8 @@ const hoisted = vi.hoisted(() => {
     provider: "openai",
     model: "gpt-5.4",
   }));
+  const resolveAgentModelPrimaryValue = vi.fn(() => "openai/gpt-5.4");
+  const resolveDefaultAgentDir = vi.fn(() => "/tmp/openclaw-state/agents/main/agent");
   const resolveHooksGmailModel = vi.fn<() => string | null>(() => null);
   const loadModelCatalog = vi.fn(async () => ({}));
   const getModelRefStatus = vi.fn(() => ({
@@ -81,6 +84,8 @@ const hoisted = vi.hoisted(() => {
     reconcilePendingSessionIdentities,
     isCliProvider,
     resolveConfiguredModelRef,
+    resolveAgentModelPrimaryValue,
+    resolveDefaultAgentDir,
     resolveHooksGmailModel,
     loadModelCatalog,
     getModelRefStatus,
@@ -171,6 +176,18 @@ vi.mock("../agents/model-selection.js", () => ({
   resolveConfiguredModelRef: hoisted.resolveConfiguredModelRef,
   resolveHooksGmailModel: hoisted.resolveHooksGmailModel,
 }));
+
+vi.mock("../config/model-input.js", () => ({
+  resolveAgentModelPrimaryValue: hoisted.resolveAgentModelPrimaryValue,
+}));
+
+vi.mock("../agents/agent-scope.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../agents/agent-scope.js")>();
+  return {
+    ...actual,
+    resolveDefaultAgentDir: hoisted.resolveDefaultAgentDir,
+  };
+});
 
 vi.mock("../agents/embedded-agent-runner/runtime.js", () => ({
   resolveEmbeddedAgentRuntime: hoisted.resolveEmbeddedAgentRuntime,
