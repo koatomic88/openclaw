@@ -22,6 +22,7 @@ import {
   readTestSessionRow,
   writeTestSessionRow,
 } from "./agent-runner.test-fixtures.js";
+import type { ReplyOperation } from "./reply-run-registry.js";
 
 const compactEmbeddedAgentSessionMock = vi.fn();
 const runWithModelFallbackMock = vi.fn();
@@ -100,6 +101,9 @@ type EmbeddedAgentParams = {
 
 type CompactEmbeddedAgentSessionParams = {
   agentId?: string;
+  authProfileId?: string;
+  contextTokenBudget?: number;
+  deferOwningContextEngineCompaction?: boolean;
   sessionKey?: string;
   sandboxSessionKey?: string;
   currentTokenCount?: number;
@@ -739,7 +743,6 @@ describe("runMemoryFlushIfNeeded", () => {
       cfg: { agents: { defaults: { compaction: { memoryFlush: {} } } } },
       followupRun: createTestFollowupRun({
         sessionId: "session",
-        sessionFile,
         sessionKey: "agent:main:main",
       }),
       defaultModel: "anthropic/claude-opus-4-6",
@@ -795,7 +798,6 @@ describe("runMemoryFlushIfNeeded", () => {
         cfg: { agents: { defaults: { compaction: { memoryFlush: {} } } } },
         followupRun: createTestFollowupRun({
           sessionId: "session",
-          sessionFile,
           sessionKey: "agent:main:main",
         }),
         defaultModel: "anthropic/claude-opus-4-6",
@@ -902,7 +904,6 @@ describe("runMemoryFlushIfNeeded", () => {
         cfg: { agents: { defaults: { compaction: { memoryFlush: {} } } } },
         followupRun: createTestFollowupRun({
           sessionId: "session",
-          sessionFile,
           sessionKey: "agent:main:telegram:group:redacted",
         }),
         defaultModel: "anthropic/claude-opus-4-6",
@@ -956,7 +957,6 @@ describe("runMemoryFlushIfNeeded", () => {
         cfg: { agents: { defaults: { compaction: { memoryFlush: {} } } } },
         followupRun: createTestFollowupRun({
           sessionId: "session",
-          sessionFile,
           sessionKey: "agent:main:telegram:group:redacted",
         }),
         defaultModel: "anthropic/claude-opus-4-6",
