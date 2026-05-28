@@ -14,7 +14,11 @@ import {
   writeDreamingWorkspaceValue,
 } from "openclaw/plugin-sdk/memory-core-host-status";
 import { appendMemoryHostEvent } from "openclaw/plugin-sdk/memory-host-events";
-import { normalizeLowercaseStringOrEmpty } from "openclaw/plugin-sdk/string-coerce-runtime";
+import {
+  normalizeLowercaseStringOrEmpty,
+  normalizeStringEntries,
+  uniqueStrings,
+} from "openclaw/plugin-sdk/string-coerce-runtime";
 import {
   deriveConceptTags,
   MAX_CONCEPT_TAGS,
@@ -1174,7 +1178,7 @@ export async function recordRemConsideredPhaseSignals(params: {
 
   await withShortTermLock(workspaceDir, async () => {
     const [store, phaseSignals] = await Promise.all([
-      readStore(workspaceDir, nowIso),
+      readShortTermRecallState(workspaceDir, nowIso),
       readPhaseSignalStore(workspaceDir, nowIso),
     ]);
     const knownKeys = new Set(Object.keys(store.entries));

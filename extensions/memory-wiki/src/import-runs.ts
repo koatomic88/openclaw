@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { createPluginStateKeyedStore } from "openclaw/plugin-sdk/plugin-state-runtime";
+import { uniqueStrings } from "openclaw/plugin-sdk/string-coerce-runtime";
 import type { ResolvedMemoryWikiConfig } from "./config.js";
 
 export type MemoryWikiImportRunSummary = {

@@ -40,6 +40,7 @@ import {
   type EmbeddingProviderRuntime,
 } from "./embeddings.js";
 import { openMemoryDatabaseAtPath } from "./manager-db.js";
+import { isMemoryEmbeddingOperationError } from "./manager-embedding-errors.js";
 import {
   applyMemoryFallbackProviderState,
   resolveMemoryFallbackProviderRequest,
@@ -1504,6 +1505,15 @@ export abstract class MemoryManagerSyncOps {
       reason,
     });
     return true;
+  }
+
+  protected async runSafeReindex(params: {
+    reason?: string;
+    force?: boolean;
+    progress?: MemorySyncProgressState;
+  }): Promise<void> {
+    this.assertFtsOnlySyncAllowed();
+    await this.runInPlaceReindex(params);
   }
 
   private async runInPlaceReindex(params: {
