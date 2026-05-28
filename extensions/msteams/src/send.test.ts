@@ -14,6 +14,9 @@ const mockState = vi.hoisted(() => ({
   prepareFileConsentActivityFs: vi.fn(),
   extractFilename: vi.fn(async () => "fallback.bin"),
   sendMSTeamsMessages: vi.fn(),
+  sendMSTeamsActivityWithReference: vi.fn(async () => ({ id: "message-1" })),
+  updateMSTeamsActivityWithReference: vi.fn(async () => ({ id: "updated" })),
+  deleteMSTeamsActivityWithReference: vi.fn(async () => {}),
   uploadAndShareSharePoint: vi.fn(),
   getDriveItemProperties: vi.fn(),
   buildTeamsFileInfoCard: vi.fn(),
@@ -93,6 +96,12 @@ vi.mock("./sdk.js", () => ({
   createMSTeamsTokenProvider: mockState.createMSTeamsTokenProvider,
 }));
 
+vi.mock("./sdk-proactive.js", () => ({
+  sendMSTeamsActivityWithReference: mockState.sendMSTeamsActivityWithReference,
+  updateMSTeamsActivityWithReference: mockState.updateMSTeamsActivityWithReference,
+  deleteMSTeamsActivityWithReference: mockState.deleteMSTeamsActivityWithReference,
+}));
+
 function createMockApp(overrides?: {
   send?: ReturnType<typeof vi.fn>;
   update?: ReturnType<typeof vi.fn>;
@@ -116,6 +125,9 @@ function createMockApp(overrides?: {
 }
 
 function mockProactiveSendContextFailure(error: string) {
+  mockState.sendMSTeamsActivityWithReference.mockRejectedValue(new Error(error));
+  mockState.updateMSTeamsActivityWithReference.mockRejectedValue(new Error(error));
+  mockState.deleteMSTeamsActivityWithReference.mockRejectedValue(new Error(error));
   const failingApp = createMockApp({
     send: vi.fn().mockRejectedValue(new Error(error)),
     update: vi.fn().mockRejectedValue(new Error(error)),
@@ -133,6 +145,7 @@ function mockProactiveSendContextFailure(error: string) {
     },
     log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
     conversationType: "personal",
+    sdkCloudOptions: { cloud: "Public" },
     tokenProvider: {},
   });
 }
@@ -151,6 +164,7 @@ function createSharePointSendContext(params: {
     log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
     conversationType: "groupChat" as const,
     replyStyle: "top-level" as const,
+    sdkCloudOptions: { cloud: "Public" as const },
     tokenProvider: { getAccessToken: vi.fn(async () => "token") },
     mediaMaxBytes: 8 * 1024 * 1024,
     sharePointSiteId: params.siteId,
@@ -226,6 +240,9 @@ describe("sendMessageMSTeams", () => {
     mockState.prepareFileConsentActivityFs.mockReset();
     mockState.extractFilename.mockReset();
     mockState.sendMSTeamsMessages.mockReset();
+    mockState.sendMSTeamsActivityWithReference.mockReset();
+    mockState.updateMSTeamsActivityWithReference.mockReset();
+    mockState.deleteMSTeamsActivityWithReference.mockReset();
     mockState.uploadAndShareSharePoint.mockReset();
     mockState.getDriveItemProperties.mockReset();
     mockState.buildTeamsFileInfoCard.mockReset();
@@ -240,11 +257,15 @@ describe("sendMessageMSTeams", () => {
       log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
       conversationType: "personal",
       replyStyle: "top-level",
+      sdkCloudOptions: { cloud: "Public" },
       tokenProvider: { getAccessToken: vi.fn(async () => "token") },
       mediaMaxBytes: 8 * 1024,
       sharePointSiteId: undefined,
     });
     mockState.sendMSTeamsMessages.mockResolvedValue(["message-1"]);
+    mockState.sendMSTeamsActivityWithReference.mockResolvedValue({ id: "message-1" });
+    mockState.updateMSTeamsActivityWithReference.mockResolvedValue({ id: "updated" });
+    mockState.deleteMSTeamsActivityWithReference.mockResolvedValue(undefined);
   });
 
   it("loads media through shared helper and forwards mediaLocalRoots", async () => {
@@ -327,6 +348,7 @@ describe("sendMessageMSTeams", () => {
       log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
       conversationType: "channel",
       replyStyle: "thread",
+      sdkCloudOptions: { cloud: "Public" },
       tokenProvider: { getAccessToken: vi.fn(async () => "token") },
       mediaMaxBytes: 8 * 1024,
       sharePointSiteId: undefined,
@@ -353,6 +375,7 @@ describe("sendMessageMSTeams", () => {
       log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
       conversationType: "channel",
       replyStyle: "top-level",
+      sdkCloudOptions: { cloud: "Public" },
       tokenProvider: { getAccessToken: vi.fn(async () => "token") },
       mediaMaxBytes: 8 * 1024,
       sharePointSiteId: undefined,
@@ -440,9 +463,11 @@ describe("MSTeams continueConversation failure handling", () => {
 describe("editMessageMSTeams", () => {
   beforeEach(() => {
     mockState.resolveMSTeamsSendContext.mockReset();
+    mockState.updateMSTeamsActivityWithReference.mockReset();
+    mockState.updateMSTeamsActivityWithReference.mockResolvedValue({ id: "updated" });
   });
 
-  it("calls app.api.conversations.activities().update with correct params", async () => {
+  it("updates with the resolved Teams conversation reference", async () => {
     const mockUpdateActivity = vi.fn(async () => ({ id: "updated" }));
     const mockApp = createMockApp({ update: mockUpdateActivity });
     mockState.resolveMSTeamsSendContext.mockResolvedValue({
@@ -457,6 +482,7 @@ describe("editMessageMSTeams", () => {
       },
       log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
       conversationType: "personal",
+      sdkCloudOptions: { cloud: "Public" },
       tokenProvider: {},
     });
 
@@ -469,11 +495,20 @@ describe("editMessageMSTeams", () => {
 
     expect(result.conversationId).toBe("19:conversation@thread.tacv2");
 
-    expect(mockUpdateActivity).toHaveBeenCalledWith("activity-123", {
-      type: "message",
-      id: "activity-123",
-      text: "Updated message text",
-    });
+    expect(mockState.updateMSTeamsActivityWithReference).toHaveBeenCalledWith(
+      mockApp,
+      expect.objectContaining({
+        conversation: { id: "19:conversation@thread.tacv2", conversationType: "personal" },
+        serviceUrl: "https://service.example.com",
+      }),
+      "activity-123",
+      {
+        type: "message",
+        id: "activity-123",
+        text: "Updated message text",
+      },
+      { serviceUrlBoundary: { cloud: "Public" } },
+    );
   });
 
   it("throws a descriptive error when update fails", async () => {
@@ -493,9 +528,11 @@ describe("editMessageMSTeams", () => {
 describe("deleteMessageMSTeams", () => {
   beforeEach(() => {
     mockState.resolveMSTeamsSendContext.mockReset();
+    mockState.deleteMSTeamsActivityWithReference.mockReset();
+    mockState.deleteMSTeamsActivityWithReference.mockResolvedValue(undefined);
   });
 
-  it("calls app.api.conversations.activities().delete with correct activityId", async () => {
+  it("deletes with the resolved Teams conversation reference", async () => {
     const mockDeleteActivity = vi.fn(async () => {});
     const mockApp = createMockApp({ delete: mockDeleteActivity });
     mockState.resolveMSTeamsSendContext.mockResolvedValue({
@@ -510,6 +547,7 @@ describe("deleteMessageMSTeams", () => {
       },
       log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
       conversationType: "groupChat",
+      sdkCloudOptions: { cloud: "Public" },
       tokenProvider: {},
     });
 
@@ -521,7 +559,15 @@ describe("deleteMessageMSTeams", () => {
 
     expect(result.conversationId).toBe("19:conversation@thread.tacv2");
 
-    expect(mockDeleteActivity).toHaveBeenCalledWith("activity-456");
+    expect(mockState.deleteMSTeamsActivityWithReference).toHaveBeenCalledWith(
+      mockApp,
+      expect.objectContaining({
+        conversation: { id: "19:conversation@thread.tacv2", conversationType: "groupChat" },
+        serviceUrl: "https://service.example.com",
+      }),
+      "activity-456",
+      { serviceUrlBoundary: { cloud: "Public" } },
+    );
   });
 
   it("throws a descriptive error when delete fails", async () => {
@@ -552,6 +598,7 @@ describe("deleteMessageMSTeams", () => {
       },
       log: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
       conversationType: "personal",
+      sdkCloudOptions: { cloud: "Public" },
       tokenProvider: {},
     });
 
@@ -561,7 +608,14 @@ describe("deleteMessageMSTeams", () => {
       activityId: "activity-789",
     });
 
-    // app.api.conversations.activities().delete should have been called
-    expect(mockDeleteActivity).toHaveBeenCalledWith("activity-789");
+    expect(mockState.deleteMSTeamsActivityWithReference).toHaveBeenCalledWith(
+      mockApp,
+      expect.objectContaining({
+        conversation: { id: "19:conv@thread.tacv2" },
+        serviceUrl: "https://service.example.com",
+      }),
+      "activity-789",
+      { serviceUrlBoundary: { cloud: "Public" } },
+    );
   });
 });

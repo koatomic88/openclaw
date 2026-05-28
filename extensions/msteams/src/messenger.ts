@@ -39,6 +39,8 @@ const MSTEAMS_MAX_MEDIA_BYTES = 100 * 1024 * 1024;
  */
 const FILE_CONSENT_THRESHOLD_BYTES = 4 * 1024 * 1024;
 
+import type { MSTeamsSdkCloudOptions } from "./cloud.js";
+import { sendMSTeamsActivityWithReference } from "./sdk-proactive.js";
 import type { MSTeamsActivityLike } from "./sdk-types.js";
 import type { MSTeamsApp } from "./sdk.js";
 
@@ -421,6 +423,7 @@ export async function sendMSTeamsMessages(params: {
   mediaMaxBytes?: number;
   /** Enable the Teams feedback loop (thumbs up/down) on sent messages. */
   feedbackLoopEnabled?: boolean;
+  serviceUrlBoundary?: MSTeamsSdkCloudOptions;
 }): Promise<string[]> {
   const messages = params.messages.filter(
     (m) => (m.text && m.text.trim().length > 0) || m.mediaUrl,
@@ -529,14 +532,11 @@ export async function sendMSTeamsMessages(params: {
   ): Promise<string[]> => {
     const baseRef = buildConversationReference(params.conversationRef);
     const isChannel = params.conversationRef.conversation?.conversationType === "channel";
-    // For Teams channels with a thread anchor, route via `app.reply` so the
-    // SDK builds the threaded conversation id (`${convId};messageid=${msgId}`)
-    // via its own `toThreadedConversationId` helper. Otherwise use `app.send`.
-    const sendFn =
-      isChannel && threadActivityId
-        ? (activity: MSTeamsActivityLike) =>
-            params.app.reply(baseRef.conversation.id, threadActivityId, activity)
-        : (activity: MSTeamsActivityLike) => params.app.send(baseRef.conversation.id, activity);
+    const sendFn = (activity: MSTeamsActivityLike) =>
+      sendMSTeamsActivityWithReference(params.app, baseRef, activity, {
+        threadActivityId: isChannel ? threadActivityId : undefined,
+        serviceUrlBoundary: params.serviceUrlBoundary,
+      });
     return await sendMessageBatchInContext(sendFn, batch, startIndex);
   };
 

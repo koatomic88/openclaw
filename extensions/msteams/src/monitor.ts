@@ -483,11 +483,40 @@ export async function monitorMSTeamsProvider(
     await runMSTeamsFileConsentInvokeHandler(adaptSdkContext(ctx, app), log);
   });
 
-  // SSO sign-in invokes use the SDK's built-in `signin.token-exchange` and
-  // `signin.verify-state` system routes. Those routes preserve Teams' expected
-  // InvokeResponse semantics, including returning 412 when silent token exchange
-  // needs interactive consent. We only subscribe to successful sign-ins so we
-  // can persist the delegated token for later OpenClaw use.
+  const handleSdkSigninInvoke = async (
+    ctx: unknown,
+    delegateName: "onTokenExchange" | "onVerifyState",
+  ) => {
+    const adaptedCtx = adaptSdkContext(ctx, app);
+    if (!(await isSigninInvokeAuthorized(adaptedCtx, handlerDeps))) {
+      return { status: 200, body: {} };
+    }
+    if (!ssoDeps) {
+      log.debug?.("signin invoke received but msteams.sso is not configured", {
+        name: adaptedCtx.activity?.name,
+      });
+      return { status: 200, body: {} };
+    }
+
+    const sdkSigninApp = app as MSTeamsApp & {
+      onTokenExchange?: (ctx: unknown) => Promise<unknown>;
+      onVerifyState?: (ctx: unknown) => Promise<unknown>;
+    };
+    const delegate = sdkSigninApp[delegateName];
+    if (typeof delegate !== "function") {
+      throw new Error(`Teams SDK ${delegateName} handler is unavailable`);
+    }
+    return delegate.call(sdkSigninApp, ctx);
+  };
+
+  // Replace the SDK's default sign-in invoke routes with an authz gate that
+  // delegates to the same SDK handlers only after sender policy passes. Registering
+  // a user route with the same name intentionally replaces the SDK system route.
+  app.on("signin.token-exchange", (ctx) => handleSdkSigninInvoke(ctx, "onTokenExchange"));
+  app.on("signin.verify-state", (ctx) => handleSdkSigninInvoke(ctx, "onVerifyState"));
+
+  // The delegated SDK sign-in handlers emit `signin` only after a successful
+  // token exchange/lookup. Persist that token for later OpenClaw use.
   if (ssoDeps) {
     app.event("signin", (ctx) => {
       void (async () => {
@@ -699,6 +728,7 @@ function adaptSdkContext(ctx: unknown, app: MSTeamsApp): MSTeamsTurnContext {
     activity?: { id?: string; conversation?: { id?: string; conversationType?: string } };
     reply?: (activity: unknown) => Promise<unknown>;
     send?: (activity: unknown) => Promise<unknown>;
+    api?: MSTeamsApp["api"];
     stream?: {
       emit(a: unknown): void;
       update(t: string): void;
@@ -711,6 +741,7 @@ function adaptSdkContext(ctx: unknown, app: MSTeamsApp): MSTeamsTurnContext {
     return ctx as MSTeamsTurnContext;
   }
   const conversationId = sdkCtx.activity?.conversation?.id ?? "";
+  const activityApi = sdkCtx.api ?? app.api;
   const conversationType = (sdkCtx.activity?.conversation?.conversationType ?? "").toLowerCase();
   const isThreadable = conversationType === "channel" || conversationType === "groupchat";
   // For Teams channels and group chats, use ctx.reply() so the SDK threads the
@@ -732,10 +763,10 @@ function adaptSdkContext(ctx: unknown, app: MSTeamsApp): MSTeamsTurnContext {
     },
     updateActivity: async (activity: { id?: string; [key: string]: unknown }) => {
       const activityId = activity.id ?? "";
-      return app.api.conversations.activities(conversationId).update(activityId, activity);
+      return activityApi.conversations.activities(conversationId).update(activityId, activity);
     },
     deleteActivity: async (activityId: string) => {
-      return app.api.conversations.activities(conversationId).delete(activityId);
+      return activityApi.conversations.activities(conversationId).delete(activityId);
     },
     stream: sdkCtx.stream,
   });

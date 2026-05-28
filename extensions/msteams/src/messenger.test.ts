@@ -114,6 +114,7 @@ function requireMentionEntity(entities: unknown): Record<string, unknown> {
 type MockAppOptions = {
   createFn?: (activity: unknown) => Promise<unknown>;
   onClientCreated?: (serviceUrl: string, conversationId: string) => void;
+  onReference?: (ref: unknown) => void;
 };
 
 function createMockApp(opts?: MockAppOptions): MSTeamsApp {
@@ -131,6 +132,16 @@ function createMockApp(opts?: MockAppOptions): MSTeamsApp {
     send: async (conversationId: string, activity: unknown) => {
       opts?.onClientCreated?.("", conversationId);
       return await createFn(activity);
+    },
+    activitySender: {
+      send: async (
+        activity: unknown,
+        ref: { serviceUrl?: string; conversation?: { id?: string } },
+      ) => {
+        opts?.onReference?.(ref);
+        opts?.onClientCreated?.(ref.serviceUrl ?? "", ref.conversation?.id ?? "");
+        return await createFn(activity);
+      },
     },
     // Mirror the SDK's `app.reply` which internally calls
     // `app.send(toThreadedConversationId(channelId, msgId), activity)`. The
@@ -239,7 +250,7 @@ describe("msteams messenger", () => {
       agent: { id: "bot123", name: "Bot" },
       conversation: { id: "19:abc@thread.tacv2;messageid=deadbeef" },
       channelId: "msteams",
-      serviceUrl: "https://service.example.com",
+      serviceUrl: "https://smba.trafficmanager.net/amer/",
     };
 
     async function sendAndCaptureRevokeFallbackReference(params: {
@@ -255,7 +266,7 @@ describe("msteams messenger", () => {
         agent: { id: "bot123", name: "Bot" },
         conversation: params.conversation,
         channelId: "msteams",
-        serviceUrl: "https://service.example.com",
+        serviceUrl: "https://smba.trafficmanager.net/amer/",
         ...(params.threadId ? { threadId: params.threadId } : {}),
       };
 
@@ -587,7 +598,7 @@ describe("msteams messenger", () => {
           conversationType: "channel",
         },
         channelId: "msteams",
-        serviceUrl: "https://service.example.com",
+        serviceUrl: "https://smba.trafficmanager.net/amer/",
         threadId: "thread-root-msg-id",
       };
 
@@ -620,7 +631,7 @@ describe("msteams messenger", () => {
           conversationType: "channel",
         },
         channelId: "msteams",
-        serviceUrl: "https://service.example.com",
+        serviceUrl: "https://smba.trafficmanager.net/amer/",
       };
 
       let capturedConversationId: string | undefined;
@@ -654,7 +665,7 @@ describe("msteams messenger", () => {
           conversationType: "channel",
         },
         channelId: "msteams",
-        serviceUrl: "https://service.example.com",
+        serviceUrl: "https://smba.trafficmanager.net/amer/",
         threadId: "thread-root-msg-id",
       };
 
@@ -740,7 +751,7 @@ describe("msteams messenger", () => {
       agent: { id: "bot123", name: "Bot" },
       conversation: { id: "conv123", conversationType: "personal" },
       channelId: "msteams",
-      serviceUrl: "https://service.example.com",
+      serviceUrl: "https://smba.trafficmanager.net/amer/",
     };
 
     it("adds AI-generated entity to text messages", async () => {
@@ -849,15 +860,14 @@ describe("msteams messenger", () => {
     });
 
     it("propagates tenantId/aadObjectId through sendMSTeamsMessages proactive path", async () => {
-      // The proactive path (app.send) uses the conversation reference built
-      // by buildConversationReference. We verify the reference carries
-      // tenant/aad data (tested above) and that the send succeeds.
       const sent: string[] = [];
+      const refs: unknown[] = [];
 
       const ids = await sendMSTeamsMessages({
         replyStyle: "top-level",
         app: createMockApp({
           createFn: createRecordedSendActivity(sent),
+          onReference: (ref) => refs.push(ref),
         }),
         appId: "app123",
         conversationRef: storedWithChannelDataTenant,
@@ -866,9 +876,18 @@ describe("msteams messenger", () => {
 
       expect(sent).toEqual(["hello"]);
       expect(ids).toEqual(["id:hello"]);
-
-      // buildConversationReference propagates tenant/aad — already tested above.
-      // This test verifies the proactive path doesn't fail when the ref has those fields.
+      expect(refs).toEqual([
+        expect.objectContaining({
+          serviceUrl: "https://smba.trafficmanager.net/amer",
+          tenantId: "tenant-abc",
+          aadObjectId: "aad-user-123",
+          conversation: expect.objectContaining({
+            id: "19:abc@thread.tacv2",
+            tenantId: "tenant-abc",
+          }),
+          user: expect.objectContaining({ aadObjectId: "aad-user-123" }),
+        }),
+      ]);
       const ref = buildConversationReference(storedWithChannelDataTenant);
       expect(ref.tenantId).toBe("tenant-abc");
       expect(ref.aadObjectId).toBe("aad-user-123");

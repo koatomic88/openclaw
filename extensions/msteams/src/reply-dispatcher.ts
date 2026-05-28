@@ -17,6 +17,7 @@ import {
   type RuntimeEnv,
 } from "../runtime-api.js";
 import type { MSTeamsAccessTokenProvider } from "./attachments/types.js";
+import { resolveMSTeamsSdkCloudOptions } from "./cloud.js";
 import type { StoredConversationReference } from "./conversation-store.js";
 import {
   classifyMSTeamsSendError,
@@ -33,6 +34,7 @@ import type { MSTeamsMonitorLogger } from "./monitor-types.js";
 import { createTeamsReplyStreamController } from "./reply-stream-controller.js";
 import { withRevokedProxyFallback } from "./revoked-context.js";
 import { getMSTeamsRuntime } from "./runtime.js";
+import { sendMSTeamsActivityWithReference } from "./sdk-proactive.js";
 import type { MSTeamsTurnContext } from "./sdk-types.js";
 import type { MSTeamsApp } from "./sdk.js";
 
@@ -97,7 +99,12 @@ export function createMSTeamsReplyDispatcher(params: {
       },
       onRevoked: async () => {
         const baseRef = buildConversationReference(params.conversationRef);
-        await params.app.send(baseRef.conversation.id, { type: "typing" });
+        await sendMSTeamsActivityWithReference(
+          params.app,
+          baseRef,
+          { type: "typing" },
+          { serviceUrlBoundary: resolveMSTeamsSdkCloudOptions(msteamsCfg) },
+        );
       },
       onRevokedLog: () => {
         params.log.debug?.("turn context revoked, sending typing via proactive messaging");
@@ -203,6 +210,7 @@ export function createMSTeamsReplyDispatcher(params: {
       sharePointSiteId: params.sharePointSiteId,
       mediaMaxBytes,
       feedbackLoopEnabled,
+      serviceUrlBoundary: resolveMSTeamsSdkCloudOptions(msteamsCfg),
     });
   };
 
@@ -371,6 +379,10 @@ export function createMSTeamsReplyDispatcher(params: {
   const previewToolProgressEnabled = resolveChannelStreamingPreviewToolProgress(msteamsCfg);
   const suppressDefaultToolProgressMessages =
     resolveChannelStreamingSuppressDefaultToolProgressMessages(msteamsCfg);
+  const shouldSuppressDefaultToolProgressMessages =
+    teamsStreamMode === "progress" &&
+    suppressDefaultToolProgressMessages &&
+    previewToolProgressEnabled;
 
   // Forward the rich pipeline event payload through to the channel-streaming
   // formatters. The formatters accept the canonical union shape; the pipeline
@@ -516,7 +528,7 @@ export function createMSTeamsReplyDispatcher(params: {
       // When progress mode is active, suppress openclaw's default block-style
       // tool-progress messages so they don't duplicate alongside the
       // streaming card's progress lines.
-      ...(suppressDefaultToolProgressMessages && previewToolProgressEnabled
+      ...(shouldSuppressDefaultToolProgressMessages
         ? { suppressDefaultToolProgressMessages: true }
         : {}),
       // Pass-through to the reply pipeline. `false` = "use block streaming"

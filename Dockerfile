@@ -48,6 +48,7 @@ RUN --mount=type=bind,source=packages,target=/tmp/packages,readonly \
 FROM ${OPENCLAW_BUN_IMAGE} AS bun-binary
 FROM ${OPENCLAW_NODE_BOOKWORM_IMAGE} AS build
 ARG OPENCLAW_BUNDLED_PLUGIN_DIR
+ARG OPENCLAW_EXTENSIONS
 
 # Copy pinned Bun binary from the official image instead of fetching via curl.
 COPY --from=bun-binary /usr/local/bin/bun /usr/local/bin/bun

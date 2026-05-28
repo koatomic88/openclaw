@@ -9,8 +9,8 @@
       "version": "2026.5.28",
       "dependencies": {
         "@azure/identity": "4.13.1",
-        "@microsoft/teams.api": "2.0.11",
-        "@microsoft/teams.apps": "2.0.11",
+        "@microsoft/teams.api": "2.0.12",
+        "@microsoft/teams.apps": "2.0.12",
         "express": "5.2.1",
         "typebox": "1.1.38"
       },
@@ -181,30 +181,30 @@
       }
     },
     "node_modules/@microsoft/teams.api": {
-      "version": "2.0.11",
-      "resolved": "https://registry.npmjs.org/@microsoft/teams.api/-/teams.api-2.0.11.tgz",
-      "integrity": "sha512-/QvOQkqSM73O9SrDLURyJZClnOAi6fJTX6qhhka/fPZbPU4ID4BIDvee7dSRbLx7lM+nSa370uLFzHHzXp5TWQ==",
+      "version": "2.0.12",
+      "resolved": "https://registry.npmjs.org/@microsoft/teams.api/-/teams.api-2.0.12.tgz",
+      "integrity": "sha512-LQSCwRONUl09pdszTdgsRLQ0ZZcdq16goaBckzM/zKGuQkfSIT3u+3V1X2FVeND4sGt0wn+E/v29cZfhJAW4ZA==",
       "license": "MIT",
       "dependencies": {
-        "@microsoft/teams.cards": "2.0.11",
-        "@microsoft/teams.common": "2.0.11",
+        "@microsoft/teams.cards": "2.0.12",
+        "@microsoft/teams.common": "2.0.12",
         "jwt-decode": "^4.0.0",
-        "qs": "^6.14.2"
+        "qs": "^6.15.2"
       },
       "engines": {
         "node": ">=20"
       }
     },
     "node_modules/@microsoft/teams.apps": {
-      "version": "2.0.11",
-      "resolved": "https://registry.npmjs.org/@microsoft/teams.apps/-/teams.apps-2.0.11.tgz",
-      "integrity": "sha512-DSk09njNbFi5pc8GOAd3/Auqy52ZmsBJqu0wRXV2VQp/L+M8e9L2SXhmyIs164jhnwD0w3DYXPOjjZKHdu1M2A==",
+      "version": "2.0.12",
+      "resolved": "https://registry.npmjs.org/@microsoft/teams.apps/-/teams.apps-2.0.12.tgz",
+      "integrity": "sha512-AZWxhnuBLlUvrz1Jm1DtoB/ZfvIiML8e3PGGmJm9MXnxd6mwv8ZcL9Po8Or96KDF6E+DICRbpXBO7I3b+B+X5A==",
       "license": "MIT",
       "dependencies": {
         "@azure/msal-node": "^3.8.1",
-        "@microsoft/teams.api": "2.0.11",
-        "@microsoft/teams.common": "2.0.11",
-        "@microsoft/teams.graph": "2.0.11",
+        "@microsoft/teams.api": "2.0.12",
+        "@microsoft/teams.common": "2.0.12",
+        "@microsoft/teams.graph": "2.0.12",
         "axios": "^1.15.2",
         "cors": "^2.8.5",
         "express": "^5.0.0",
@@ -240,18 +240,18 @@
       }
     },
     "node_modules/@microsoft/teams.cards": {
-      "version": "2.0.11",
-      "resolved": "https://registry.npmjs.org/@microsoft/teams.cards/-/teams.cards-2.0.11.tgz",
-      "integrity": "sha512-4ErBqR4A4abpKSXsiCssRh2ZTpE3jsYHcWXLwL+fKnJo96GzlfSUV1Zg78dl7xWxe388SlqQ3Z4r3m/v413Mew==",
+      "version": "2.0.12",
+      "resolved": "https://registry.npmjs.org/@microsoft/teams.cards/-/teams.cards-2.0.12.tgz",
+      "integrity": "sha512-FVSSuOpvjpWSsoYwJI05eB4irPlaBkepgmWGFe1dhqTC2In9GWvkfNPJieyvmeDydj1jqHwwrjrkHO3MdGjiCw==",
       "license": "MIT",
       "engines": {
         "node": ">=20"
       }
     },
     "node_modules/@microsoft/teams.common": {
-      "version": "2.0.11",
-      "resolved": "https://registry.npmjs.org/@microsoft/teams.common/-/teams.common-2.0.11.tgz",
-      "integrity": "sha512-XuGTRlYfLOQxJZuZI6IUhbTRQjgXZAgW59LlGnFJ/nb00G8GnJwdCrFbis+bQa+h7dP5SdLIi1ZybVGYomKgqA==",
+      "version": "2.0.12",
+      "resolved": "https://registry.npmjs.org/@microsoft/teams.common/-/teams.common-2.0.12.tgz",
+      "integrity": "sha512-gFFeWXXABOkarUViYIM4DJxNxNSTcXHv7Ds6poNyb3HODsY3kZV3EmYaDanP7KDqqXbUPlgB3LPV9bYRgcL9JQ==",
       "license": "MIT",
       "dependencies": {
         "axios": "^1.15.2"
@@ -261,13 +261,13 @@
       }
     },
     "node_modules/@microsoft/teams.graph": {
-      "version": "2.0.11",
-      "resolved": "https://registry.npmjs.org/@microsoft/teams.graph/-/teams.graph-2.0.11.tgz",
-      "integrity": "sha512-Txc0N6dENmEluOCwGzCerz+3G/uomfzCElla1OR7nUNICIcY8p1A2babcIAA8AZiuAKPSkck0U1w5RTu7jZgVQ==",
+      "version": "2.0.12",
+      "resolved": "https://registry.npmjs.org/@microsoft/teams.graph/-/teams.graph-2.0.12.tgz",
+      "integrity": "sha512-dMioF/l/bb/cDZDZed8/7CeIZJEsREE4GwSn9V9h1/KiY004bLnjePVeLjpMt4QRoUmPn+GVokhEXztIFTYZzA==",
       "license": "MIT",
       "dependencies": {
-        "@microsoft/teams.common": "2.0.11",
-        "qs": "^6.14.2"
+        "@microsoft/teams.common": "2.0.12",
+        "qs": "^6.15.2"
       },
       "engines": {
         "node": ">=20"
@@ -1475,9 +1475,9 @@
       "license": "MIT"
     },
     "node_modules/semver": {
-      "version": "7.8.0",
-      "resolved": "https://registry.npmjs.org/semver/-/semver-7.8.0.tgz",
-      "integrity": "sha512-AcM7dV/5ul4EekoQ29Agm5vri8JNqRyj39o0qpX6vDF2GZrtutZl5RwgD1XnZjiTAfncsJhMI48QQH3sN87YNA==",
+      "version": "7.8.1",
+      "resolved": "https://registry.npmjs.org/semver/-/semver-7.8.1.tgz",
+      "integrity": "sha512-rkVq3IXh+4FDGch+KwzX3aV9W3kO54GyEgpvBzSyctDA6Xtd7RJQV1xmXbeQp5v7+VzLOfVqiutSE6GICgPFvg==",
       "license": "ISC",
       "bin": {
         "semver": "bin/semver.js"

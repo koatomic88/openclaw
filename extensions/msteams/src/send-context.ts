@@ -15,6 +15,7 @@ import {
 import {
   resolveMSTeamsSdkCloudOptions,
   validateMSTeamsProactiveServiceUrlBoundary,
+  type MSTeamsSdkCloudOptions,
 } from "./cloud.js";
 import { createMSTeamsConversationStoreFs } from "./conversation-store-fs.js";
 import type {
@@ -41,6 +42,8 @@ export type MSTeamsProactiveContext = {
   conversationType: MSTeamsConversationType;
   /** Reply style resolved for proactive text/media sends. */
   replyStyle: MSTeamsReplyStyle;
+  /** Teams SDK cloud/service endpoint used to validate proactive sends. */
+  sdkCloudOptions: MSTeamsSdkCloudOptions;
   /** Token provider for Graph API / OneDrive operations */
   tokenProvider: MSTeamsAccessTokenProvider;
   /** SharePoint site ID for file uploads in group chats/channels */
@@ -295,6 +298,7 @@ export async function resolveMSTeamsSendContext(params: {
     log,
     conversationType,
     replyStyle,
+    sdkCloudOptions,
     tokenProvider,
     sharePointSiteId,
     mediaMaxBytes,

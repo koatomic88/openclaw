@@ -3,6 +3,7 @@ import {
   dispatchReplyFromConfigWithSettledDispatcher,
   type OpenClawConfig,
 } from "../runtime-api.js";
+import { resolveMSTeamsSdkCloudOptions } from "./cloud.js";
 import type { StoredConversationReference } from "./conversation-store.js";
 import { formatUnknownError } from "./errors.js";
 import { buildReflectionPrompt, parseReflectionResponse } from "./feedback-reflection-prompt.js";
@@ -17,6 +18,7 @@ import {
 import { buildConversationReference } from "./messenger.js";
 import type { MSTeamsMonitorLogger } from "./monitor-types.js";
 import { getMSTeamsRuntime } from "./runtime.js";
+import { sendMSTeamsActivityWithReference } from "./sdk-proactive.js";
 import type { MSTeamsApp } from "./sdk.js";
 
 export type FeedbackEvent = {
@@ -139,12 +141,18 @@ function createReflectionCaptureDispatcher(params: {
 }
 
 async function sendReflectionFollowUp(params: {
+  cfg: OpenClawConfig;
   app: MSTeamsApp;
   conversationRef: StoredConversationReference;
   userMessage: string;
 }): Promise<void> {
   const baseRef = buildConversationReference(params.conversationRef);
-  await params.app.send(baseRef.conversation.id, { type: "message", text: params.userMessage });
+  await sendMSTeamsActivityWithReference(
+    params.app,
+    baseRef,
+    { type: "message", text: params.userMessage },
+    { serviceUrlBoundary: resolveMSTeamsSdkCloudOptions(params.cfg.channels?.msteams) },
+  );
 }
 
 /**
@@ -242,6 +250,7 @@ export async function runFeedbackReflection(params: RunFeedbackReflectionParams)
 
   try {
     await sendReflectionFollowUp({
+      cfg,
       app: params.app,
       conversationRef: params.conversationRef,
       userMessage: parsedReflection.userMessage!,

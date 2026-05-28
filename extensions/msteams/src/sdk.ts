@@ -110,14 +110,8 @@ type MSTeamsAppOn = {
   // system defaults registered so Teams gets the SDK's 200/412 response
   // semantics. These overloads remain for route-name validation if a caller ever
   // needs an explicit replacement route.
-  (
-    name: "signin.token-exchange",
-    cb: (ctx: SigninTokenExchangeCtx) => void | Promise<void>,
-  ): MSTeamsApp;
-  (
-    name: "signin.verify-state",
-    cb: (ctx: SigninVerifyStateCtx) => void | Promise<void>,
-  ): MSTeamsApp;
+  (name: "signin.token-exchange", cb: (ctx: SigninTokenExchangeCtx) => unknown): MSTeamsApp;
+  (name: "signin.verify-state", cb: (ctx: SigninVerifyStateCtx) => unknown): MSTeamsApp;
   // Feedback (thumbs up/down) on AI-generated messages — Teams delivers
   // this as a `message/submitAction` invoke with `actionName === "feedback"`.
   // Typed return is `InvokeResponse | void`, so a void-returning cb works.

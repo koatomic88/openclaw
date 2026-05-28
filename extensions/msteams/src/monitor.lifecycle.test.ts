@@ -132,6 +132,8 @@ const loadMSTeamsSdkWithAuth = vi.hoisted(() =>
     app: {
       on: vi.fn(),
       event: vi.fn(),
+      onTokenExchange: vi.fn(async () => ({ status: 200 })),
+      onVerifyState: vi.fn(async () => ({ status: 200 })),
       initialize: vi.fn(async () => {}),
       tokenManager: {
         getBotToken: vi.fn(async () => ({ toString: (): string => "bot-token" })),
@@ -363,7 +365,7 @@ describe("monitorMSTeamsProvider lifecycle", () => {
     await task;
   });
 
-  it("keeps SDK SSO invoke routes and persists successful signin events", async () => {
+  it("gates SDK SSO invoke routes and persists successful signin events", async () => {
     const abort = new AbortController();
     const cfg = createConfig(0);
     updateMSTeamsConfig(cfg, {
@@ -392,9 +394,22 @@ describe("monitorMSTeamsProvider lifecycle", () => {
     }
     const sdkResult = await sdkResultPromise;
     const app = sdkResult.app;
-    expect(app.on).not.toHaveBeenCalledWith("signin.token-exchange", expect.any(Function));
-    expect(app.on).not.toHaveBeenCalledWith("signin.verify-state", expect.any(Function));
+    expect(app.on).toHaveBeenCalledWith("signin.token-exchange", expect.any(Function));
+    expect(app.on).toHaveBeenCalledWith("signin.verify-state", expect.any(Function));
     expect(app.event).toHaveBeenCalledWith("signin", expect.any(Function));
+
+    const tokenExchangeHandler = app.on.mock.calls.find(
+      (call: [string, unknown]) => call[0] === "signin.token-exchange",
+    )?.[1];
+    expect(typeof tokenExchangeHandler).toBe("function");
+    if (typeof tokenExchangeHandler !== "function") {
+      throw new Error("expected signin token-exchange handler");
+    }
+    const exchangeResult = await tokenExchangeHandler({
+      activity: { from: { id: "29:user", aadObjectId: "aad-user" } },
+    });
+    expect(exchangeResult).toEqual({ status: 200 });
+    expect(app.onTokenExchange).toHaveBeenCalledTimes(1);
 
     const signinHandler = app.event.mock.calls.find(
       (call: [string, unknown]) => call[0] === "signin",
@@ -414,7 +429,7 @@ describe("monitorMSTeamsProvider lifecycle", () => {
     });
 
     await vi.waitFor(() => {
-      expect(isSigninInvokeAuthorized).toHaveBeenCalledTimes(1);
+      expect(isSigninInvokeAuthorized).toHaveBeenCalledTimes(2);
       expect(ssoTokenStore.save).toHaveBeenCalledTimes(2);
     });
     expect(ssoTokenStore.save).toHaveBeenCalledWith(
@@ -482,6 +497,51 @@ describe("monitorMSTeamsProvider lifecycle", () => {
     await vi.waitFor(() => {
       expect(isSigninInvokeAuthorized).toHaveBeenCalledTimes(1);
     });
+    expect(ssoTokenStore.save).not.toHaveBeenCalled();
+
+    abort.abort();
+    await task;
+  });
+
+  it("blocks SDK SSO token exchange before the SDK calls Bot Framework", async () => {
+    const abort = new AbortController();
+    const cfg = createConfig(0);
+    updateMSTeamsConfig(cfg, {
+      sso: { enabled: true, connectionName: "graph" },
+    });
+    isSigninInvokeAuthorized.mockResolvedValueOnce(false);
+
+    const task = monitorMSTeamsProvider({
+      cfg,
+      runtime: createRuntime(),
+      abortSignal: abort.signal,
+      conversationStore: createStores().conversationStore,
+      pollStore: createStores().pollStore,
+    });
+
+    await vi.waitFor(() => {
+      expect(registerMSTeamsHandlers).toHaveBeenCalled();
+    });
+
+    const sdkResultPromise = loadMSTeamsSdkWithAuth.mock.results[0]?.value;
+    if (!sdkResultPromise) {
+      throw new Error("expected loadMSTeamsSdkWithAuth result");
+    }
+    const app = (await sdkResultPromise).app;
+    const tokenExchangeHandler = app.on.mock.calls.find(
+      (call: [string, unknown]) => call[0] === "signin.token-exchange",
+    )?.[1];
+    if (typeof tokenExchangeHandler !== "function") {
+      throw new Error("expected signin token-exchange handler");
+    }
+
+    const result = await tokenExchangeHandler({
+      activity: { from: { id: "29:blocked", aadObjectId: "aad-blocked" } },
+    });
+
+    expect(result).toEqual({ status: 200, body: {} });
+    expect(isSigninInvokeAuthorized).toHaveBeenCalledTimes(1);
+    expect(app.onTokenExchange).not.toHaveBeenCalled();
     expect(ssoTokenStore.save).not.toHaveBeenCalled();
 
     abort.abort();

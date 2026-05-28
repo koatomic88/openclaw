@@ -427,6 +427,19 @@ describe("createMSTeamsReplyDispatcher", () => {
     expect(getStreamMock().update).toHaveBeenCalled();
   });
 
+  it("does not suppress default tool progress messages in partial stream mode", () => {
+    const dispatcher = createDispatcher("personal", {
+      streaming: {
+        mode: "partial",
+        progress: {
+          toolProgress: true,
+        },
+      },
+    });
+
+    expect(dispatcher.replyOptions.suppressDefaultToolProgressMessages).toBeUndefined();
+  });
+
   it("does not set suppressDefaultToolProgressMessages when toolProgress=false", async () => {
     const dispatcher = createDispatcher("personal", {
       streaming: {
