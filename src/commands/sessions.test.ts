@@ -343,7 +343,7 @@ describe("sessionsCommand", () => {
   });
 
   it("rejects partial --active values", async () => {
-    const store = writeStore(
+    seedSessionRows(
       {
         demo: {
           sessionId: "demo",
@@ -354,12 +354,10 @@ describe("sessionsCommand", () => {
     );
     const { runtime, errors } = makeRuntime();
 
-    await expect(sessionsCommand({ store, active: "10m" }, runtime)).rejects.toThrow("exit 1");
+    await expect(sessionsCommand({ active: "10m" }, runtime)).rejects.toThrow("exit 1");
     expect(errors).toStrictEqual([
       "--active must be a positive number of minutes, for example --active 30.",
     ]);
-
-    fs.rmSync(store);
   });
 
   it("rejects invalid --limit values", async () => {
