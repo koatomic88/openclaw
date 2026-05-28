@@ -6,11 +6,10 @@ import { buildHierarchyReinforcementMessage } from "../../../auto-reply/handoff-
 import { filterHeartbeatTranscriptArtifacts } from "../../../auto-reply/heartbeat-filter.js";
 import { stripInboundMetadata } from "../../../auto-reply/reply/strip-inbound-meta.js";
 import { getRuntimeConfig, type OpenClawConfig } from "../../../config/config.js";
-import { resolveStorePath } from "../../../config/sessions/paths.js";
 import {
-  loadSessionStore,
-  runQuotaSuspensionMaintenance,
-  updateSessionStoreEntry,
+  getSessionEntry,
+  listSessionEntries,
+  patchSessionEntry,
 } from "../../../config/sessions/store.js";
 import {
   bindOwnedSessionTranscriptWrites,
@@ -164,7 +163,6 @@ import {
 } from "../../runtime-plan/tools.js";
 import { resolveSandboxContext } from "../../sandbox.js";
 import { resolveSandboxRuntimeStatus } from "../../sandbox/runtime-status.js";
-import { repairSessionFileIfNeeded } from "../../session-file-repair.js";
 import { guardSessionManager } from "../../session-tool-result-guard-wrapper.js";
 import {
   sanitizeToolUseResultPairing,
@@ -265,8 +263,6 @@ import {
   updateActiveEmbeddedRunSnapshot,
 } from "../runs.js";
 import { buildEmbeddedSandboxInfo } from "../sandbox-info.js";
-import { prewarmSessionFile, trackSessionManagerAccess } from "../session-manager-cache.js";
-import { prepareSessionManagerForRun } from "../session-manager-init.js";
 import { resolveEmbeddedRunSkillEntries } from "../skills-runtime.js";
 import {
   describeEmbeddedAgentStreamStrategy,
@@ -313,7 +309,6 @@ import {
   resolveAttemptTrajectoryTerminal,
   resolveTerminalAssistantTexts,
 } from "./attempt-trajectory-status.js";
-import { EmbeddedAttemptSessionTakeoverError } from "./attempt.session-lock.js";
 export { buildContextEnginePromptCacheInfo } from "./attempt.context-engine-helpers.js";
 import {
   rotateTranscriptAfterCompaction,
@@ -387,7 +382,6 @@ import {
   sanitizeOpenAIResponsesReplayForStream,
   sanitizeReplayToolCallIdsForStream,
   shouldApplyReplayToolCallIdSanitizer,
-  sanitizeOpenAIResponsesReplayForStream,
   wrapStreamFnSanitizeMalformedToolCalls,
   wrapStreamFnTrimToolCallNames,
 } from "./attempt.tool-call-normalization.js";
@@ -2604,8 +2598,9 @@ export async function runEmbeddedAttempt(
     let trajectoryEndRecorded = false;
     let buildAbortSettlePromise: () => Promise<void> | null = () => null;
     try {
-      await repairSessionFileIfNeeded({
-        sessionFile: params.sessionFile,
+      await repairTranscriptSessionStateIfNeeded({
+        agentId: sessionAgentId,
+        sessionId: params.sessionId,
         debug: (message) => log.debug(message),
         warn: (message) => log.warn(message),
       });
@@ -2623,7 +2618,6 @@ export async function runEmbeddedAttempt(
         env: process.env,
       });
 
-      await prewarmSessionFile(params.sessionFile);
       const preparedUserTurnMessage = await params.userTurnTranscriptRecorder?.resolveMessage();
       sessionManager = guardSessionManager(SessionManager.open(params.sessionFile), {
         agentId: sessionAgentId,
@@ -2654,8 +2648,6 @@ export async function runEmbeddedAttempt(
           params.onAssistantErrorMessagePersisted?.(message);
         },
       });
-      trackSessionManagerAccess(params.sessionFile);
-
       await runAttemptContextEngineBootstrap({
         hadSessionFile,
         contextEngine: activeContextEngine,
@@ -2685,14 +2677,6 @@ export async function runEmbeddedAttempt(
             agentId: sessionAgentId,
           }),
         warn: (message) => log.warn(message),
-      });
-
-      await prepareSessionManagerForRun({
-        sessionManager,
-        sessionFile: params.sessionFile,
-        hadSessionFile,
-        sessionId: params.sessionId,
-        cwd: effectiveCwd,
       });
 
       const settingsManager = createPreparedEmbeddedAgentSettingsManager({
@@ -3348,10 +3332,7 @@ export async function runEmbeddedAttempt(
               }),
               repairToolUseResultPairing: transcriptPolicy.repairToolUseResultPairing,
             }),
-            repairToolUseResultPairing: transcriptPolicy.repairToolUseResultPairing,
-          });
-          return inner(model, { ...ctx, messages: nextMessages } as typeof context, options);
-        };
+        );
       }
 
       if (isOpenAIResponsesApi) {
@@ -3520,15 +3501,14 @@ export async function runEmbeddedAttempt(
           });
 
           if (params.sessionKey && !isRawModelRun) {
-            const storePath = resolveStorePath(params.config?.session?.store, {
+            const sessionEntry = getSessionEntry({
               agentId: sessionAgentId,
+              sessionKey: params.sessionKey,
             });
-            await runQuotaSuspensionMaintenance({ storePath });
-            const store = loadSessionStore(storePath, { skipCache: true });
-            const sessionEntry = store[params.sessionKey];
             const suspension = sessionEntry?.quotaSuspension;
             if (suspension?.state === "resuming") {
-              const subagents = Object.values(store)
+              const subagents = listSessionEntries({ agentId: sessionAgentId })
+                .map(({ entry }) => entry)
                 .filter((s) => s.spawnedBy === sessionEntry.sessionId)
                 .map((s) => ({
                   sessionId: s.sessionId,
@@ -3540,8 +3520,8 @@ export async function runEmbeddedAttempt(
                 activeSubagents: subagents,
               });
               validated.push(handoffMsg);
-              await updateSessionStoreEntry({
-                storePath,
+              await patchSessionEntry({
+                agentId: sessionAgentId,
                 sessionKey: params.sessionKey,
                 update: async (entry) => {
                   if (entry.quotaSuspension?.state !== "resuming") {
@@ -5623,4 +5603,3 @@ export async function runEmbeddedAttempt(
     restoreSkillEnv?.();
   }
 }
-export { testing as __testing };

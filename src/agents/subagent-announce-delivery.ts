@@ -130,6 +130,9 @@ async function runAnnounceAgentCall(params: {
     params.agentParams,
     {
       expectFinal: params.expectFinal,
+      forceSyntheticClient: shouldPreserveUserFacingSessionStateForInputProvenance(
+        params.agentParams.inputProvenance,
+      ),
       timeoutMs: params.timeoutMs,
     },
   );
