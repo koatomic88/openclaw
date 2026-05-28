@@ -45,16 +45,12 @@ import {
   writeStoredModelsConfigRaw,
 } from "../agents/models-config-store.js";
 import { ensureOpenClawModelCatalog } from "../agents/models-config.js";
-import {
-  clampThinkingLevel,
-  type Api,
-  type Model,
-  type ModelThinkingLevel,
-} from "../agents/pi-ai-contract.js";
+import { type Api, type Model, type ModelThinkingLevel } from "../agents/pi-ai-contract.js";
 import { STREAM_ERROR_FALLBACK_TEXT } from "../agents/stream-message-shared.js";
 import { clearRuntimeConfigSnapshot, getRuntimeConfig } from "../config/io.js";
 import type { ModelsConfig, ModelProviderConfig, OpenClawConfig } from "../config/types.js";
 import { isTruthyEnvValue } from "../infra/env.js";
+import { clampThinkingLevel } from "../llm/model-utils.js";
 import { normalizeGoogleModelId } from "../plugin-sdk/google-model-id.js";
 import { resolveProviderThinkingProfile } from "../plugins/provider-runtime.js";
 import { DEFAULT_AGENT_ID, resolveAgentIdFromSessionKey } from "../routing/session-key.js";
@@ -3100,7 +3096,7 @@ describeLive("gateway live (dev agent, profile keys)", () => {
         );
         const workspaceDir = resolveAgentWorkspaceDir(cfg, DEFAULT_AGENT_ID);
         logProgress("[all-models] preparing model catalog");
-        await withGatewayLiveSetupTimeout(
+        const modelsJsonResult = await withGatewayLiveSetupTimeout(
           ensureOpenClawModelCatalog(cfg, undefined, {
             workspaceDir,
             ...(providerList ? { providerDiscoveryProviderIds: providerList } : {}),
