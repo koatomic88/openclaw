@@ -511,7 +511,6 @@ describe("gateway session utils", () => {
   test("session rows expose estimated context budget status", () => {
     const row = buildGatewaySessionRow({
       cfg: createModelDefaultsConfig({ primary: "anthropic/claude-sonnet-4.6" }),
-      storePath: "",
       store: {},
       key: "agent:main:main",
       entry: {

@@ -252,9 +252,9 @@ describe("heartbeat runner skips when target session lane is busy", () => {
   });
 
   it("returns requests-in-flight when another session for the same agent has an active reply run", async () => {
-    await withTempHeartbeatSandbox(async ({ storePath, replySpy }) => {
+    await withTempHeartbeatSandbox(async ({ agentId, replySpy }) => {
       const cfg = createHeartbeatTelegramConfig();
-      await seedHeartbeatTelegramSession(storePath, cfg);
+      await seedHeartbeatTelegramSession(agentId, cfg);
       const listActiveReplyRunSessionKeys = vi.fn(() => [
         "agent:main:telegram:group:-1003966283270:topic:547",
       ]);
@@ -276,9 +276,9 @@ describe("heartbeat runner skips when target session lane is busy", () => {
   });
 
   it("ignores unscoped active reply runs when checking same-agent heartbeat work", async () => {
-    await withTempHeartbeatSandbox(async ({ storePath, replySpy }) => {
+    await withTempHeartbeatSandbox(async ({ agentId, replySpy }) => {
       const cfg = createHeartbeatTelegramConfig();
-      await seedHeartbeatTelegramSession(storePath, cfg);
+      await seedHeartbeatTelegramSession(agentId, cfg);
       const listActiveReplyRunSessionKeys = vi.fn(() => ["legacy-session-key"]);
       replySpy.mockResolvedValue({ text: "HEARTBEAT_OK" });
 
@@ -299,9 +299,9 @@ describe("heartbeat runner skips when target session lane is busy", () => {
   });
 
   it("does not defer immediate heartbeat wakes for another active session", async () => {
-    await withTempHeartbeatSandbox(async ({ storePath, replySpy }) => {
+    await withTempHeartbeatSandbox(async ({ agentId, replySpy }) => {
       const cfg = createHeartbeatTelegramConfig();
-      await seedHeartbeatTelegramSession(storePath, cfg);
+      await seedHeartbeatTelegramSession(agentId, cfg);
       const listActiveReplyRunSessionKeys = vi.fn(() => [
         "agent:main:telegram:group:-1003966283270:topic:547",
       ]);
@@ -324,9 +324,9 @@ describe("heartbeat runner skips when target session lane is busy", () => {
   });
 
   it("returns requests-in-flight when a reply run is still active after queues drain", async () => {
-    await withTempHeartbeatSandbox(async ({ storePath, replySpy }) => {
+    await withTempHeartbeatSandbox(async ({ agentId, replySpy }) => {
       const cfg = createHeartbeatTelegramConfig();
-      const sessionKey = await seedHeartbeatTelegramSession(storePath, cfg);
+      const sessionKey = await seedHeartbeatTelegramSession(agentId, cfg);
       const operation = createReplyOperation({
         sessionKey,
         sessionId: "active-reply-session",
@@ -356,10 +356,10 @@ describe("heartbeat runner skips when target session lane is busy", () => {
   });
 
   it("returns requests-in-flight when an isolated heartbeat reply run is still active", async () => {
-    await withTempHeartbeatSandbox(async ({ storePath, replySpy }) => {
+    await withTempHeartbeatSandbox(async ({ agentId, replySpy }) => {
       const cfg = createHeartbeatTelegramConfig();
       cfg.agents!.defaults!.heartbeat = { every: "30m", isolatedSession: true };
-      const baseSessionKey = await seedHeartbeatTelegramSession(storePath, cfg);
+      const baseSessionKey = await seedHeartbeatTelegramSession(agentId, cfg);
       const isolatedSessionKey = `${baseSessionKey}:heartbeat`;
       const operation = createReplyOperation({
         sessionKey: isolatedSessionKey,
@@ -443,16 +443,14 @@ describe("heartbeat runner skips when target session lane is busy", () => {
   });
 
   it("does not replay stale pending final delivery through a later heartbeat", async () => {
-    await withTempHeartbeatSandbox(async ({ storePath, replySpy }) => {
+    await withTempHeartbeatSandbox(async ({ agentId, replySpy }) => {
       const cfg = createHeartbeatTelegramConfig();
-      cfg.session = { store: storePath };
       cfg.agents!.defaults!.heartbeat = {
         every: "30m",
         target: "telegram",
       };
-      await seedMainSessionStore(storePath, cfg, {
+      await seedMainHeartbeatSession(agentId, cfg, {
         lastChannel: "telegram",
-        lastProvider: "telegram",
         lastTo: "default-heartbeat-target",
         updatedAt: Date.now() - 60_000,
         pendingFinalDelivery: true,

@@ -745,7 +745,7 @@ describe("maybeRepairLegacyCronStore", () => {
   });
 
   it("warns and continues when the cron job store cannot be read", async () => {
-    const storePath = await makeTempStorePath();
+    const storePath = await makeTempLegacyStorePath();
     // Force loadCronStore to throw a non-ENOENT read error by placing a
     // directory where the cron job store file would be. This mirrors the
     // Docker-on-root permission failure reported in #86102 without depending
@@ -756,7 +756,7 @@ describe("maybeRepairLegacyCronStore", () => {
 
     await expect(
       maybeRepairLegacyCronStore({
-        cfg: { cron: { store: storePath } },
+        cfg: { cron: { store: storePath } as OpenClawConfig["cron"] & { store: string } },
         options: {},
         prompter,
       }),

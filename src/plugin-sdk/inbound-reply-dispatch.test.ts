@@ -248,7 +248,6 @@ describe("recordInboundSessionAndDispatchReply", () => {
       accountId: "default",
       agentId: "main",
       routeSessionKey: "agent:main:telegram:peer",
-      storePath: "/tmp/sessions.json",
       ctxPayload: {
         Body: "body",
         RawBody: "body",

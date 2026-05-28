@@ -205,7 +205,7 @@ describe("diagnostics timeline", () => {
   });
 
   it("can omit sensitive span error messages", async () => {
-    const { env, path } = await createTimelineEnv();
+    const { env } = await createTimelineEnv();
 
     await expect(
       measureDiagnosticsTimelineSpan(
@@ -217,7 +217,7 @@ describe("diagnostics timeline", () => {
       ),
     ).rejects.toThrow("TOKEN_ID");
 
-    const events = await readTimeline(path);
+    const events = await readTimeline(env);
     expect(events).toHaveLength(2);
     const errorEvent = eventRecord(events, 1);
     expect(errorEvent.type).toBe("span.error");
