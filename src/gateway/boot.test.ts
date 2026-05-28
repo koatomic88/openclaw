@@ -258,8 +258,9 @@ describe("runBootOnce", () => {
       expect(call.sessionId).toMatch(
         /^boot-\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}-\d{3}-[0-9a-f]{8}$/,
       );
+      const bootSessionKey = `agent:${agentId}:boot`;
       expect(call.sessionKey).toBe(bootSessionKey);
-      expectSessionMapping({ storePath, sessionKey, expectedSessionId: existingSessionId });
+      expectMainSessionRestored({ agentId, sessionKey, expectedSessionId: existingSessionId });
     });
   });
 
