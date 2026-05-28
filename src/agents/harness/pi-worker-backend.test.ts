@@ -23,7 +23,7 @@ function createPreparedRun(overrides: Partial<PreparedAgentRun> = {}): PreparedA
 
 describe("PI worker backend", () => {
   it("runs the embedded PI runner from a prepared descriptor", async () => {
-    const runEmbeddedAgent = vi.fn(async (params) => {
+    const runEmbeddedPiAgent = vi.fn(async (params) => {
       expect(params).toMatchObject({
         runId: "run-pi-worker",
         sessionId: "session-pi-worker",
@@ -36,7 +36,7 @@ describe("PI worker backend", () => {
         meta: { durationMs: 12 },
       };
     });
-    const backend = createPiWorkerBackend({ runEmbeddedAgent });
+    const backend = createPiWorkerBackend({ runEmbeddedPiAgent });
 
     await expect(
       backend.run(createPreparedRun(), {
@@ -53,13 +53,13 @@ describe("PI worker backend", () => {
         },
       },
     });
-    expect(runEmbeddedAgent).toHaveBeenCalledTimes(1);
+    expect(runEmbeddedPiAgent).toHaveBeenCalledTimes(1);
   });
 
   it("forwards worker callback events through the runtime context", async () => {
     const events: AgentRunEvent[] = [];
     const backend = createPiWorkerBackend({
-      runEmbeddedAgent: vi.fn(async (params) => {
+      runEmbeddedPiAgent: vi.fn(async (params) => {
         await params.onBlockReply?.({ text: "visible" });
         return {
           payloads: [{ text: "final" }],

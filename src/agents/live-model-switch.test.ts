@@ -8,7 +8,7 @@ const state = vi.hoisted(() => ({
   resolvePersistedSelectedModelRefMock: vi.fn(),
   getSessionEntryMock: vi.fn(),
   upsertSessionEntryMock: vi.fn(),
-  piEmbeddedModuleImported: false,
+  embeddedAgentModuleImported: false,
 }));
 
 vi.mock("./embedded-agent.js", () => {
