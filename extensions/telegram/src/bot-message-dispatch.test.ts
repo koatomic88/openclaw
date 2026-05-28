@@ -1,4 +1,3 @@
-import fs from "node:fs";
 import type { Bot } from "grammy";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { resolveAutoTopicLabelConfig as resolveAutoTopicLabelConfigRuntime } from "./auto-topic-label-config.js";
@@ -11,7 +10,7 @@ import { notifyTelegramInboundEventOutboundSuccess } from "./inbound-event-deliv
 import {
   buildTelegramConversationContext,
   createTelegramMessageCache,
-  resolveTelegramMessageCachePath,
+  resolveTelegramMessageCacheScopeKey,
 } from "./message-cache.js";
 import { recordOutboundMessageForPromptContext as recordOutboundMessageForPromptContextActual } from "./outbound-message-context.js";
 
@@ -1178,59 +1177,55 @@ describe("dispatchTelegramMessage draft streaming", () => {
 
   it("records streamed final replies into the prompt context cache", async () => {
     const storePath = `/tmp/openclaw-telegram-stream-context-${process.pid}-${Date.now()}.json`;
-    const persistedPath = resolveTelegramMessageCachePath(storePath);
-    try {
-      setupDraftStreams({ answerMessageId: 1497 });
-      dispatchReplyWithBufferedBlockDispatcher.mockImplementation(async ({ dispatcherOptions }) => {
-        await dispatcherOptions.deliver(
-          { text: "Done already: timeoutSeconds is now 7200s." },
-          { kind: "final" },
-        );
-        return { queuedFinal: true };
-      });
-
-      await dispatchWithContext({
-        context: createContext(),
-        cfg: { session: { store: storePath } },
-        telegramDeps: {
-          ...telegramDepsForTest,
-          recordOutboundMessageForPromptContext: recordOutboundMessageForPromptContextActual,
-        },
-      });
-
-      const cache = createTelegramMessageCache({ persistedPath });
-      await cache.record({
-        accountId: "default",
-        chatId: "123",
-        threadId: 777,
-        msg: {
-          chat: { id: 123, type: "private", first_name: "Keshav" },
-          message_thread_id: 777,
-          message_id: 1521,
-          date: 1_779_425_460,
-          text: "Did all Amazon crons run fine",
-          from: { id: 5185575566, is_bot: false, first_name: "Keshav" },
-        },
-      });
-
-      const context = await buildTelegramConversationContext({
-        cache,
-        accountId: "default",
-        chatId: "123",
-        threadId: 777,
-        messageId: "1521",
-        replyChainNodes: [],
-        recentLimit: 10,
-        replyTargetWindowSize: 2,
-      });
-
-      expect(context.map((entry) => entry.node.messageId)).toContain("1497");
-      expect(context.map((entry) => entry.node.body)).toContain(
-        "Done already: timeoutSeconds is now 7200s.",
+    const persistedScopeKey = resolveTelegramMessageCacheScopeKey(storePath);
+    setupDraftStreams({ answerMessageId: 1497 });
+    dispatchReplyWithBufferedBlockDispatcher.mockImplementation(async ({ dispatcherOptions }) => {
+      await dispatcherOptions.deliver(
+        { text: "Done already: timeoutSeconds is now 7200s." },
+        { kind: "final" },
       );
-    } finally {
-      fs.rmSync(persistedPath, { force: true });
-    }
+      return { queuedFinal: true };
+    });
+
+    await dispatchWithContext({
+      context: createContext(),
+      cfg: { session: { store: storePath } },
+      telegramDeps: {
+        ...telegramDepsForTest,
+        recordOutboundMessageForPromptContext: recordOutboundMessageForPromptContextActual,
+      },
+    });
+
+    const cache = createTelegramMessageCache({ persistedScopeKey });
+    await cache.record({
+      accountId: "default",
+      chatId: "123",
+      threadId: 777,
+      msg: {
+        chat: { id: 123, type: "private", first_name: "Keshav" },
+        message_thread_id: 777,
+        message_id: 1521,
+        date: 1_779_425_460,
+        text: "Did all Amazon crons run fine",
+        from: { id: 5185575566, is_bot: false, first_name: "Keshav" },
+      },
+    });
+
+    const context = await buildTelegramConversationContext({
+      cache,
+      accountId: "default",
+      chatId: "123",
+      threadId: 777,
+      messageId: "1521",
+      replyChainNodes: [],
+      recentLimit: 10,
+      replyTargetWindowSize: 2,
+    });
+
+    expect(context.map((entry) => entry.node.messageId)).toContain("1497");
+    expect(context.map((entry) => entry.node.body)).toContain(
+      "Done already: timeoutSeconds is now 7200s.",
+    );
   });
 
   it("mirrors the longer streamed preview when final text is truncated", async () => {

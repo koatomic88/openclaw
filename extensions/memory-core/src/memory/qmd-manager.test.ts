@@ -31,6 +31,18 @@ const { withOpenClawStateLockMock } = vi.hoisted(() => ({
     async <T>(_key: string, _options: unknown, fn: () => Promise<T>) => await fn(),
   ),
 }));
+
+function mockMessages(mock: Mock): string[] {
+  return mock.mock.calls.map((call) => {
+    const message = call[0];
+    return typeof message === "string" ? message : "";
+  });
+}
+
+function expectMockMessageContains(mock: Mock, text: string): void {
+  expect(mockMessages(mock).join("\n")).toContain(text);
+}
+
 const MEMORY_EMBEDDING_PROVIDERS_KEY = Symbol.for("openclaw.memoryEmbeddingProviders");
 const MCPORTER_STATE_KEY = Symbol.for("openclaw.mcporterState");
 const QMD_EMBED_QUEUE_KEY = Symbol.for("openclaw.qmdEmbedQueueTail");

@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { resetPluginBlobStoreForTests } from "openclaw/plugin-sdk/plugin-state-runtime";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { compileMemoryWikiVault } from "./compile.js";
 import { readMemoryWikiCompiledDigestBundle } from "./digest-state.js";
 import { renderWikiMarkdown } from "./markdown.js";

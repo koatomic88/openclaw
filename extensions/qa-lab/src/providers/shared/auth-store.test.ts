@@ -24,6 +24,7 @@ describe("QA auth profile store", () => {
 
     await writeQaAuthProfiles({
       agentDir,
+      stateDir: agentDir,
       profiles: {
         "qa-mock-openai": {
           type: "api_key",
@@ -46,6 +47,7 @@ describe("QA auth profile store", () => {
     await expect(
       writeQaAuthProfiles({
         agentDir,
+        stateDir: agentDir,
         profiles: {
           "qa-mock-openai": {
             type: "api_key",
@@ -67,6 +69,7 @@ describe("QA auth profile store", () => {
     await expect(
       writeQaAuthProfiles({
         agentDir,
+        stateDir: agentDir,
         profiles: {
           "qa-mock-openai": {
             type: "api_key",
@@ -99,6 +102,7 @@ describe("QA auth profile store", () => {
 
     await writeQaAuthProfiles({
       agentDir,
+      stateDir: agentDir,
       profiles: {
         "qa-mock-anthropic": {
           type: "api_key",
@@ -159,6 +163,7 @@ describe("QA auth profile store", () => {
 
     await writeQaAuthProfiles({
       agentDir,
+      stateDir: agentDir,
       profiles: {
         "qa-mock-openai": {
           type: "api_key",
@@ -215,6 +220,7 @@ describe("QA auth profile store", () => {
 
     await writeQaAuthProfiles({
       agentDir,
+      stateDir: agentDir,
       profiles: {
         "qa-mock-anthropic": {
           type: "api_key",
@@ -254,6 +260,7 @@ describe("QA auth profile store", () => {
 
     await writeQaAuthProfiles({
       agentDir,
+      stateDir: agentDir,
       profiles: {
         "qa-mock-anthropic": {
           type: "api_key",

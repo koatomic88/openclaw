@@ -52,17 +52,12 @@ export async function buildTelegramMessageContextForTest(
 ): Promise<
   Awaited<ReturnType<typeof import("./bot-message-context.js").buildTelegramMessageContext>>
 > {
-  const { expect, vi } = await loadVitestModule();
+  const { vi } = await loadVitestModule();
   const buildTelegramMessageContext = await loadBuildTelegramMessageContext();
   const sessionRuntime =
     params.sessionRuntime === null
       ? undefined
-      : {
-          ...createTelegramMessageContextSessionRuntimeForTest(
-            resolveSessionStorePathForTest(expect.getState().currentTestName),
-          ),
-          ...params.sessionRuntime,
-        };
+      : { ...telegramMessageContextSessionRuntimeForTest, ...params.sessionRuntime };
   return await buildTelegramMessageContext({
     primaryCtx: {
       message: {
@@ -132,7 +127,7 @@ async function loadVitestModule() {
 }
 
 async function installMessageContextTestMocks() {
-  installTelegramTopicNameStoreForTest();
+  setTelegramTopicNameStoreFactoryForTest(undefined);
   if (messageContextMocksInstalled) {
     return;
   }

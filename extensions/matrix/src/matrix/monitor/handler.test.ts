@@ -1207,7 +1207,6 @@ describe("matrix monitor handler pairing account scope", () => {
       const { handler } = createMatrixHandlerTestHarness({
         dispatchReplyFromConfig,
         isDirectMessage: true,
-        resolveStorePath: () => storePath,
         client: {
           sendMessage: sendNotice,
         },

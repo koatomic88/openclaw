@@ -194,22 +194,10 @@ describe("irc inbound behavior", () => {
       sendReply: vi.fn(async () => {}),
     });
 
-    expect(coreRuntime.channel.turn.runPrepared).toHaveBeenCalledWith(
-      expect.objectContaining({
-        channel: "irc",
-        accountId: "default",
-        routeSessionKey: expect.any(String),
-      }),
-    );
-    expect(coreRuntime.channel.session.recordInboundSession).toHaveBeenCalledTimes(1);
-    expect(coreRuntime.channel.reply.dispatchReplyWithBufferedBlockDispatcher).toHaveBeenCalledWith(
-      expect.objectContaining({
-        ctx: expect.objectContaining({
-          Provider: "irc",
-          AccountId: "default",
-        }),
-      }),
-    );
+    const assembledRequest = (
+      coreRuntime.channel.inbound.dispatchReply as unknown as { mock: { calls: unknown[][] } }
+    ).mock.calls[0]?.[0] as { replyPipeline?: unknown } | undefined;
+    expect(assembledRequest?.replyPipeline).toEqual({});
   });
 
   it("uses channel:# prefix for group channel From and OriginatingTo fields", async () => {

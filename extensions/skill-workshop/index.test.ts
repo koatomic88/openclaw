@@ -747,7 +747,7 @@ describe("skill-workshop", () => {
       skillName: "qa-scenario-workflow",
       change: { kind: "append", section: "Workflow" },
     });
-    expect(runEmbeddedPiAgent).toHaveBeenCalledWith(
+    expect(runEmbeddedAgent).toHaveBeenCalledWith(
       expect.objectContaining({
         disableTools: true,
         toolsAllow: [],
@@ -801,7 +801,7 @@ describe("skill-workshop", () => {
       messages: [{ role: "user", content: "Remember this repeatable fix." }],
     });
 
-    expect(runEmbeddedPiAgent).toHaveBeenCalledWith(
+    expect(runEmbeddedAgent).toHaveBeenCalledWith(
       expect.objectContaining({
         provider: "openai-codex",
         model: "gpt-5.5",
@@ -871,7 +871,7 @@ describe("skill-workshop", () => {
       messages: [{ role: "user", content: "Remember this bare-model default." }],
     });
 
-    expect(runEmbeddedPiAgent).toHaveBeenCalledWith(
+    expect(runEmbeddedAgent).toHaveBeenCalledWith(
       expect.objectContaining({
         provider: "openai-codex",
         model: "gpt-5.5",

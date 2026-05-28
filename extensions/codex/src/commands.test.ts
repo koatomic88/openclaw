@@ -33,7 +33,7 @@ let tempDir: string;
 
 function createContext(
   args: string,
-  sessionFile?: string,
+  sessionId?: string,
   overrides: Partial<PluginCommandContext> = {},
 ): PluginCommandContext {
   return {
@@ -44,7 +44,7 @@ function createContext(
     args,
     commandBody: `/codex ${args}`,
     config: {},
-    sessionFile,
+    sessionId,
     requestConversationBinding: async () => ({ status: "error", message: "unused" }),
     detachConversationBinding: async () => ({ removed: false }),
     getCurrentConversationBinding: async () => null,
@@ -2501,17 +2501,19 @@ describe("codex command", () => {
       firstConfirmBindingReadStarted = resolve;
     });
     let bindingReadCount = 0;
-    const readCodexAppServerBinding = vi.fn(async (bindingSessionFile: string) => {
+    const readCodexAppServerBinding = vi.fn(async (identity: string | { sessionId?: string }) => {
       bindingReadCount += 1;
       if (bindingReadCount === 2) {
         firstConfirmBindingReadStarted();
         await firstConfirmBindingRead;
       }
+      const sessionId =
+        typeof identity === "string" ? identity : (identity.sessionId ?? sessionFile);
       return {
         schemaVersion: 1 as const,
         threadId: "thread-race",
         cwd: "/repo",
-        sessionFile: bindingSessionFile,
+        sessionId,
         createdAt: "2026-04-28T00:00:00.000Z",
         updatedAt: "2026-04-28T00:00:00.000Z",
       };
@@ -3306,7 +3308,7 @@ describe("codex command", () => {
     const startCodexConversationThread = vi.fn(async () => ({
       kind: "codex-app-server-session" as const,
       version: 1 as const,
-      sessionFile,
+      sessionId: sessionFile,
       workspaceDir: "/repo",
     }));
     const requestConversationBinding = vi.fn(async (_request?: { summary?: string }) => ({
@@ -3344,9 +3346,8 @@ describe("codex command", () => {
     expect(startCodexConversationThread).toHaveBeenCalledWith({
       pluginConfig: undefined,
       config: {},
-      sessionFile,
+      sessionId: sessionFile,
       workspaceDir: "/repo",
-      agentDir: path.join(tempDir, "agents", "main", "agent"),
       threadId: "thread-123",
       model: "gpt-5.4",
       modelProvider: "openai",
@@ -3358,7 +3359,7 @@ describe("codex command", () => {
       data: {
         kind: "codex-app-server-session",
         version: 1,
-        sessionFile,
+        sessionId: sessionFile,
         workspaceDir: "/repo",
       },
     });
@@ -3369,7 +3370,7 @@ describe("codex command", () => {
     const startCodexConversationThread = vi.fn(async () => ({
       kind: "codex-app-server-session" as const,
       version: 1 as const,
-      sessionFile,
+      sessionId: sessionFile,
       workspaceDir: "/repo with space",
     }));
     const requestConversationBinding = vi.fn(async (_request?: { summary?: string }) => ({
@@ -3403,9 +3404,8 @@ describe("codex command", () => {
     expect(startCodexConversationThread).toHaveBeenCalledWith({
       pluginConfig: undefined,
       config: {},
-      sessionFile,
+      sessionId: sessionFile,
       workspaceDir: "/repo with space",
-      agentDir: path.join(tempDir, "agents", "main", "agent"),
       threadId: "thread-123",
       model: undefined,
       modelProvider: undefined,
@@ -3419,7 +3419,7 @@ describe("codex command", () => {
     const startCodexConversationThread = vi.fn(async () => ({
       kind: "codex-app-server-session" as const,
       version: 1 as const,
-      sessionFile,
+      sessionId: sessionFile,
       workspaceDir: unsafeWorkspace,
     }));
     const requestConversationBinding = vi.fn(async (_request?: { summary?: string }) => ({
@@ -3544,7 +3544,7 @@ describe("codex command", () => {
             startCodexConversationThread: vi.fn(async () => ({
               kind: "codex-app-server-session" as const,
               version: 1 as const,
-              sessionFile,
+              sessionId: sessionFile,
               workspaceDir: "/default",
             })),
             resolveCodexDefaultWorkspaceDir: vi.fn(() => "/default"),
@@ -3572,7 +3572,7 @@ describe("codex command", () => {
             startCodexConversationThread: vi.fn(async () => ({
               kind: "codex-app-server-session" as const,
               version: 1 as const,
-              sessionFile,
+              sessionId: sessionFile,
               workspaceDir: "/default",
             })),
             resolveCodexDefaultWorkspaceDir: vi.fn(() => "/default"),
@@ -3582,7 +3582,7 @@ describe("codex command", () => {
     ).resolves.toEqual({
       text: "binding unsupported &lt;\uff20U123&gt; \uff3btrusted\uff3d\uff08https://evil\uff09",
     });
-    expect(clearCodexAppServerBinding).toHaveBeenCalledWith(sessionFile);
+    expect(clearCodexAppServerBinding).toHaveBeenCalledWith({ sessionId: sessionFile });
   });
 
   it("detaches the current conversation and clears the Codex app-server thread binding", async () => {
@@ -3605,7 +3605,7 @@ describe("codex command", () => {
             data: {
               kind: "codex-app-server-session",
               version: 1,
-              sessionFile,
+              sessionId: sessionFile,
               workspaceDir: "/repo",
             },
           }),
@@ -3616,7 +3616,7 @@ describe("codex command", () => {
       text: "Detached this conversation from Codex.",
     });
     expect(detachConversationBinding).toHaveBeenCalled();
-    expect(clearCodexAppServerBinding).toHaveBeenCalledWith(sessionFile);
+    expect(clearCodexAppServerBinding).toHaveBeenCalledWith({ sessionId: sessionFile });
   });
 
   it("rejects malformed detach commands before clearing bindings", async () => {
@@ -3651,9 +3651,8 @@ describe("codex command", () => {
       }),
     ).resolves.toEqual({ text: "Codex stop requested." });
     expect(stopCodexConversationTurn).toHaveBeenCalledWith({
-      sessionFile,
+      sessionId: sessionFile,
       pluginConfig: undefined,
-      agentDir: path.join(tempDir, "agents", "main", "agent"),
       config: {},
     });
   });
@@ -3671,9 +3670,8 @@ describe("codex command", () => {
       }),
     ).resolves.toEqual({ text: "Codex stop requested." });
     expect(stopCodexConversationTurn).toHaveBeenCalledWith({
-      sessionFile,
+      sessionId: sessionFile,
       pluginConfig: undefined,
-      agentDir: path.join(tempDir, "agents", "main", "agent"),
       config: { agents: { defaults: { sandbox: { mode: "all" } } } },
     });
   });
@@ -3703,10 +3701,9 @@ describe("codex command", () => {
       }),
     ).resolves.toEqual({ text: "Sent steer message to Codex." });
     expect(steerCodexConversationTurn).toHaveBeenCalledWith({
-      sessionFile,
+      sessionId: sessionFile,
       pluginConfig: undefined,
       message: "focus tests first",
-      agentDir: path.join(tempDir, "agents", "main", "agent"),
       config: {},
     });
   });
@@ -3735,24 +3732,21 @@ describe("codex command", () => {
     ).resolves.toEqual({ text: "Codex permissions set to full access." });
 
     expect(setCodexConversationModel).toHaveBeenCalledWith({
-      sessionFile,
+      sessionId: sessionFile,
       pluginConfig: undefined,
       model: "gpt-5.4",
-      agentDir: path.join(tempDir, "agents", "main", "agent"),
       config: {},
     });
     expect(setCodexConversationFastMode).toHaveBeenCalledWith({
-      sessionFile,
+      sessionId: sessionFile,
       pluginConfig: undefined,
       enabled: true,
-      agentDir: path.join(tempDir, "agents", "main", "agent"),
       config: {},
     });
     expect(setCodexConversationPermissions).toHaveBeenCalledWith({
-      sessionFile,
+      sessionId: sessionFile,
       pluginConfig: undefined,
       mode: "yolo",
-      agentDir: path.join(tempDir, "agents", "main", "agent"),
       config: {},
     });
   });
@@ -3907,7 +3901,7 @@ describe("codex command", () => {
             data: {
               kind: "codex-app-server-session",
               version: 1,
-              sessionFile,
+              sessionId: sessionFile,
               workspaceDir: "/repo",
             },
           }),
@@ -3915,7 +3909,7 @@ describe("codex command", () => {
         {
           deps: createDeps({
             readCodexConversationActiveTurn: vi.fn(() => ({
-              sessionFile,
+              sessionId: sessionFile,
               threadId: "thread-123",
               turnId: "turn-1",
             })),
@@ -3931,7 +3925,7 @@ describe("codex command", () => {
         "- Fast: on",
         "- Permissions: full access",
         "- Active run: turn-1",
-        `- Session: ${sessionFile.replaceAll("_", "\uff3f")}`,
+        `- Session key: ${sessionFile.replaceAll("_", "\uff3f")}`,
       ].join("\n"),
     });
   });
@@ -3961,7 +3955,7 @@ describe("codex command", () => {
           data: {
             kind: "codex-app-server-session",
             version: 1,
-            sessionFile,
+            sessionId: sessionFile,
             workspaceDir: "/repo <@U123>",
           },
         }),

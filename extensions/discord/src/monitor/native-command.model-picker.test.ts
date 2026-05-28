@@ -174,6 +174,16 @@ function createDispatchSpy() {
   return vi.fn<DispatchDiscordCommandInteraction>().mockResolvedValue({ accepted: true });
 }
 
+type MockWithCalls = { mock: { calls: unknown[][] } };
+
+function firstMockArg(mock: MockWithCalls, label: string) {
+  const call = mock.mock.calls.at(0);
+  if (!call) {
+    throw new Error(`expected ${label} call`);
+  }
+  return call[0];
+}
+
 function createModelPickerFallbackButton(
   context: ModelPickerContext,
   dispatchCommandInteraction: DispatchDiscordCommandInteraction = createDispatchSpy(),

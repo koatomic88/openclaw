@@ -4,6 +4,7 @@ import {
   loadAuthProfileStoreWithoutExternalProfiles,
   resolveAuthProfileStoreLocationForDisplay,
 } from "openclaw/plugin-sdk/agent-runtime";
+import type { MigrationProviderContext } from "openclaw/plugin-sdk/plugin-entry";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/provider-auth";
 import { updateAuthProfileStoreWithLock } from "openclaw/plugin-sdk/provider-auth";
 import { afterEach, describe, expect, it } from "vitest";

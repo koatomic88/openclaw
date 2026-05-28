@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   buildTelegramConversationContext,
   createTelegramMessageCache,
-  resolveTelegramMessageCachePath,
+  resolveTelegramMessageCacheScopeKey,
   resetTelegramMessageCacheBucketsForTest,
 } from "./message-cache.js";
 import {
@@ -624,7 +624,7 @@ describe("sendMessageTelegram", () => {
 
   it("records sent text messages into the Telegram prompt context cache", async () => {
     const storePath = `/tmp/openclaw-telegram-send-context-${process.pid}-${Date.now()}.json`;
-    const persistedPath = resolveTelegramMessageCachePath(storePath);
+    const persistedScopeKey = resolveTelegramMessageCacheScopeKey(storePath);
     const cfg = { session: { store: storePath } };
     try {
       botApi.sendMessage.mockResolvedValueOnce({
@@ -646,7 +646,7 @@ describe("sendMessageTelegram", () => {
         messageThreadId: 1154,
       });
 
-      const cache = createTelegramMessageCache({ persistedPath });
+      const cache = createTelegramMessageCache({ persistedScopeKey });
       await cache.record({
         accountId: "default",
         chatId: "-1003966283270",
@@ -681,7 +681,6 @@ describe("sendMessageTelegram", () => {
         "Done already: timeoutSeconds is now 7200s.",
       );
     } finally {
-      fs.rmSync(persistedPath, { force: true });
       fs.rmSync(`${storePath}.telegram-sent-messages.json`, { force: true });
     }
   });

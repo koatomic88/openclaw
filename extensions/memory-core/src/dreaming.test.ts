@@ -183,6 +183,24 @@ function createCronHarness(
   };
 }
 
+function requireAddCall(harness: { addCalls: CronAddInput[] }, index: number): CronAddInput {
+  const call = harness.addCalls[index];
+  if (!call) {
+    throw new Error(`expected cron add call ${index}`);
+  }
+  return call;
+}
+
+function expectCronSchedule(
+  schedule: CronAddInput["schedule"] | CronPatch["schedule"] | undefined,
+  expr: string,
+  tz?: string,
+): void {
+  expect(schedule?.kind).toBe("cron");
+  expect(schedule?.expr).toBe(expr);
+  expect(schedule?.tz).toBe(tz);
+}
+
 function getBeforeAgentReplyHandler(
   onMock: ReturnType<typeof vi.fn>,
 ): (

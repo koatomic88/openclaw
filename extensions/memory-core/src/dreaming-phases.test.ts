@@ -2815,7 +2815,7 @@ describe("dedupeEntries — CJK-aware snippet similarity (#80613)", () => {
     const a = makeRecall("cjk-a", "教训：配置中实验开关字段是叫做规则");
     const b = makeRecall("cjk-b", "教训：配置里实验开关的字段叫做规则");
 
-    const deduped = testing.dedupeEntries([a, b], 0.5);
+    const deduped = __testing.dedupeEntries([a, b], 0.5);
     expect(deduped).toHaveLength(1);
     // First entry survives; recall counts merge in.
     expect(deduped[0]?.key).toBe("cjk-a");
@@ -2829,7 +2829,7 @@ describe("dedupeEntries — CJK-aware snippet similarity (#80613)", () => {
     const a = makeRecall("mixed-a", "Plan 实验开关字段叫做 exRule");
     const b = makeRecall("mixed-b", "Plan 整个产品体系彻底重构 exRule");
 
-    const deduped = testing.dedupeEntries([a, b], 0.7);
+    const deduped = __testing.dedupeEntries([a, b], 0.7);
     expect(deduped).toHaveLength(2);
     expect(deduped.map((entry) => entry.key).toSorted()).toStrictEqual(["mixed-a", "mixed-b"]);
   });
@@ -2841,7 +2841,7 @@ describe("dedupeEntries — CJK-aware snippet similarity (#80613)", () => {
     const a = makeRecall("en-a", "Plan config experiment toggle field is named exRule");
     const b = makeRecall("en-b", "Plan configuration uses experiment toggle field named exRule");
 
-    const deduped = testing.dedupeEntries([a, b], 0.4);
+    const deduped = __testing.dedupeEntries([a, b], 0.4);
     expect(deduped).toHaveLength(1);
     expect(deduped[0]?.key).toBe("en-a");
   });
@@ -2850,7 +2850,7 @@ describe("dedupeEntries — CJK-aware snippet similarity (#80613)", () => {
     const a = makeRecall("short-a", "weather: sunny");
     const b = makeRecall("short-b", "deploy: blocked");
 
-    const deduped = testing.dedupeEntries([a, b], 0.5);
+    const deduped = __testing.dedupeEntries([a, b], 0.5);
     expect(deduped).toHaveLength(2);
   });
 });

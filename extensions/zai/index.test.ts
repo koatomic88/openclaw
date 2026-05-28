@@ -1,3 +1,6 @@
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import type { StreamFn } from "openclaw/plugin-sdk/agent-core";
 import { registerSingleProviderPlugin } from "openclaw/plugin-sdk/plugin-test-runtime";
 import type { Context, Model } from "openclaw/plugin-sdk/provider-ai";

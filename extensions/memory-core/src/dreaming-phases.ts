@@ -1837,6 +1837,7 @@ async function runPhaseIfTriggered(
 export const testing = {
   runPhaseIfTriggered,
   previewRemDreaming,
+  dedupeEntries,
   readDailyIngestionState,
   readSessionIngestionState,
   constants: {

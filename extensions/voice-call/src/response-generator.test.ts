@@ -75,7 +75,7 @@ function createAgentRuntime(payloads: Array<Record<string, unknown>>) {
 
   return {
     runtime,
-    runEmbeddedPiAgent,
+    runEmbeddedAgent,
     getSessionEntry,
     upsertSessionEntry,
     sessionStore,
@@ -85,8 +85,8 @@ function createAgentRuntime(payloads: Array<Record<string, unknown>>) {
   };
 }
 
-function requireEmbeddedAgentArgs(runEmbeddedPiAgent: ReturnType<typeof vi.fn>) {
-  const calls = runEmbeddedPiAgent.mock.calls as unknown[][];
+function requireEmbeddedAgentArgs(runEmbeddedAgent: ReturnType<typeof vi.fn>) {
+  const calls = runEmbeddedAgent.mock.calls as unknown[][];
   const firstCall = calls[0];
   if (!firstCall) {
     throw new Error("voice response generator did not invoke the embedded agent");
@@ -175,7 +175,7 @@ describe("generateVoiceResponse", () => {
   });
 
   it("pins the voice session to responseModel before running the embedded agent", async () => {
-    const { runtime, runEmbeddedPiAgent, upsertSessionEntry, sessionStore } = createAgentRuntime([
+    const { runtime, runEmbeddedAgent, upsertSessionEntry, sessionStore } = createAgentRuntime([
       { text: '{"spoken":"Pinned model works."}' },
     ]);
     const voiceConfig = VoiceCallConfigSchema.parse({
@@ -205,7 +205,7 @@ describe("generateVoiceResponse", () => {
         sessionKey: "voice:15550001111",
       }),
     );
-    expect(runEmbeddedPiAgent).toHaveBeenCalledWith(
+    expect(runEmbeddedAgent).toHaveBeenCalledWith(
       expect.objectContaining({
         provider: "openai",
         model: "gpt-4.1-nano",
@@ -272,7 +272,7 @@ describe("generateVoiceResponse", () => {
     if (!defaultSessionEntry) {
       throw new Error("Expected default voice session entry");
     }
-    expect(requireEmbeddedAgentArgs(runEmbeddedPiAgent)).toMatchObject({
+    expect(requireEmbeddedAgentArgs(runEmbeddedAgent)).toMatchObject({
       agentId: "main",
       sessionId: defaultSessionEntry.sessionId,
       sessionKey: "voice:15550001111",
@@ -313,7 +313,7 @@ describe("generateVoiceResponse", () => {
     if (!voiceSessionEntry) {
       throw new Error("Expected routed voice session entry");
     }
-    expect(requireEmbeddedAgentArgs(runEmbeddedPiAgent)).toMatchObject({
+    expect(requireEmbeddedAgentArgs(runEmbeddedAgent)).toMatchObject({
       agentId: "voice",
       sessionId: voiceSessionEntry.sessionId,
       sessionKey: "voice:15550001111",

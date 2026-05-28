@@ -33,18 +33,16 @@ describe("discord voice opus codec", () => {
     const encoder = createDiscordOpusEncodeStream();
     const packetsPromise = collectBuffers(encoder);
 
-    try {
-      expect(resolveOpusDecoderPreference()).toBe("opusscript");
-      expect(resolveOpusDecoderPreference("")).toBe("opusscript");
-      expect(resolveOpusDecoderPreference("opusscript")).toBe("opusscript");
-      expect(resolveOpusDecoderPreference("native")).toBe("native");
-      expect(resolveOpusDecoderPreference("@discordjs/opus")).toBe("native");
-    } finally {
-      if (previousPreference === undefined) {
-        delete process.env.OPENCLAW_DISCORD_OPUS_DECODER;
-      } else {
-        process.env.OPENCLAW_DISCORD_OPUS_DECODER = previousPreference;
-      }
-    }
+    encoder.end(Buffer.alloc(960 * 2 * 2));
+    const packets = await packetsPromise;
+
+    expect(packets).toHaveLength(1);
+    expect(packets[0]?.length).toBeGreaterThan(0);
+
+    const decoded = await decodeOpusStream(Readable.from(packets), {
+      onVerbose: vi.fn(),
+      onWarn: vi.fn(),
+    });
+    expect(decoded.length).toBe(960 * 2 * 2);
   });
 });

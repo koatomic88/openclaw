@@ -20,6 +20,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import "./test-runtime-mocks.js";
 import type { MemoryIndexManager } from "./index.js";
 import { closeAllMemorySearchManagers, getMemorySearchManager } from "./index.js";
+import { LOCAL_EMBEDDING_WORKER_ERROR_CODES } from "./manager-local-worker-errors.js";
 import { EMBEDDING_PROBE_CACHE_TTL_MS } from "./manager.js";
 import {
   DEFAULT_LOCAL_MODEL,
@@ -36,6 +37,7 @@ afterAll(() => {
 
 let embedBatchCalls = 0;
 let embedBatchInputCalls = 0;
+let providerInitGate: Promise<void> | null = null;
 let providerCalls: Array<{ provider?: string; model?: string; outputDimensionality?: number }> = [];
 let forceNoProvider = false;
 
