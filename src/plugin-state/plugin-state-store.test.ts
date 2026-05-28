@@ -491,15 +491,15 @@ describe("plugin state keyed store", () => {
         maxEntries: 100,
       });
 
-      await expectPluginStateStoreError(limitStore.register("overflow", { overflow: true }), {
+      await expectPluginStateStoreError(messageStore.register("overflow", { overflow: true }), {
         code: "PLUGIN_STATE_LIMIT_EXCEEDED",
         operation: "register",
       });
-      await expect(siblingStore.lookup("k-0")).resolves.toEqual({
-        namespaceIndex: 1,
+      await expect(topicStore.lookup("topic-0")).resolves.toEqual({
+        kind: "topic",
         entryIndex: 0,
       });
-      await expect(limitStore.lookup("overflow")).resolves.toBeUndefined();
+      await expect(messageStore.lookup("overflow")).resolves.toBeUndefined();
     });
   });
 
