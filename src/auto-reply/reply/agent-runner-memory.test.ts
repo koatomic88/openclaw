@@ -1056,7 +1056,7 @@ describe("runMemoryFlushIfNeeded", () => {
 
     expect(entry?.sessionId).toBe("session-rotated");
     expect(followupRun.run.sessionId).toBe("session-rotated");
-    expect(updateSessionId).toHaveBeenCalledWith("session-rotated");
+    expect(replyOperation.updateSessionId).toHaveBeenCalledWith("session-rotated");
     expect(refreshQueuedFollowupSessionMock).toHaveBeenCalledWith({
       key: "agent:main:main",
       previousSessionId: "session",

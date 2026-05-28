@@ -761,11 +761,20 @@ export async function runPreflightCompactionIfNeeded(params: {
     abortSignal: params.replyOperation.abortSignal,
   });
 
-  if (!result?.ok || !result.compacted) {
-    logVerbose(
-      `preflightCompaction skipped: sessionKey=${params.sessionKey} reason=${result?.reason ?? "not_compacted"}`,
-    );
-    return entry ?? params.sessionEntry;
+  if (!result?.ok) {
+    const reason = result?.reason ?? "not_compacted";
+    if (isPreflightCompactionSkipReason(reason)) {
+      logVerbose(`preflightCompaction skipped: sessionKey=${params.sessionKey} reason=${reason}`);
+      return entry ?? params.sessionEntry;
+    }
+    logVerbose(`preflightCompaction failed: sessionKey=${params.sessionKey} reason=${reason}`);
+    if (isRecoverableNativeHarnessBindingFailure(result)) {
+      logVerbose(
+        `preflightCompaction continuing after recoverable native harness binding failure: sessionKey=${params.sessionKey} reason=${reason}`,
+      );
+      return entry ?? params.sessionEntry;
+    }
+    throw new Error(`Preflight compaction required but failed: ${reason}`);
   }
 
   if (!result.compacted) {
