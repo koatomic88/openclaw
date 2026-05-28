@@ -463,8 +463,6 @@ export {
   resolveEmbeddedAgentStreamFn,
 };
 
-type EmbeddedAttemptSessionFileOwner = { release: () => void };
-
 function logRuntimeToolSchemaQuarantine(params: {
   diagnostics: readonly RuntimeToolSchemaDiagnostic[];
   tools: readonly Parameters<typeof getPluginToolMeta>[0][];
@@ -2019,8 +2017,10 @@ export async function runEmbeddedAttempt(
       bootstrapContextMode: params.bootstrapContextMode,
       bootstrapContextRunKind: params.bootstrapContextRunKind ?? "default",
       bootstrapMode,
-      sessionFile: params.sessionFile,
-      hasCompletedBootstrapTurn: hasCompletedBootstrapTurnForAttempt,
+      agentId: sessionAgentId,
+      sessionId: params.sessionId,
+      hasCompletedBootstrapSessionTurn: async () =>
+        await hasCompletedBootstrapTurnForAttempt(params.sessionFile),
       resolveBootstrapContextForRun: async () => {
         const bootstrapFiles =
           preloadedBootstrapFiles ??
@@ -3224,16 +3224,6 @@ export async function runEmbeddedAttempt(
         resolvedTransport,
         { preparedExtraParams: effectiveExtraParams },
       );
-      if (codeModeControlsEnabledForRun) {
-        activeSession.agent.streamFn = createCodexNativeWebSearchWrapper(
-          activeSession.agent.streamFn,
-          {
-            config: params.config,
-            agentDir,
-            codeModeToolSurfaceEnabled: true,
-          },
-        );
-      }
       const effectivePromptCacheRetention = resolveCacheRetention(
         effectiveExtraParams,
         params.provider,
@@ -3461,6 +3451,16 @@ export async function runEmbeddedAttempt(
           },
         },
       );
+      if (codeModeControlsEnabledForRun) {
+        activeSession.agent.streamFn = createCodexNativeWebSearchWrapper(
+          activeSession.agent.streamFn,
+          {
+            config: params.config,
+            agentDir,
+            codeModeToolSurfaceEnabled: true,
+          },
+        );
+      }
 
       try {
         if (isRawModelRun) {
@@ -4153,7 +4153,9 @@ export async function runEmbeddedAttempt(
         const effectiveTranscriptPrompt =
           params.transcriptPrompt === undefined ? undefined : params.transcriptPrompt;
         let transcriptPromptForRuntimeSplit = effectiveTranscriptPrompt;
-        let promptForRuntimeContextSplit = promptBeforePromptBuildHooks;
+        let promptForRuntimeContextSplit = hasPromptBuildContext
+          ? effectivePrompt
+          : promptBeforePromptBuildHooks;
         // Repair orphaned trailing user messages so new prompts don't violate role ordering.
         const leafEntry = isRawModelRun ? null : sessionManager.getLeafEntry();
         if (leafEntry?.type === "message" && leafEntry.message.role === "user") {

@@ -597,8 +597,8 @@ export function createCodexNativeWebSearchWrapper(
   const underlying = baseStreamFn ?? streamSimple;
   return (model, context, options) => {
     if (
-      (params.codeModeToolSurfaceEnabled === true || isCodeModeEnabled(params.config)) &&
-      hasCodeModeVisibleTools(context)
+      params.codeModeToolSurfaceEnabled === true ||
+      (isCodeModeEnabled(params.config) && hasCodeModeVisibleTools(context))
     ) {
       emitModelTransportDebug(
         log,

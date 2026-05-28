@@ -91,10 +91,10 @@ export function resolveRuntimeContextPromptParts(params: {
     };
   }
   const hiddenRuntimeContext = modelPrompt
-    ? (removeLastPromptOccurrence(extracted.text, modelPrompt.text)?.trim() ??
+    ? removeLastPromptOccurrence(extracted.text, modelPrompt.text)?.trim() ||
       (transcriptPrompt
         ? removeLastPromptOccurrence(extracted.text, transcriptPrompt)?.trim()
-        : undefined))
+        : undefined)
     : transcriptPrompt
       ? removeLastPromptOccurrence(extracted.text, transcriptPrompt)?.trim()
       : undefined;

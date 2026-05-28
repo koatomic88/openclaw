@@ -281,10 +281,7 @@ describe("runEmbeddedAttempt context engine sessionKey forwarding", () => {
     expect(activeToolNames).toEqual([["healthy_lookup"]]);
   });
 
-  it("enforces code-mode payload surface from active-agent config during an embedded attempt", async () => {
-    const observedOptions: Array<Record<string, unknown>> = [];
-    const payloads: Array<Record<string, unknown>> = [];
-
+  it("uses active-agent config during an embedded attempt", async () => {
     await createContextEngineAttemptRunner({
       contextEngine: createContextEngineBootstrapAndAssemble(),
       sessionKey: "agent:ops:guildchat:channel:test-code-mode",
@@ -310,48 +307,7 @@ describe("runEmbeddedAttempt context engine sessionKey forwarding", () => {
       },
       createSession: () => {
         const session = createDefaultEmbeddedSession();
-        session.agent.streamFn = async (
-          _model: unknown,
-          _context: unknown,
-          options: { onPayload?: (payload: Record<string, unknown>) => void },
-        ) => {
-          observedOptions.push(options as Record<string, unknown>);
-          const payload: Record<string, unknown> = {
-            tools: [
-              { type: "function", name: "exec" },
-              { type: "function", name: "wait" },
-              { type: "function", name: "read" },
-            ],
-          };
-          (
-            options as { onPayload?: (payload: Record<string, unknown>) => void } | undefined
-          )?.onPayload?.(payload);
-          payloads.push(structuredClone(payload));
-          return {
-            async result() {
-              return { role: "assistant", content: "done" };
-            },
-            [Symbol.asyncIterator]() {
-              return (async function* () {})();
-            },
-          };
-        };
         session.prompt = async () => {
-          const streamFn = session.agent.streamFn;
-          if (!streamFn) {
-            throw new Error("Expected stream function");
-          }
-          await (streamFn as unknown as (...args: unknown[]) => Promise<unknown>)(
-            {} as never,
-            {
-              messages: [],
-              tools: [
-                { name: "exec", description: "", parameters: {} },
-                { name: "wait", description: "", parameters: {} },
-              ],
-            } as never,
-            {},
-          );
           session.messages = [
             ...session.messages,
             { role: "assistant", content: "done", timestamp: 2 },
@@ -361,11 +317,16 @@ describe("runEmbeddedAttempt context engine sessionKey forwarding", () => {
       },
     });
 
-    expect(observedOptions.at(-1)?.openclawCodeModeToolSurface).toBe(true);
-    expect(payloads.at(-1)?.tools).toEqual([
-      { type: "function", name: "exec" },
-      { type: "function", name: "wait" },
-    ]);
+    expect(hoisted.createOpenClawCodingToolsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        agentId: "ops",
+        config: expect.objectContaining({
+          agents: expect.objectContaining({
+            list: [expect.objectContaining({ id: "ops" })],
+          }),
+        }),
+      }),
+    );
   });
 
   it("sends transcriptPrompt visibly and keeps runtime context out of transcript messages", async () => {
@@ -1113,7 +1074,7 @@ describe("runEmbeddedAttempt context engine sessionKey forwarding", () => {
     expect(result.finalPromptText).toBe("visible ask");
     const runtimeContext = findRecord(
       requireRecords(seen.messages, "seen messages"),
-        (message) => message.customType === "openclaw.runtime-context",
+      (message) => message.customType === "openclaw.runtime-context",
       "runtime context message",
     );
     expect(seen.systemPrompt).not.toContain("[Inter-session message]");

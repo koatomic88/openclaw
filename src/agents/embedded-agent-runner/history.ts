@@ -1,5 +1,7 @@
 import { normalizeChatType } from "../../channels/chat-type.js";
+import { readSqliteSessionRoutingInfo } from "../../config/sessions/session-entries.sqlite.js";
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
+import { resolveAgentIdFromSessionKey } from "../../routing/session-key.js";
 import { normalizeOptionalString } from "../../shared/string-coerce.js";
 import type { AgentMessage } from "../agent-core-contract.js";
 import { normalizeProviderId } from "../provider-id.js";
@@ -104,4 +106,18 @@ export function getHistoryLimitForSessionRouting(
   }
 
   return undefined;
+}
+
+export function getHistoryLimitFromSessionKey(
+  sessionKey: string | undefined,
+  config: OpenClawConfig | undefined,
+): number | undefined {
+  if (!sessionKey) {
+    return undefined;
+  }
+  const routing = readSqliteSessionRoutingInfo({
+    agentId: resolveAgentIdFromSessionKey(sessionKey),
+    sessionKey,
+  });
+  return getHistoryLimitForSessionRouting(routing, config);
 }

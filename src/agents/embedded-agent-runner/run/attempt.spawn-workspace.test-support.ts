@@ -27,8 +27,8 @@ import type {
 import type { Api, Model } from "../../pi-ai-contract.js";
 import type { WorkspaceBootstrapFile } from "../../workspace.js";
 
-type SubscribeEmbeddedPiSessionFn =
-  typeof import("../../embedded-agent-subscribe.js").subscribeEmbeddedPiSession;
+type SubscribeEmbeddedAgentSessionFn =
+  typeof import("../../embedded-agent-subscribe.js").subscribeEmbeddedAgentSession;
 type ShouldPreemptivelyCompactBeforePromptFn =
   typeof import("./preemptive-compaction.js").shouldPreemptivelyCompactBeforePrompt;
 
@@ -70,7 +70,7 @@ type AttemptSpawnWorkspaceHoisted = {
   getOrCreateSessionMcpRuntimeMock: AsyncUnknownMock;
   materializeBundleMcpToolsForRunMock: AsyncUnknownMock;
   createBundleLspToolRuntimeMock: AsyncUnknownMock;
-  subscribeEmbeddedPiSessionMock: Mock<SubscribeEmbeddedPiSessionFn>;
+  subscribeEmbeddedAgentSessionMock: Mock<SubscribeEmbeddedAgentSessionFn>;
   installToolResultContextGuardMock: UnknownMock;
   installContextEngineLoopHookMock: UnknownMock;
   flushPendingToolResultsAfterIdleMock: AsyncUnknownMock;
@@ -141,11 +141,14 @@ const hoisted = vi.hoisted((): AttemptSpawnWorkspaceHoisted => {
   const ensureGlobalUndiciStreamTimeoutsMock = vi.fn();
   const buildEmbeddedMessageActionDiscoveryInputMock = vi.fn((params: unknown) => params);
   const createOpenClawCodingToolsMock = vi.fn(() => []);
+  const getOrCreateSessionMcpRuntimeMock = vi.fn(async () => undefined);
+  const materializeBundleMcpToolsForRunMock = vi.fn(async () => undefined);
+  const createBundleLspToolRuntimeMock = vi.fn(async () => undefined);
   const installToolResultContextGuardMock = vi.fn(() => () => {});
   const installContextEngineLoopHookMock = vi.fn(() => () => {});
   const flushPendingToolResultsAfterIdleMock = vi.fn(async () => {});
   const releaseWsSessionMock = vi.fn(() => {});
-  const subscribeEmbeddedPiSessionMock = vi.fn<SubscribeEmbeddedPiSessionFn>(() =>
+  const subscribeEmbeddedAgentSessionMock = vi.fn<SubscribeEmbeddedAgentSessionFn>(() =>
     createSubscriptionMock(),
   );
   const resolveBootstrapContextForRunMock = vi.fn<() => Promise<BootstrapContext>>(async () => ({
@@ -211,7 +214,7 @@ const hoisted = vi.hoisted((): AttemptSpawnWorkspaceHoisted => {
     getOrCreateSessionMcpRuntimeMock,
     materializeBundleMcpToolsForRunMock,
     createBundleLspToolRuntimeMock,
-    subscribeEmbeddedPiSessionMock,
+    subscribeEmbeddedAgentSessionMock,
     installToolResultContextGuardMock,
     installContextEngineLoopHookMock,
     flushPendingToolResultsAfterIdleMock,
@@ -377,6 +380,7 @@ vi.mock("../../bootstrap-files.js", async () => {
     resolveBootstrapFilesForRun: hoisted.resolveBootstrapFilesForRunMock,
     resolveBootstrapContextForRun: hoisted.resolveBootstrapContextForRunMock,
     resolveContextInjectionMode: hoisted.resolveContextInjectionModeMock,
+    hasCompletedBootstrapTurn: hoisted.hasCompletedBootstrapTranscriptTurnMock,
     hasCompletedBootstrapSessionTurn: hoisted.hasCompletedBootstrapTranscriptTurnMock,
   };
 });
@@ -580,14 +584,18 @@ vi.mock("../../agent-tools.js", () => ({
 }));
 
 vi.mock("../../agent-bundle-mcp-tools.js", () => ({
-  createBundleMcpToolRuntime: async () => undefined,
-  getOrCreateSessionMcpRuntime: async () => undefined,
-  materializeBundleMcpToolsForRun: async () => undefined,
+  createBundleMcpToolRuntime: (...args: unknown[]) =>
+    hoisted.getOrCreateSessionMcpRuntimeMock(...args),
+  getOrCreateSessionMcpRuntime: (...args: unknown[]) =>
+    hoisted.getOrCreateSessionMcpRuntimeMock(...args),
+  materializeBundleMcpToolsForRun: (...args: unknown[]) =>
+    hoisted.materializeBundleMcpToolsForRunMock(...args),
   retireSessionMcpRuntime: async () => true,
 }));
 
 vi.mock("../../agent-bundle-lsp-runtime.js", () => ({
-  createBundleLspToolRuntime: async () => undefined,
+  createBundleLspToolRuntime: (...args: unknown[]) =>
+    hoisted.createBundleLspToolRuntimeMock(...args),
 }));
 
 vi.mock("../../../image-generation/runtime.js", () => ({
@@ -740,6 +748,8 @@ vi.mock("../compaction-safety-timeout.js", () => ({
 }));
 
 vi.mock("../history.js", () => ({
+  getHistoryLimitFromSessionKey: (sessionKey: unknown, config: unknown) =>
+    hoisted.getHistoryLimitForSessionRoutingMock(sessionKey, config),
   getHistoryLimitForSessionRouting: (routing: unknown, config: unknown) =>
     hoisted.getHistoryLimitForSessionRoutingMock(routing, config),
   limitHistoryTurns: (messages: unknown, limit: number | undefined) =>
@@ -1135,6 +1145,7 @@ export async function createContextEngineAttemptRunner(params: {
   const agentDir = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-ctx-engine-agent-"));
   const stateDir = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-ctx-engine-state-"));
   const sessionId = "embedded-session";
+  const sessionFile = path.join(agentDir, "sessions", `${sessionId}.jsonl`);
   params.tempPaths.push(workspaceDir, agentDir, stateDir);
   const seedMessages: AgentMessage[] =
     params.sessionMessages ?? ([{ role: "user", content: "seed", timestamp: 1 }] as AgentMessage[]);
@@ -1178,6 +1189,7 @@ export async function createContextEngineAttemptRunner(params: {
     )({
       sessionId,
       sessionKey: params.sessionKey,
+      sessionFile,
       workspaceDir,
       agentDir,
       config: {},
