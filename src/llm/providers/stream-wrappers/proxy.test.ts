@@ -1,11 +1,8 @@
 import type { StreamFn } from "openclaw/plugin-sdk/agent-core";
+import type { Context, Model } from "openclaw/plugin-sdk/llm";
+import { createAssistantMessageEventStream } from "openclaw/plugin-sdk/llm";
 import { describe, expect, it } from "vitest";
-import type { Context, Model } from "../../../agents/pi-ai-contract.js";
-import { createAssistantMessageEventStream } from "../../../agents/pi-ai-contract.js";
-import {
-  createOpenRouterSystemCacheWrapper,
-  createOpenRouterWrapper,
-} from "./proxy-stream-wrappers.js";
+import { createOpenRouterSystemCacheWrapper, createOpenRouterWrapper } from "./proxy.js";
 
 function runSystemCacheWrapper(model: Partial<Model<"openai-completions">>) {
   const payload = {
