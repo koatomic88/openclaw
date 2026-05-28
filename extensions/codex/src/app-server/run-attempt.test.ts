@@ -1,9 +1,9 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { SessionManager } from "@earendil-works/pi-coding-agent";
 import {
   abortAgentHarnessRun,
   embeddedAgentLog,
+  openTranscriptSessionManagerForSession,
   onAgentEvent,
   type AgentEventPayload,
   type EmbeddedRunAttemptParams,
@@ -106,6 +106,15 @@ function expectResumeRequest(
   for (const [key, value] of Object.entries(params)) {
     expect(requestParams?.[key]).toEqual(value);
   }
+}
+
+function openTestTranscriptSession(params: { sessionFile: string; workspaceDir: string }) {
+  return openTranscriptSessionManagerForSession({
+    agentId: "main",
+    path: params.sessionFile,
+    sessionId: "session-1",
+    cwd: params.workspaceDir,
+  });
 }
 
 async function writeExistingBinding(
@@ -1545,7 +1554,7 @@ describe("runCodexAppServerAttempt", () => {
     );
     const sessionFile = path.join(tempDir, "session.jsonl");
     const workspaceDir = path.join(tempDir, "workspace");
-    const sessionManager = SessionManager.open(sessionFile);
+    const sessionManager = openTestTranscriptSession({ sessionFile, workspaceDir });
     sessionManager.appendMessage(assistantMessage("previous turn", Date.now()));
     const harness = createStartedThreadHarness();
 
@@ -1579,7 +1588,7 @@ describe("runCodexAppServerAttempt", () => {
   it("projects mirrored history when starting Codex without a native thread binding", async () => {
     const sessionFile = path.join(tempDir, "session.jsonl");
     const workspaceDir = path.join(tempDir, "workspace");
-    const sessionManager = SessionManager.open(sessionFile);
+    const sessionManager = openTestTranscriptSession({ sessionFile, workspaceDir });
     sessionManager.appendMessage(userMessage("we are fixing the Opik default project", Date.now()));
     sessionManager.appendMessage(assistantMessage("Opik default project context", Date.now() + 1));
     const harness = createStartedThreadHarness();
@@ -1613,7 +1622,7 @@ describe("runCodexAppServerAttempt", () => {
     if (!Number.isFinite(bindingUpdatedAt)) {
       throw new Error("expected valid Codex binding timestamp");
     }
-    const sessionManager = SessionManager.open(sessionFile);
+    const sessionManager = openTestTranscriptSession({ sessionFile, workspaceDir });
     sessionManager.appendMessage(
       userMessage("we were discussing the Sonnet leak screenshots", bindingUpdatedAt + 1_000),
     );
@@ -1655,7 +1664,7 @@ describe("runCodexAppServerAttempt", () => {
     >;
     bindingPayload.updatedAt = new Date(oldBindingUpdatedAt).toISOString();
     await fs.writeFile(bindingPath, `${JSON.stringify(bindingPayload, null, 2)}\n`);
-    const sessionManager = SessionManager.open(sessionFile);
+    const sessionManager = openTestTranscriptSession({ sessionFile, workspaceDir });
     sessionManager.appendMessage(
       userMessage("we were discussing the Sonnet leak screenshots", oldBindingUpdatedAt + 1_000),
     );

@@ -428,7 +428,9 @@ describe("mirrorCodexAppServerTranscript", () => {
     ]);
     expect(JSON.stringify(second.userMessagesPresent)).not.toContain("secret prompt");
     const records = loadTranscriptEvents(sessionFile, "session-1");
-    expect(records.filter((record) => record.message?.role === "user")).toHaveLength(1);
+    expect(
+      records.filter((record) => record.type === "message" && record.message?.role === "user"),
+    ).toHaveLength(1);
   });
 
   it("preserves the computed idempotency key when hooks rewrite message keys", async () => {

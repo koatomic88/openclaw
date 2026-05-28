@@ -10,7 +10,11 @@ import type { CodexAppServerClientFactory } from "./client-factory.js";
 import type { CodexAppServerClient } from "./client.js";
 import { maybeCompactCodexAppServerSession as maybeCompactCodexAppServerSessionImpl } from "./compact.js";
 import type { CodexServerNotification } from "./protocol.js";
-import { readCodexAppServerBinding, writeCodexAppServerBinding } from "./session-binding.js";
+import {
+  readCodexAppServerBinding,
+  writeCodexAppServerBinding,
+  type CodexAppServerThreadBinding,
+} from "./session-binding.js";
 
 let tempDir: string;
 let codexAppServerClientFactoryForTest: CodexAppServerClientFactory | undefined;
@@ -38,7 +42,9 @@ function maybeCompactCodexAppServerSession(
   );
 }
 
-async function writeTestBinding(options: { authProfileId?: string } = {}): Promise<string> {
+async function writeTestBinding(
+  options: Partial<CodexAppServerThreadBinding> = {},
+): Promise<string> {
   await writeCodexAppServerBinding(
     {
       sessionKey: testSessionKey,

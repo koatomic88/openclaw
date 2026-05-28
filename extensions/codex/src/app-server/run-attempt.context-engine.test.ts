@@ -1,11 +1,11 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import type { AgentMessage } from "@earendil-works/pi-agent-core";
 import type { EmbeddedRunAttemptParams } from "openclaw/plugin-sdk/agent-harness";
 import {
   embeddedAgentLog,
   openTranscriptSessionManagerForSession,
+  type AgentMessage,
   type HarnessContextEngine as ContextEngine,
 } from "openclaw/plugin-sdk/agent-harness-runtime";
 import { replaceSqliteSessionTranscriptEvents } from "openclaw/plugin-sdk/session-store-runtime";
@@ -129,6 +129,19 @@ function seedSessionTranscript(sessionId: string, messages: AgentMessage[]): voi
         message,
       })),
     ],
+  });
+}
+
+function openTestTranscriptSession(params: {
+  sessionId: string;
+  sessionFile?: string;
+  workspaceDir: string;
+}) {
+  return openTranscriptSessionManagerForSession({
+    agentId: "main",
+    path: params.sessionFile,
+    sessionId: params.sessionId,
+    cwd: params.workspaceDir,
   });
 }
 
@@ -646,7 +659,11 @@ describe("runCodexAppServerAttempt context-engine lifecycle", () => {
     const sessionFile = path.join(tempDir, "session.jsonl");
     const workspaceDir = path.join(tempDir, "workspace");
     const agentDir = path.join(tempDir, "agent");
-    const sessionManager = SessionManager.open(sessionFile);
+    const sessionManager = openTestTranscriptSession({
+      sessionId: "session-1",
+      sessionFile,
+      workspaceDir,
+    });
     sessionManager.appendMessage(
       userMessage("previous stale-bootstrap request", Date.now()) as never,
     );
