@@ -7,7 +7,7 @@ import type { OpenClawConfig } from "../config/config.js";
 import { listDiagnosticEvents } from "../infra/diagnostic-events-store.js";
 import { closeOpenClawStateDatabaseForTest } from "../state/openclaw-state-db.js";
 import { runEmbeddedAgent } from "./embedded-agent-runner.js";
-import { compactEmbeddedPiSessionDirect } from "./embedded-agent-runner/compact.runtime.js";
+import { compactEmbeddedAgentSessionDirect } from "./embedded-agent-runner/compact.runtime.js";
 import {
   buildAssistantHistoryTurn as buildTypedAssistantHistoryTurn,
   buildStableCachePrefix,

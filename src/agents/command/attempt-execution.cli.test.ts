@@ -12,6 +12,7 @@ import {
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
 import { closeOpenClawStateDatabaseForTest } from "../../state/openclaw-state-db.js";
 import { saveAuthProfileStore } from "../auth-profiles/store.js";
+import type { EmbeddedAgentRunResult, EmbeddedPiRunResult } from "../embedded-agent.js";
 import { FailoverError } from "../failover-error.js";
 import { persistCliTurnTranscript, runAgentAttempt } from "./attempt-execution.js";
 
