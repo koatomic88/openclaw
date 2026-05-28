@@ -1852,6 +1852,7 @@ describe("runEmbeddedAttempt context engine sessionKey forwarding", () => {
         flushPendingToolResultsAfterIdle: flushMock,
         session: { agent: {}, dispose: disposeMock },
         sessionManager: hoisted.sessionManager,
+        sessionLock: { release: vi.fn(async () => {}) },
         bundleLspRuntime: undefined,
       }),
     ).rejects.toBe(flushError);
