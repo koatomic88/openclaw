@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import type { PluginInstallRecord } from "../config/types.plugins.js";
 import { closeOpenClawStateDatabaseForTest } from "../state/openclaw-state-db.js";
@@ -15,6 +15,7 @@ import {
   readPendingPluginInstallRecords,
   recordPluginInstallInRecords,
   removePluginInstallRecordFromRecords,
+  resolveInstalledPluginIndexRecordsStorePath,
   withoutPluginInstallRecords,
   writePersistedInstalledPluginIndexInstallRecords,
   writePersistedInstalledPluginIndexInstallRecordsSync,
@@ -74,7 +75,16 @@ function requireInstalledPluginIndex(index: InstalledPluginIndex | null): Instal
   return index;
 }
 
+function createDeferred<T>() {
+  let resolve: (value: T) => void = () => {};
+  const promise = new Promise<T>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
+
 afterEach(() => {
+  vi.doUnmock("../infra/json-files.js");
   closeOpenClawStateDatabaseForTest();
   for (const dir of tempDirs.splice(0)) {
     fs.rmSync(dir, { recursive: true, force: true });
