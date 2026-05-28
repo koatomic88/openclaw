@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { note } from "../../terminal/note.js";
 import { formatCliCommand } from "../command-format.js";
+import { formatPluginPackagingRuntimeOutputRecoveryHint } from "../config-recovery-hints.js";
 import { ensureConfigReady, testApi } from "./config-guard.js";
+
+const pluginPackagingRecoveryHint = formatPluginPackagingRuntimeOutputRecoveryHint();
 
 const runDoctorConfigPreflightMock = vi.hoisted(() => vi.fn());
 const readConfigFileSnapshotMock = vi.hoisted(() => vi.fn());

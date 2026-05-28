@@ -13,6 +13,8 @@ import {
   isHelpOrVersionInvocation,
   isRootHelpInvocation,
   isRootVersionInvocation,
+  normalizeGeneratedHelpCommandArgv,
+  normalizeRootHelpTargetArgv,
   shouldRunConfigPreflight,
   shouldRunConfigPreflightFromPath,
 } from "./argv.js";

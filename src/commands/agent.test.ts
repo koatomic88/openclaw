@@ -269,7 +269,7 @@ function mockConfig(
     | Partial<NonNullable<NonNullable<OpenClawConfig["agents"]>["defaults"]>>,
   telegramOverrides?: Partial<NonNullable<NonNullable<OpenClawConfig["channels"]>["telegram"]>>,
   _legacyUnused?: unknown,
-  agentsList?: Array<{ id: string; default?: boolean }>,
+  agentsList?: Array<{ id: string; default?: boolean; thinkingDefault?: string }>,
 ) {
   const agentOverrides =
     typeof agentOverridesOrStore === "string" ? undefined : agentOverridesOrStore;
@@ -460,13 +460,12 @@ describe("agentCommand", () => {
 
   it("uses the selected agent thinkingDefault for fresh ingress runs", async () => {
     await withTempHome(async (home) => {
-      const store = path.join(home, "sessions.json");
       mockConfig(
         home,
-        store,
         {
           thinkingDefault: "high",
         },
+        undefined,
         undefined,
         [{ id: "main", default: true, thinkingDefault: "off" }],
       );
