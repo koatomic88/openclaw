@@ -1538,10 +1538,10 @@ describe("initSessionState reset policy", () => {
   it("reuses completed run entries while the session is still fresh", async () => {
     vi.setSystemTime(new Date(2026, 0, 18, 5, 30, 0));
     const root = await makeCaseDir("openclaw-reset-terminal-entry-");
-    const storePath = path.join(root, "sessions.json");
+    const sessionRowsTarget = createSessionRowsTargetFromStateDir(root);
     const sessionKey = "agent:main:whatsapp:dm:terminal-entry";
     const existingSessionId = "terminal-entry-old";
-    await writeSessionStoreFast(storePath, {
+    await replaceSessionRowsForFixtureTarget(sessionRowsTarget, {
       [sessionKey]: {
         sessionId: existingSessionId,
         updatedAt: Date.now(),
@@ -1552,7 +1552,7 @@ describe("initSessionState reset policy", () => {
       },
     });
 
-    const cfg = { session: { store: storePath } } as OpenClawConfig;
+    const cfg = { session: {} } as OpenClawConfig;
     const result = await initSessionState({
       ctx: { Body: "hello", SessionKey: sessionKey },
       cfg,
@@ -1562,10 +1562,7 @@ describe("initSessionState reset policy", () => {
     expect(result.isNewSession).toBe(false);
     expect(result.sessionId).toBe(existingSessionId);
 
-    const persisted = JSON.parse(await fs.readFile(storePath, "utf-8")) as Record<
-      string,
-      SessionEntry
-    >;
+    const persisted = readSessionRowsForFixtureTarget(sessionRowsTarget);
     expect(persisted[sessionKey]?.sessionId).toBe(existingSessionId);
     expect(persisted[sessionKey]?.status).toBe("done");
     expect(persisted[sessionKey]?.startedAt).toBe(Date.now() - 10_000);
@@ -3295,10 +3292,12 @@ describe("persistSessionUsageUpdate", () => {
   });
 
   it("preserves the displayed session model when an internal announce uses fallback", async () => {
-    const storePath = await createStorePath("openclaw-usage-internal-announce-model-");
+    const sessionRowsTarget = await createSessionRowsTarget(
+      "openclaw-usage-internal-announce-model-",
+    );
     const sessionKey = "agent:main:telegram:group:-1003871627242:topic:6823";
     await seedSessionStore({
-      storePath,
+      target: sessionRowsTarget,
       sessionKey,
       entry: {
         sessionId: "s1",
@@ -3325,7 +3324,6 @@ describe("persistSessionUsageUpdate", () => {
     });
 
     await persistSessionUsageUpdate({
-      storePath,
       sessionKey,
       preserveUserFacingSessionModelState: true,
       usage: { input: 39_908, output: 122, cacheRead: 0, cacheWrite: 0 },
@@ -3340,7 +3338,6 @@ describe("persistSessionUsageUpdate", () => {
       contextTokensUsed: 1_000_000,
     });
     await persistSessionUsageUpdate({
-      storePath,
       sessionKey,
       preserveUserFacingSessionModelState: true,
       providerUsed: "claude-cli",
@@ -3349,7 +3346,7 @@ describe("persistSessionUsageUpdate", () => {
       contextTokensUsed: 900_000,
     });
 
-    const stored = JSON.parse(await fs.readFile(storePath, "utf-8"));
+    const stored = readSessionRowsForFixtureTarget(sessionRowsTarget);
     expect(stored[sessionKey].modelProvider).toBe("openai-codex");
     expect(stored[sessionKey].model).toBe("gpt-5.5");
     expect(stored[sessionKey].contextTokens).toBe(200_000);
@@ -3360,7 +3357,9 @@ describe("persistSessionUsageUpdate", () => {
     expect(stored[sessionKey].totalTokens).toBe(1_305);
     expect(stored[sessionKey].totalTokensFresh).toBe(true);
     expect(stored[sessionKey].estimatedCostUsd).toBe(0.123);
-    expect(stored[sessionKey].cliSessionIds?.["claude-cli"]).toBe("visible-cli-session");
+    expect(
+      (stored[sessionKey].cliSessionIds as Record<string, string> | undefined)?.["claude-cli"],
+    ).toBe("visible-cli-session");
     expect(stored[sessionKey].cliSessionBindings?.["claude-cli"]).toEqual({
       sessionId: "visible-cli-session",
       authProfileId: "anthropic:visible",
