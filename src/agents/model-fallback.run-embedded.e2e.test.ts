@@ -261,7 +261,7 @@ async function runEmbeddedFallback(params: {
     runId: params.runId,
     agentDir: params.agentDir,
     run: (provider, model, options) =>
-      runEmbeddedPiAgent({
+      runEmbeddedAgent({
         sessionId,
         sessionKey: params.sessionKey,
         workspaceDir: params.workspaceDir,
@@ -411,7 +411,7 @@ describe("runWithModelFallback + runEmbeddedAgent failover behavior", () => {
         }),
       );
 
-      const result = await runEmbeddedPiAgent({
+      const result = await runEmbeddedAgent({
         sessionId: "tool-side-effect-terminal",
         sessionKey: "agent:test:tool-side-effect-terminal",
         workspaceDir,

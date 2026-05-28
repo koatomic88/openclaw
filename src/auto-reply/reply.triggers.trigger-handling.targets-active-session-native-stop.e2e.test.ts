@@ -267,12 +267,12 @@ async function expectNextRunUsesTargetSession(
     params.cfg,
   );
 
-  expect(params.runEmbeddedPiAgentMock).toHaveBeenCalledOnce();
-  const runParams = params.runEmbeddedPiAgentMock.mock.calls[0]?.[0] as
+  expect(params.runEmbeddedAgentMock).toHaveBeenCalledOnce();
+  const runParams = params.runEmbeddedAgentMock.mock.calls[0]?.[0] as
     | Record<string, unknown>
     | undefined;
   if (!runParams) {
-    throw new Error("expected embedded PI agent call params");
+    throw new Error("expected embedded OpenClaw agent call params");
   }
   for (const [key, value] of Object.entries(expected)) {
     expect(runParams[key]).toEqual(value);
@@ -670,8 +670,8 @@ describe("trigger handling", () => {
   it("applies native model changes to the target session", async () => {
     await withTempHome(async (home) => {
       const cfg = makeCfg(home);
-      const runEmbeddedPiAgentMock = getRunEmbeddedPiAgentMock();
-      runEmbeddedPiAgentMock.mockReset();
+      const runEmbeddedAgentMock = getRunEmbeddedAgentMock();
+      runEmbeddedAgentMock.mockReset();
       const slashSessionKey = "telegram:slash:111";
       const targetSessionKey = MAIN_SESSION_KEY;
 
@@ -717,8 +717,8 @@ describe("trigger handling", () => {
           },
         },
       };
-      const runEmbeddedPiAgentMock = getRunEmbeddedPiAgentMock();
-      runEmbeddedPiAgentMock.mockReset();
+      const runEmbeddedAgentMock = getRunEmbeddedAgentMock();
+      runEmbeddedAgentMock.mockReset();
       const slashSessionKey = "agent:main:telegram:slash:7595562691";
       const targetSessionKey = "agent:main:main:thread:7595562691:12812";
 
@@ -761,8 +761,8 @@ describe("trigger handling", () => {
   it("applies native model auth profile overrides to the target session", async () => {
     await withTempHome(async (home) => {
       const cfg = makeCfg(home);
-      const runEmbeddedPiAgentMock = getRunEmbeddedPiAgentMock();
-      runEmbeddedPiAgentMock.mockReset();
+      const runEmbeddedAgentMock = getRunEmbeddedAgentMock();
+      runEmbeddedAgentMock.mockReset();
       const authDir = join(home, ".openclaw", "agents", "main", "agent");
       savePersistedAuthProfileSecretsStore(
         {

@@ -131,7 +131,7 @@ describe("gateway startup primary model warmup", () => {
     expect(piModelModuleLoadedMock).not.toHaveBeenCalled();
   });
 
-  it("skips static warmup when a non-PI agent runtime is forced", async () => {
+  it("skips static warmup when a non-embedded agent runtime is forced", async () => {
     resolveEmbeddedAgentRuntimeMock.mockReturnValue("codex");
     await prewarmConfiguredPrimaryModel({
       cfg: {
@@ -150,7 +150,7 @@ describe("gateway startup primary model warmup", () => {
     expect(piModelModuleLoadedMock).not.toHaveBeenCalled();
   });
 
-  it("keeps PI static warmup when the PI agent runtime is forced", async () => {
+  it("keeps PI static warmup when the embedded agent runtime is forced", async () => {
     resolveEmbeddedAgentRuntimeMock.mockReturnValue("pi");
     const cfg = {
       agents: {

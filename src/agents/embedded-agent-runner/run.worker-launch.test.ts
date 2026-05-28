@@ -19,7 +19,7 @@ vi.mock("../harness/pi-worker-runner.js", () => ({
   runPiRunInWorker: runPiRunInWorkerMock,
 }));
 
-const { runEmbeddedPiAgent } = await import("./run.js");
+const { runEmbeddedAgent } = await import("./run.js");
 
 function makeParams(): RunEmbeddedPiAgentParams {
   return {
@@ -56,7 +56,7 @@ function makeReplyOperation(): ReplyOperation {
   };
 }
 
-describe("runEmbeddedPiAgent worker launch", () => {
+describe("runEmbeddedAgent worker launch", () => {
   beforeEach(() => {
     decidePiRunWorkerLaunchMock.mockReset();
     runPiRunInWorkerMock.mockReset();
@@ -79,7 +79,7 @@ describe("runEmbeddedPiAgent worker launch", () => {
     vi.stubEnv("OPENCLAW_AGENT_WORKER_MODE", "worker");
     vi.stubEnv("OPENCLAW_AGENT_WORKER_FILESYSTEM_MODE", "vfs-only");
 
-    await expect(runEmbeddedPiAgent(makeParams())).resolves.toBe(workerResult);
+    await expect(runEmbeddedAgent(makeParams())).resolves.toBe(workerResult);
 
     expect(decidePiRunWorkerLaunchMock).toHaveBeenCalledWith({
       runParams: expect.objectContaining({
@@ -116,7 +116,7 @@ describe("runEmbeddedPiAgent worker launch", () => {
     vi.stubEnv("OPENCLAW_AGENT_WORKER_FILESYSTEM_MODE", "vfs-only");
     vi.stubEnv("OPENCLAW_AGENT_WORKER_PERMISSION_MODE", "audit");
 
-    await expect(runEmbeddedPiAgent(makeParams())).resolves.toBe(workerResult);
+    await expect(runEmbeddedAgent(makeParams())).resolves.toBe(workerResult);
 
     expect(runPiRunInWorkerMock).toHaveBeenCalledWith(
       expect.anything(),
@@ -139,7 +139,7 @@ describe("runEmbeddedPiAgent worker launch", () => {
     runPiRunInWorkerMock.mockResolvedValue(workerResult);
     vi.stubEnv("OPENCLAW_AGENT_WORKER_MODE", "auto");
 
-    await expect(runEmbeddedPiAgent(makeParams())).resolves.toBe(workerResult);
+    await expect(runEmbeddedAgent(makeParams())).resolves.toBe(workerResult);
 
     expect(decidePiRunWorkerLaunchMock).toHaveBeenCalledWith(
       expect.objectContaining({ mode: "auto" }),
@@ -156,7 +156,7 @@ describe("runEmbeddedPiAgent worker launch", () => {
     vi.stubEnv("OPENCLAW_AGENT_WORKER_MODE", "auto");
 
     await expect(
-      runEmbeddedPiAgent({
+      runEmbeddedAgent({
         ...makeParams(),
         enqueue: async () => {
           throw new Error("inline path");
@@ -184,7 +184,7 @@ describe("runEmbeddedPiAgent worker launch", () => {
     runPiRunInWorkerMock.mockResolvedValue(workerResult);
     vi.stubEnv("OPENCLAW_AGENT_WORKER_MODE", "worker");
 
-    await expect(runEmbeddedPiAgent({ ...makeParams(), enqueue })).resolves.toBe(workerResult);
+    await expect(runEmbeddedAgent({ ...makeParams(), enqueue })).resolves.toBe(workerResult);
 
     expect(queueTaskOptions).toHaveLength(2);
     expect(runPiRunInWorkerMock).toHaveBeenCalledTimes(1);
@@ -221,9 +221,7 @@ describe("runEmbeddedPiAgent worker launch", () => {
     });
     vi.stubEnv("OPENCLAW_AGENT_WORKER_MODE", "worker");
 
-    await expect(runEmbeddedPiAgent({ ...makeParams(), replyOperation })).resolves.toBe(
-      workerResult,
-    );
+    await expect(runEmbeddedAgent({ ...makeParams(), replyOperation })).resolves.toBe(workerResult);
 
     expect(vi.mocked(replyOperation.attachBackend)).toHaveBeenCalledTimes(1);
     expect(vi.mocked(replyOperation.detachBackend)).toHaveBeenCalledWith(attachedBackend);

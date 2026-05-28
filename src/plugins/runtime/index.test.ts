@@ -305,12 +305,12 @@ describe("plugin runtime command execution", () => {
         });
         expectFunctionKeys(runtime.agent as Record<string, unknown>, [
           "runEmbeddedAgent",
-          "runEmbeddedPiAgent",
+          "runEmbeddedAgent",
           "normalizeThinkingLevel",
           "resolveThinkingPolicy",
           "resolveAgentDir",
         ]);
-        expect(runtime.agent.runEmbeddedPiAgent).toBe(runtime.agent.runEmbeddedAgent);
+        expect(runtime.agent.runEmbeddedAgent).toBe(runtime.agent.runEmbeddedAgent);
         expectFunctionKeys(runtime.agent.session as Record<string, unknown>, [
           "getSessionEntry",
           "listSessionEntries",

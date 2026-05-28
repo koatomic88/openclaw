@@ -82,7 +82,7 @@ const knownDeprecatedSurfaceMarkers = [
   {
     code: "embedded-pi-agent-sdk-aliases",
     file: "src/plugins/runtime/types-core.ts",
-    marker: "runEmbeddedPiAgent",
+    marker: "runEmbeddedAgent",
   },
   {
     code: "runtime-config-load-write",

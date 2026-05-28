@@ -260,7 +260,7 @@ describe("Crestodian assistant", () => {
     });
     expect(result).toBeNull();
 
-    expect(runEmbeddedPiAgent).toHaveBeenCalledTimes(1);
+    expect(runEmbeddedAgent).toHaveBeenCalledTimes(1);
     expect(runCliAgent).not.toHaveBeenCalled();
   });
 });

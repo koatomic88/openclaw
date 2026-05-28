@@ -1,7 +1,6 @@
 import "./isolated-agent.mocks.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { clearAllBootstrapSnapshots } from "../agents/bootstrap-cache.js";
-import { runEmbeddedPiAgent } from "../agents/embedded-agent.js";
 import { resetAgentRunContextForTest } from "../infra/agent-events.js";
 import { createCliDeps, mockAgentPayloads } from "./isolated-agent.delivery.test-helpers.js";
 import { runCronIsolatedAgentTurn } from "./isolated-agent.js";
@@ -11,6 +10,26 @@ import {
   seedCronSessionRows,
   withTempCronHome,
 } from "./isolated-agent.test-harness.js";
+import { runEmbeddedAgentMock } from "./isolated-agent/run.test-harness.js";
+
+const envSnapshot = {
+  HOME: process.env.HOME,
+  USERPROFILE: process.env.USERPROFILE,
+  HOMEDRIVE: process.env.HOMEDRIVE,
+  HOMEPATH: process.env.HOMEPATH,
+  OPENCLAW_HOME: process.env.OPENCLAW_HOME,
+  OPENCLAW_STATE_DIR: process.env.OPENCLAW_STATE_DIR,
+} as const;
+
+function restoreSnapshotEnv() {
+  for (const [key, value] of Object.entries(envSnapshot)) {
+    if (value === undefined) {
+      delete process.env[key];
+    } else {
+      process.env[key] = value;
+    }
+  }
+}
 
 function lastEmbeddedLane(): string | undefined {
   const params = runEmbeddedAgentMock.mock.calls.at(-1)?.[0];
@@ -20,32 +39,34 @@ function lastEmbeddedLane(): string | undefined {
   return (params as { lane?: string }).lane;
 }
 
-async function runLaneCase(home: string, lane?: string) {
-  await seedCronSessionRows(home, {
-    "agent:main:main": {
-      sessionId: "main-session",
-      updatedAt: Date.now(),
-      lastChannel: "webchat",
-      lastTo: "",
-    },
-  });
-  mockAgentPayloads([{ text: "ok" }]);
+async function runLaneCase(lane?: string) {
+  return withTempCronHome(async (home) => {
+    await seedCronSessionRows(home, {
+      "agent:main:main": {
+        sessionId: "main-session",
+        updatedAt: Date.now(),
+        lastChannel: "webchat",
+        lastTo: "",
+      },
+    });
+    mockAgentPayloads([{ text: "ok" }]);
 
-  await runCronIsolatedAgentTurn({
-    cfg: makeCfg(home),
-    deps: createCliDeps(),
-    job: { ...makeJob({ kind: "agentTurn", message: "do it" }), delivery: { mode: "none" } },
-    message: "do it",
-    sessionKey: "cron:job-1",
-    ...(lane === undefined ? {} : { lane }),
-  });
+    await runCronIsolatedAgentTurn({
+      cfg: makeCfg(home),
+      deps: createCliDeps(),
+      job: { ...makeJob({ kind: "agentTurn", message: "do it" }), delivery: { mode: "none" } },
+      message: "do it",
+      sessionKey: "cron:job-1",
+      ...(lane === undefined ? {} : { lane }),
+    });
 
-  return lastEmbeddedLane();
+    return lastEmbeddedLane();
+  });
 }
 
 describe("runCronIsolatedAgentTurn lane selection", () => {
   beforeEach(() => {
-    vi.mocked(runEmbeddedPiAgent).mockClear();
+    runEmbeddedAgentMock.mockClear();
   });
 
   afterEach(() => {

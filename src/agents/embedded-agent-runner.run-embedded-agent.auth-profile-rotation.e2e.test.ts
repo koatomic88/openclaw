@@ -465,7 +465,7 @@ async function runAutoPinnedOpenAiTurn(params: {
   authProfileId?: string;
   config?: OpenClawConfig;
 }) {
-  await runEmbeddedPiAgentInline({
+  await runEmbeddedAgentInline({
     sessionId: TEST_SESSION_ID,
     sessionKey: params.sessionKey,
     workspaceDir: params.workspaceDir,
@@ -675,7 +675,7 @@ async function runTurnWithCooldownSeed(params: {
     });
     mockSingleSuccessfulAttempt();
 
-    await runEmbeddedPiAgentInline({
+    await runEmbeddedAgentInline({
       sessionId: TEST_SESSION_ID,
       sessionKey: params.sessionKey,
       workspaceDir,
@@ -739,7 +739,7 @@ describe("runEmbeddedAgent auth profile rotation", () => {
           }),
         );
 
-      await runEmbeddedPiAgentInline({
+      await runEmbeddedAgentInline({
         sessionId: TEST_SESSION_ID,
         sessionKey: "agent:test:copilot-auth-error",
         workspaceDir,
@@ -823,7 +823,7 @@ describe("runEmbeddedAgent auth profile rotation", () => {
           }),
         );
 
-      await runEmbeddedPiAgentInline({
+      await runEmbeddedAgentInline({
         sessionId: TEST_SESSION_ID,
         sessionKey: "agent:test:copilot-auth-repeat",
         workspaceDir,
@@ -870,7 +870,7 @@ describe("runEmbeddedAgent auth profile rotation", () => {
         }),
       );
 
-      const runPromise = runEmbeddedPiAgentInline({
+      const runPromise = runEmbeddedAgentInline({
         sessionId: TEST_SESSION_ID,
         sessionKey: "agent:test:copilot-shutdown",
         workspaceDir,
@@ -1073,7 +1073,7 @@ describe("runEmbeddedAgent auth profile rotation", () => {
         }),
       );
 
-      const result = await runEmbeddedPiAgentInline({
+      const result = await runEmbeddedAgentInline({
         sessionId: TEST_SESSION_ID,
         sessionKey: "agent:test:compaction-timeout",
         workspaceDir,
@@ -1111,7 +1111,7 @@ describe("runEmbeddedAgent auth profile rotation", () => {
         }),
       );
 
-      const result = await runEmbeddedPiAgentInline({
+      const result = await runEmbeddedAgentInline({
         sessionId: TEST_SESSION_ID,
         sessionKey: "agent:test:compaction-wait-abort",
         workspaceDir,
@@ -1139,7 +1139,7 @@ describe("runEmbeddedAgent auth profile rotation", () => {
       mockSingleErrorAttempt({ errorMessage: "rate limit" });
 
       await expectFailoverError(
-        runEmbeddedPiAgentInline({
+        runEmbeddedAgentInline({
           sessionId: TEST_SESSION_ID,
           sessionKey: "agent:test:user",
           workspaceDir,
@@ -1188,7 +1188,7 @@ describe("runEmbeddedAgent auth profile rotation", () => {
       });
       mockSingleSuccessfulAttempt();
 
-      await runEmbeddedPiAgentInline({
+      await runEmbeddedAgentInline({
         sessionId: TEST_SESSION_ID,
         sessionKey: "agent:test:user-order-excluded",
         workspaceDir,
@@ -1216,7 +1216,7 @@ describe("runEmbeddedAgent auth profile rotation", () => {
       await writeOpenAiCodexAuthStore(agentDir);
       mockSingleSuccessfulAttempt();
 
-      await runEmbeddedPiAgentInline({
+      await runEmbeddedAgentInline({
         sessionId: TEST_SESSION_ID,
         sessionKey: "agent:test:user-auth-alias",
         workspaceDir,
@@ -1256,7 +1256,7 @@ describe("runEmbeddedAgent auth profile rotation", () => {
         }),
       );
 
-      await runEmbeddedPiAgentInline({
+      await runEmbeddedAgentInline({
         sessionId: TEST_SESSION_ID,
         sessionKey: "agent:test:mismatch",
         workspaceDir,
@@ -1297,7 +1297,7 @@ describe("runEmbeddedAgent auth profile rotation", () => {
       });
 
       await expectFailoverError(
-        runEmbeddedPiAgentInline({
+        runEmbeddedAgentInline({
           sessionId: TEST_SESSION_ID,
           sessionKey: "agent:test:cooldown-failover",
           workspaceDir,
@@ -1340,7 +1340,7 @@ describe("runEmbeddedAgent auth profile rotation", () => {
         }),
       );
 
-      const result = await runEmbeddedPiAgentInline({
+      const result = await runEmbeddedAgentInline({
         sessionId: TEST_SESSION_ID,
         sessionKey: "agent:test:cooldown-probe",
         workspaceDir,
@@ -1387,7 +1387,7 @@ describe("runEmbeddedAgent auth profile rotation", () => {
         }),
       );
 
-      const result = await runEmbeddedPiAgentInline({
+      const result = await runEmbeddedAgentInline({
         sessionId: TEST_SESSION_ID,
         sessionKey: "agent:test:overloaded-cooldown-probe",
         workspaceDir,
@@ -1434,7 +1434,7 @@ describe("runEmbeddedAgent auth profile rotation", () => {
         }),
       );
 
-      const result = await runEmbeddedPiAgentInline({
+      const result = await runEmbeddedAgentInline({
         sessionId: TEST_SESSION_ID,
         sessionKey: "agent:test:billing-cooldown-probe-no-fallbacks",
         workspaceDir,
@@ -1464,7 +1464,7 @@ describe("runEmbeddedAgent auth profile rotation", () => {
       });
 
       await expectFailoverError(
-        runEmbeddedPiAgentInline({
+        runEmbeddedAgentInline({
           sessionId: TEST_SESSION_ID,
           sessionKey: "agent:support:cooldown-failover",
           workspaceDir,
@@ -1508,7 +1508,7 @@ describe("runEmbeddedAgent auth profile rotation", () => {
       });
 
       await expectFailoverError(
-        runEmbeddedPiAgentInline({
+        runEmbeddedAgentInline({
           sessionId: TEST_SESSION_ID,
           sessionKey: "agent:test:disabled-failover",
           workspaceDir,
@@ -1541,7 +1541,7 @@ describe("runEmbeddedAgent auth profile rotation", () => {
         savePersistedAuthProfileState({ usageStats: {} }, agentDir);
 
         await expectFailoverError(
-          runEmbeddedPiAgentInline({
+          runEmbeddedAgentInline({
             sessionId: TEST_SESSION_ID,
             sessionKey: "agent:test:auth-unavailable",
             workspaceDir,
@@ -1579,7 +1579,7 @@ describe("runEmbeddedAgent auth profile rotation", () => {
 
       let thrown: unknown;
       try {
-        await runEmbeddedPiAgentInline({
+        await runEmbeddedAgentInline({
           sessionId: TEST_SESSION_ID,
           sessionKey: "agent:test:billing-failover-active-model",
           workspaceDir,

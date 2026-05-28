@@ -847,7 +847,7 @@ describe("runReplyAgent Active Memory inline debug", () => {
 
     await replaceTestSessionRows(sessionRowsTarget, { [sessionKey]: sessionEntry });
 
-    runEmbeddedPiAgentMock.mockImplementationOnce(async () => {
+    runEmbeddedAgentMock.mockImplementationOnce(async () => {
       const latest = readTestSessionRows(sessionRowsTarget);
       latest[sessionKey] = {
         ...latest[sessionKey],
@@ -947,7 +947,7 @@ describe("runReplyAgent Active Memory inline debug", () => {
 
     await replaceTestSessionRows(sessionRowsTarget, { [sessionKey]: sessionEntry });
 
-    runEmbeddedPiAgentMock.mockImplementationOnce(async () => {
+    runEmbeddedAgentMock.mockImplementationOnce(async () => {
       const latest = readTestSessionRows(sessionRowsTarget);
       latest[sessionKey] = {
         ...latest[sessionKey],
@@ -1046,7 +1046,7 @@ describe("runReplyAgent Active Memory inline debug", () => {
 
     await replaceTestSessionRows(sessionRowsTarget, { [sessionKey]: sessionEntry });
 
-    runEmbeddedPiAgentMock.mockImplementationOnce(async () => {
+    runEmbeddedAgentMock.mockImplementationOnce(async () => {
       const latest = readTestSessionRows(sessionRowsTarget);
       latest[sessionKey] = {
         ...latest[sessionKey],
@@ -1666,7 +1666,7 @@ describe("runReplyAgent Active Memory inline debug", () => {
 
     await replaceTestSessionRows(sessionRowsTarget, { [sessionKey]: sessionEntry });
 
-    runEmbeddedPiAgentMock.mockResolvedValueOnce({
+    runEmbeddedAgentMock.mockResolvedValueOnce({
       payloads: [{ text: "Normal reply" }],
       meta: {},
     });

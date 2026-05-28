@@ -506,7 +506,7 @@ describe("agentCommand", () => {
   it("persists local overrides", async () => {
     await withTempHome(async (home) => {
       mockConfig(home);
-      vi.mocked(runEmbeddedPiAgent).mockResolvedValue(
+      vi.mocked(runEmbeddedAgent).mockResolvedValue(
         createDefaultAgentResult({
           payloads: [{ text: "json-reply", mediaUrl: "http://x.test/a.jpg" }],
           durationMs: 42,

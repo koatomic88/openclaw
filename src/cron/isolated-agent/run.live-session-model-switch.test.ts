@@ -224,8 +224,8 @@ describe("runCronIsolatedAgentTurn — LiveSessionModelSwitchError retry (#57206
     const result = await runCronIsolatedAgentTurn(makeParams());
 
     expect(result.status).toBe("ok");
-    expect(runEmbeddedPiAgentMock).toHaveBeenCalledTimes(2);
-    const retryParams = runEmbeddedPiAgentMock.mock.calls[1]?.[0];
+    expect(runEmbeddedAgentMock).toHaveBeenCalledTimes(2);
+    const retryParams = runEmbeddedAgentMock.mock.calls[1]?.[0];
     expect(retryParams?.provider).toBe("anthropic");
     expect(retryParams?.model).toBe("claude-sonnet-4-6");
     expect(retryParams?.authProfileId).toBe("profile-b");

@@ -150,7 +150,7 @@ describe("realtime voice agent consult runtime", () => {
       throw new Error("Expected voice consult session entry");
     }
     expect(voiceSession.sessionId).toEqual(expect.stringMatching(/\S/));
-    expect(runEmbeddedPiAgent).toHaveBeenCalledWith(
+    expect(runEmbeddedAgent).toHaveBeenCalledWith(
       expect.objectContaining({
         sessionKey: "voice:15550001234",
         sandboxSessionKey: "agent:main:voice:15550001234",
@@ -186,7 +186,7 @@ describe("realtime voice agent consult runtime", () => {
       userLabel: "Caller",
     });
 
-    expect(runEmbeddedPiAgent).toHaveBeenCalledWith(
+    expect(runEmbeddedAgent).toHaveBeenCalledWith(
       expect.objectContaining({
         sessionKey: "voice:15550001234",
         sandboxSessionKey: "agent:voice:voice:15550001234",
@@ -270,7 +270,7 @@ describe("realtime voice agent consult runtime", () => {
       spawnedBy: "agent:main:main",
       forkedFromParent: true,
     });
-    expect(runEmbeddedPiAgent).toHaveBeenCalledWith(
+    expect(runEmbeddedAgent).toHaveBeenCalledWith(
       expect.objectContaining({
         sessionId: "forked-session",
         spawnedBy: "agent:main:main",
@@ -307,7 +307,7 @@ describe("realtime voice agent consult runtime", () => {
       userLabel: "Caller",
     });
 
-    expect(runEmbeddedPiAgent).toHaveBeenCalledWith(
+    expect(runEmbeddedAgent).toHaveBeenCalledWith(
       expect.objectContaining({
         sessionKey: "voice:google-meet:meet-1",
         spawnedBy: "agent:main:discord:channel:123",
@@ -354,7 +354,7 @@ describe("realtime voice agent consult runtime", () => {
       userLabel: "Caller",
     });
 
-    expect(runEmbeddedPiAgent).toHaveBeenCalledWith(
+    expect(runEmbeddedAgent).toHaveBeenCalledWith(
       expect.objectContaining({
         sessionId: "call-session",
         sessionKey: "voice:google-meet:meet-1",
@@ -369,7 +369,7 @@ describe("realtime voice agent consult runtime", () => {
   });
 
   it("does not route consults from stale session-entry delivery shadows", async () => {
-    const { runtime, runEmbeddedPiAgent, sessionStore } = createAgentRuntime();
+    const { runtime, runEmbeddedAgent, sessionStore } = createAgentRuntime();
     sessionStore["voice:google-meet:meet-1"] = {
       sessionId: "call-session",
       deliveryContext: {
@@ -395,7 +395,7 @@ describe("realtime voice agent consult runtime", () => {
       userLabel: "Caller",
     });
 
-    expect(runEmbeddedPiAgent).toHaveBeenCalledWith(
+    expect(runEmbeddedAgent).toHaveBeenCalledWith(
       expect.objectContaining({
         sessionId: "call-session",
         sessionKey: "voice:google-meet:meet-1",

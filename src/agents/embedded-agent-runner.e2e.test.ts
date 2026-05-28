@@ -164,7 +164,7 @@ const installRunEmbeddedMocks = () => {
   });
 };
 
-let runEmbeddedPiAgent: typeof import("./embedded-agent-runner/run.js").runEmbeddedPiAgent;
+let runEmbeddedAgent: typeof import("./embedded-agent-runner/run.js").runEmbeddedAgent;
 let e2eWorkspace: EmbeddedPiRunnerTestWorkspace | undefined;
 let agentDir: string;
 let workspaceDir: string;
@@ -180,7 +180,7 @@ beforeAll(async () => {
   ({ agentDir, workspaceDir } = e2eWorkspace);
   previousStateDir = process.env.OPENCLAW_STATE_DIR;
   process.env.OPENCLAW_STATE_DIR = e2eWorkspace.stateDir;
-  ({ runEmbeddedPiAgent } = await import("./embedded-agent-runner/run.js"));
+  ({ runEmbeddedAgent } = await import("./embedded-agent-runner/run.js"));
 }, 180_000);
 
 afterAll(async () => {
@@ -246,7 +246,7 @@ const runWithOrphanedSingleUserMessage = async (text: string, sessionKey: string
   );
 
   const cfg = createEmbeddedPiRunnerOpenAiConfig(["mock-1"]);
-  return await runEmbeddedPiAgent({
+  return await runEmbeddedAgent({
     sessionId: sessionId,
     sessionKey,
     workspaceDir,
@@ -319,7 +319,7 @@ const runDefaultEmbeddedTurn = async (sessionId: string, prompt: string, session
       }),
     }),
   );
-  await runEmbeddedPiAgent({
+  await runEmbeddedAgent({
     sessionId,
     sessionKey,
     workspaceDir,
@@ -346,7 +346,7 @@ function firstRunEmbeddedAttemptParams(): { sessionKey?: string } {
   return firstMockCall(runEmbeddedAttemptMock, "embedded attempt")[0] as { sessionKey?: string };
 }
 
-describe("runEmbeddedPiAgent", () => {
+describe("runEmbeddedAgent", () => {
   it("skips model catalog generation when dynamic model resolution succeeds", async () => {
     const sessionId = nextSessionId();
     const cfg = createEmbeddedPiRunnerOpenAiConfig([]);
@@ -359,7 +359,7 @@ describe("runEmbeddedPiAgent", () => {
       }),
     );
 
-    await runEmbeddedPiAgent({
+    await runEmbeddedAgent({
       sessionId,
       workspaceDir,
       config: cfg,
@@ -423,7 +423,7 @@ describe("runEmbeddedPiAgent", () => {
       }),
     );
 
-    await runEmbeddedPiAgent({
+    await runEmbeddedAgent({
       sessionId: "codex-first-pi",
       workspaceDir,
       config: cfg,
@@ -545,7 +545,7 @@ describe("runEmbeddedPiAgent", () => {
       }),
     );
 
-    await runEmbeddedPiAgent({
+    await runEmbeddedAgent({
       sessionId,
       sessionKey: "   ",
       workspaceDir,
@@ -584,7 +584,7 @@ describe("runEmbeddedPiAgent", () => {
       }),
     );
 
-    await runEmbeddedPiAgent({
+    await runEmbeddedAgent({
       sessionId,
       sessionKey: "   ",
       workspaceDir,
@@ -622,7 +622,7 @@ describe("runEmbeddedPiAgent", () => {
       }),
     );
 
-    await runEmbeddedPiAgent({
+    await runEmbeddedAgent({
       sessionId,
       workspaceDir,
       config: cfg,
@@ -658,7 +658,7 @@ describe("runEmbeddedPiAgent", () => {
       }),
     );
 
-    await runEmbeddedPiAgent({
+    await runEmbeddedAgent({
       sessionId,
       sessionKey: undefined,
       workspaceDir,
@@ -694,7 +694,7 @@ describe("runEmbeddedPiAgent", () => {
       }),
     );
 
-    await runEmbeddedPiAgent({
+    await runEmbeddedAgent({
       sessionId,
       sessionKey,
       workspaceDir,
@@ -736,7 +736,7 @@ describe("runEmbeddedPiAgent", () => {
         });
       });
 
-    const result = await runEmbeddedPiAgent({
+    const result = await runEmbeddedAgent({
       sessionId,
       sessionKey,
       workspaceDir,
@@ -791,7 +791,7 @@ describe("runEmbeddedPiAgent", () => {
         });
       });
 
-    const result = await runEmbeddedPiAgent({
+    const result = await runEmbeddedAgent({
       sessionId: sessionId,
       sessionKey,
       workspaceDir,
@@ -819,7 +819,7 @@ describe("runEmbeddedPiAgent", () => {
       }),
     );
     await expect(
-      runEmbeddedPiAgent({
+      runEmbeddedAgent({
         sessionId: sessionId,
         sessionKey,
         workspaceDir,

@@ -22,7 +22,7 @@ import { setupRunCronIsolatedAgentTurnSuite } from "./isolated-agent/run.suite-h
 import {
   dispatchCronDeliveryMock,
   mockRunCronFallbackPassthrough,
-  runEmbeddedPiAgentMock,
+  runEmbeddedAgentMock,
 } from "./isolated-agent/run.test-harness.js";
 import { normalizeCronJobCreate } from "./normalize.js";
 import type { CronJob } from "./types.js";
@@ -122,7 +122,7 @@ describe("runCronIsolatedAgentTurn session identity", () => {
       });
 
       expect(res.status).toBe("ok");
-      const call = runEmbeddedPiAgentMock.mock.calls.at(-1)?.[0] as {
+      const call = runEmbeddedAgentMock.mock.calls.at(-1)?.[0] as {
         agentId?: string;
         sessionId?: string;
         sessionKey?: string;
@@ -140,7 +140,7 @@ describe("runCronIsolatedAgentTurn session identity", () => {
       const { res } = await runCronTurn(home, {
         jobPayload: DEFAULT_AGENT_TURN_PAYLOAD,
       });
-      const call = runEmbeddedPiAgentMock.mock.calls.at(-1)?.[0] as {
+      const call = runEmbeddedAgentMock.mock.calls.at(-1)?.[0] as {
         agentId?: string;
         sessionId?: string;
       };

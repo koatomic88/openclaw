@@ -5451,7 +5451,7 @@ describe("runAgentTurnWithFallback", () => {
         attempts: [],
       }),
     );
-    state.runEmbeddedPiAgentMock.mockResolvedValue({
+    state.runEmbeddedAgentMock.mockResolvedValue({
       payloads: [{ text: "ok" }],
       meta: {},
     });
@@ -5496,7 +5496,7 @@ describe("runAgentTurnWithFallback", () => {
     });
 
     expect(result.kind).toBe("success");
-    expectMockCallArgFields(state.runEmbeddedPiAgentMock, 0, "embedded run params", {
+    expectMockCallArgFields(state.runEmbeddedAgentMock, 0, "embedded run params", {
       provider: "openai",
       model: "gpt-4o-mini",
     });
