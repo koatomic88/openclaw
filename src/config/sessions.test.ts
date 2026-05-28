@@ -6,7 +6,6 @@ import { closeOpenClawAgentDatabasesForTest } from "../state/openclaw-agent-db.j
 import { closeOpenClawStateDatabaseForTest } from "../state/openclaw-state-db.js";
 import { withEnv } from "../test-utils/env.js";
 import {
-  applySessionStoreEntryPatch,
   buildGroupDisplayName,
   deriveSessionKey,
   resolveSessionKey,
