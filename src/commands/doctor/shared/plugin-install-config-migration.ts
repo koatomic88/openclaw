@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { PluginInstallRecord } from "../../../config/types.plugins.js";
 import { PluginInstallRecordShape } from "../../../config/zod-schema.installs.js";
+import { isRecord } from "../../../shared/record-coerce.js";
 
 const PluginInstallRecordsSchema = z.record(
   z.string(),

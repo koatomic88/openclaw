@@ -19,6 +19,7 @@ import type {
 type TimerHandle = ReturnType<typeof setTimeout>;
 type ModelRef = { provider: string; model: string };
 type EmbeddedAgentPayloadResult = { payloads?: Array<{ text?: string }> };
+type EmbeddedPiPayloadResult = EmbeddedAgentPayloadResult;
 
 type CommitmentExtractionEnqueueInput = CommitmentScope & {
   cfg?: OpenClawConfig;

@@ -3,6 +3,7 @@ import type { Insertable, Selectable } from "kysely";
 import type { OpenClawConfig } from "../config/config.js";
 import { executeSqliteQuerySync, getNodeSqliteKysely } from "../infra/kysely-sync.js";
 import { sqliteNullableNumber, sqliteNullableText } from "../infra/sqlite-row-values.js";
+import { normalizeOptionalString } from "../shared/string-coerce.js";
 import type { DB as OpenClawStateKyselyDatabase } from "../state/openclaw-state-db.generated.js";
 import {
   openOpenClawStateDatabase,
@@ -10,6 +11,7 @@ import {
   type OpenClawStateDatabaseOptions,
 } from "../state/openclaw-state-db.js";
 import { resolveOpenClawStateSqlitePath } from "../state/openclaw-state-db.paths.js";
+import { isRecord } from "../utils.js";
 import {
   DEFAULT_COMMITMENT_EXPIRE_AFTER_HOURS,
   DEFAULT_COMMITMENT_MAX_PER_HEARTBEAT,
@@ -496,8 +498,8 @@ export async function upsertInferredCommitments(params: {
   }
   const nowMs = params.nowMs ?? Date.now();
   const scopeKey = buildCommitmentScopeKey(params.item);
-  return await runExclusiveCommitmentsStoreWrite(resolveCommitmentStorePath(), async () => {
-    const { store } = await loadAndMarkExpiredUnchecked(nowMs);
+  return await runExclusiveCommitmentsStoreWrite(resolveCommitmentDatabasePath(), async () => {
+    const store = await loadCommitmentStoreWithExpiredMarked(nowMs);
     const created: CommitmentRecord[] = [];
     for (const entry of params.candidates) {
       const dedupeKey = entry.candidate.dedupeKey.trim();
@@ -648,7 +650,7 @@ export async function markCommitmentsAttempted(params: {
   }
   const idSet = new Set(params.ids);
   const nowMs = params.nowMs ?? Date.now();
-  await runExclusiveCommitmentsStoreWrite(resolveCommitmentStorePath(), async () => {
+  await runExclusiveCommitmentsStoreWrite(resolveCommitmentDatabasePath(), async () => {
     const store = await loadCommitmentStore();
     let changed = false;
     store.commitments = store.commitments.map((commitment) => {
@@ -664,12 +666,9 @@ export async function markCommitmentsAttempted(params: {
       };
     });
     if (changed) {
-      await saveCommitmentStore(undefined, store);
+      await saveCommitmentStore(store);
     }
   });
-  if (changed) {
-    await saveCommitmentStore(store);
-  }
 }
 
 export async function markCommitmentsStatus(params: {
@@ -683,7 +682,7 @@ export async function markCommitmentsStatus(params: {
   }
   const idSet = new Set(params.ids);
   const nowMs = params.nowMs ?? Date.now();
-  await runExclusiveCommitmentsStoreWrite(resolveCommitmentStorePath(), async () => {
+  await runExclusiveCommitmentsStoreWrite(resolveCommitmentDatabasePath(), async () => {
     const store = await loadCommitmentStore();
     let changed = false;
     store.commitments = store.commitments.map((commitment) => {
@@ -701,12 +700,9 @@ export async function markCommitmentsStatus(params: {
       };
     });
     if (changed) {
-      await saveCommitmentStore(undefined, store);
+      await saveCommitmentStore(store);
     }
   });
-  if (changed) {
-    await saveCommitmentStore(store);
-  }
 }
 
 export async function listCommitments(params?: {

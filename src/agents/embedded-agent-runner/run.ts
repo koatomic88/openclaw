@@ -172,7 +172,7 @@ import {
   resolveRunLivenessState,
   shouldTreatEmptyAssistantReplyAsSilent,
 } from "./run/incomplete-turn.js";
-import type { RunEmbeddedAgentParams } from "./run/params.js";
+import type { RunEmbeddedAgentParams, RunEmbeddedPiAgentParams } from "./run/params.js";
 import { buildEmbeddedRunPayloads } from "./run/payloads.js";
 import { handleRetryLimitExhaustion } from "./run/retry-limit.js";
 import {
@@ -189,6 +189,7 @@ import {
 import type {
   EmbeddedAgentMeta,
   EmbeddedAgentRunResult,
+  EmbeddedPiRunResult,
   TraceAttempt,
   ToolSummaryTrace,
   EmbeddedRunLivenessState,
@@ -769,7 +770,7 @@ export async function runEmbeddedAgent(
           // Plugin dynamic model hooks can resolve explicit model refs without
           // first building the PI model catalog. This keeps one-shot model runs
           // from blocking on unrelated provider discovery.
-          skipPiDiscovery: true,
+          skipAgentDiscovery: true,
           workspaceDir: resolvedWorkspace,
         },
       );
@@ -2908,7 +2909,7 @@ export async function runEmbeddedAgent(
             timedOutDuringPrompt &&
             Boolean(
               payloadAlreadyContainsRecoveredFinalAssistant ||
-                recoveredFinalAssistantPayloadsAfterPromptTimeout?.length,
+              recoveredFinalAssistantPayloadsAfterPromptTimeout?.length,
             );
           const hasPartialAssistantTextAfterPromptTimeout =
             timedOutDuringPrompt &&
@@ -3012,7 +3013,7 @@ export async function runEmbeddedAgent(
               ? payloadsWithToolMedia
               : silentToolResultReplyPayload
                 ? [silentToolResultReplyPayload]
-              : payloadsWithToolMedia;
+                : payloadsWithToolMedia;
           const payloadCount = payloadsForTerminalPath?.length ?? 0;
           const emptyAssistantReplyIsSilent = shouldTreatEmptyAssistantReplyAsSilent({
             allowEmptyAssistantReplyAsSilent: params.allowEmptyAssistantReplyAsSilent,
@@ -3553,3 +3554,5 @@ function resolveAuthProfileStateProvider(
   const idProvider = profileId.split(":", 1)[0]?.trim();
   return idProvider || fallbackProvider;
 }
+
+export { runEmbeddedAgent as runEmbeddedPiAgent };

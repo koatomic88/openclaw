@@ -16,6 +16,8 @@ export {
   AssistantMessageEventStream,
   createAssistantMessageEventStream,
 } from "../llm/utils/event-stream.js";
+export { parseStreamingJson } from "../llm/utils/json-parse.js";
+export type { MutableAssistantMessageEventStream } from "./stream-compat.js";
 export type { AnthropicOptions } from "../llm/providers/anthropic.js";
 export type { OAuthCredentials, OAuthLoginCallbacks } from "../llm/utils/oauth/types.js";
 export type { OpenAICompletionsOptions } from "../llm/providers/openai-completions.js";

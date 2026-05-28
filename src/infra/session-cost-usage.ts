@@ -68,6 +68,31 @@ const emptyTotals = (): CostUsageTotals => ({
 
 type UsageCostRefreshResult = "refreshed" | "busy";
 type SessionUsageTimePointBase = Omit<SessionUsageTimePoint, "cumulativeCost" | "cumulativeTokens">;
+type UsageCostResolver = (params: {
+  provider?: string;
+  model?: string;
+}) => ReturnType<typeof resolveModelCostConfig>;
+
+function createUsageCostResolver(config?: OpenClawConfig): UsageCostResolver {
+  return (params) =>
+    resolveModelCostConfig({
+      provider: params.provider,
+      model: params.model,
+      config,
+    });
+}
+
+function isModelPricingKnown(cost: ReturnType<typeof resolveModelCostConfig>): boolean {
+  if (!cost) {
+    return false;
+  }
+  if (cost.tieredPricing && cost.tieredPricing.length > 0) {
+    return true;
+  }
+  return [cost.input, cost.output, cost.cacheRead, cost.cacheWrite].some(
+    (value) => typeof value === "number" && value > 0,
+  );
+}
 
 const extractCostBreakdown = (usageRaw?: UsageLike | null): CostBreakdown | undefined => {
   if (!usageRaw || typeof usageRaw !== "object") {
@@ -288,6 +313,7 @@ function resolveUsageSessionScope(params: {
 function scanTranscriptEvents(params: {
   events: SqliteSessionTranscriptEvent[];
   config?: OpenClawConfig;
+  resolveCost: UsageCostResolver;
   onEntry: (entry: ParsedTranscriptEntry) => void;
 }): void {
   for (const event of params.events) {
@@ -300,7 +326,7 @@ function scanTranscriptEvents(params: {
     }
 
     if (entry.usage) {
-      const cost = resolveCost({
+      const cost = params.resolveCost({
         provider: entry.provider,
         model: entry.model,
       });
@@ -338,11 +364,13 @@ function scanTranscriptEvents(params: {
 function scanUsageEvents(params: {
   events: SqliteSessionTranscriptEvent[];
   config?: OpenClawConfig;
+  resolveCost: UsageCostResolver;
   onEntry: (entry: ParsedUsageEntry) => void;
 }): void {
   scanTranscriptEvents({
     events: params.events,
     config: params.config,
+    resolveCost: params.resolveCost,
     onEntry: (entry) => {
       if (!entry.usage) {
         return;
@@ -449,16 +477,6 @@ export async function refreshCostUsageCache(params?: {
 }): Promise<UsageCostRefreshResult> {
   void params;
   return "refreshed";
-}
-
-export async function refreshCostUsageCache(params?: {
-  config?: OpenClawConfig;
-  agentId?: string;
-  maxFiles?: number;
-  sessionFiles?: string[];
-  startMs?: number;
-}): Promise<UsageCostRefreshResult> {
-  return await refreshCostUsageCacheForPath(params);
 }
 
 export async function loadCostUsageSummaryFromCache(params: {
@@ -916,6 +934,7 @@ export async function loadSessionUsageTimeSeries(params: {
   }
 
   const points: SessionUsageTimePointBase[] = [];
+  const resolveCost = createUsageCostResolver(params.config);
 
   scanUsageEvents({
     events,

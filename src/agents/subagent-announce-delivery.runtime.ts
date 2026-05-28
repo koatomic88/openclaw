@@ -10,8 +10,11 @@ export { resolveConversationIdFromTargets } from "../infra/outbound/conversation
 export { getGlobalHookRunner } from "../plugins/hook-runner-global.js";
 export {
   formatEmbeddedAgentQueueFailureSummary,
+  formatEmbeddedAgentQueueFailureSummary as formatEmbeddedPiQueueFailureSummary,
   isEmbeddedAgentRunActive,
+  isEmbeddedAgentRunActive as isEmbeddedPiRunActive,
   isEmbeddedRunAbandoned,
   queueEmbeddedAgentMessageWithOutcomeAsync,
+  queueEmbeddedAgentMessageWithOutcomeAsync as queueEmbeddedPiMessageWithOutcomeAsync,
   resolveActiveEmbeddedRunSessionId,
 } from "./embedded-agent-runner/runs.js";

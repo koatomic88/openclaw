@@ -1,4 +1,6 @@
 import type { Insertable, Selectable } from "kysely";
+import type { FailoverReason } from "../agents/embedded-agent-helpers/types.js";
+import { resolveFailoverReasonFromError } from "../agents/failover-error.js";
 import { parseByteSize } from "../cli/parse-bytes.js";
 import type { CronConfig } from "../config/types.cron.js";
 import {
@@ -17,6 +19,7 @@ import {
   normalizeOptionalString,
   normalizeStringifiedOptionalString,
 } from "../shared/string-coerce.js";
+import { uniqueValues } from "../shared/string-normalization.js";
 import type { DB as OpenClawStateKyselyDatabase } from "../state/openclaw-state-db.generated.js";
 import {
   openOpenClawStateDatabase,

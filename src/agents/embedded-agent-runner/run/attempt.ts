@@ -387,6 +387,7 @@ import {
   sanitizeOpenAIResponsesReplayForStream,
   sanitizeReplayToolCallIdsForStream,
   shouldApplyReplayToolCallIdSanitizer,
+  sanitizeOpenAIResponsesReplayForStream,
   wrapStreamFnSanitizeMalformedToolCalls,
   wrapStreamFnTrimToolCallNames,
 } from "./attempt.tool-call-normalization.js";
@@ -468,6 +469,8 @@ export {
   resolveEmbeddedAgentStreamFn,
 };
 
+type EmbeddedAttemptSessionFileOwner = { release: () => void };
+
 function logRuntimeToolSchemaQuarantine(params: {
   diagnostics: readonly RuntimeToolSchemaDiagnostic[];
   tools: readonly Parameters<typeof getPluginToolMeta>[0][];
@@ -500,6 +503,26 @@ function logRuntimeToolSchemaQuarantine(params: {
   log.warn(
     `[tools] quarantined ${params.diagnostics.length} unsupported tool schema${params.diagnostics.length === 1 ? "" : "s"} before model runtime projection: ${summary}. Run openclaw doctor for details.`,
   );
+}
+
+function collectTrustedPluginLocalMediaToolNames(params: {
+  tools: readonly Parameters<typeof getPluginToolMeta>[0][];
+}): Set<string> {
+  const names = new Set<string>();
+  for (const tool of params.tools) {
+    const name = (tool.name ?? "").trim();
+    if (name && getPluginToolMeta(tool)?.trustedLocalMedia === true) {
+      names.add(name);
+    }
+  }
+  return names;
+}
+
+function collectTrustedLocalMediaToolNames(params: {
+  coreBuiltinToolNames: ReadonlySet<string>;
+  trustedPluginToolNames: ReadonlySet<string>;
+}): Set<string> {
+  return new Set([...params.coreBuiltinToolNames, ...params.trustedPluginToolNames]);
 }
 const MAX_BTW_SNAPSHOT_MESSAGES = 100;
 const TOOL_SEARCH_CONTROL_ALLOWLIST_NAMES = [

@@ -67,6 +67,7 @@ export type CliSessionBinding = {
   authEpochVersion?: number;
   extraSystemPromptHash?: string;
   promptToolNamesHash?: string;
+  cwdHash?: string;
   mcpConfigHash?: string;
   mcpResumeHash?: string;
 };
@@ -211,11 +212,15 @@ export type SessionEntry = {
   /** Durable one-shot prompt additions drained before the next agent turn. */
   pluginNextTurnInjections?: Record<string, SessionPluginNextTurnInjection[]>;
   sessionId: string;
+  /** @deprecated Runtime state is SQLite-backed; only legacy adapters may materialize this. */
+  sessionFile?: string;
   updatedAt: number;
   /** Parent session key that spawned this session (used for sandbox session-tool scoping). */
   spawnedBy?: string;
   /** Workspace inherited by spawned sessions and reused on later turns for the same child session. */
   spawnedWorkspaceDir?: string;
+  /** Task working directory inherited by spawned sessions when it differs from the workspace. */
+  spawnedCwd?: string;
   /** Explicit parent session linkage for dashboard-created child sessions. */
   parentSessionKey?: string;
   /** True after a thread/topic session has been forked from its parent transcript once. */
@@ -376,7 +381,6 @@ export type SessionEntry = {
     accountId?: string;
     threadId?: string | number;
   };
-  sessionFile?: string;
   claudeCliSessionId?: string;
   cliSessionIds?: Record<string, string> | string[];
   route?: ChannelRouteRef;

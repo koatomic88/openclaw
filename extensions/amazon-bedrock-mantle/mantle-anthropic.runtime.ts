@@ -5,7 +5,7 @@ import { streamAnthropic } from "openclaw/plugin-sdk/provider-ai";
 
 const MANTLE_ANTHROPIC_BETA = "fine-grained-tool-streaming-2025-05-14";
 type AnthropicOptions = ConstructorParameters<typeof Anthropic>[0];
-type MantleAnthropicStream = typeof stream;
+type MantleAnthropicStream = typeof streamAnthropic;
 type AnthropicStreamClient = Anthropic;
 
 export function resolveMantleAnthropicBaseUrl(baseUrl: string): string {
@@ -83,7 +83,7 @@ export function createMantleAnthropicStreamFn(deps?: {
   return (model, context, options) => {
     const apiKey = options?.apiKey ?? "";
     const createClient = deps?.createClient ?? ((clientOptions) => new Anthropic(clientOptions));
-    const streamFn = deps?.stream ?? stream;
+    const streamFn = deps?.stream ?? streamAnthropic;
     const client = createClient({
       apiKey: null,
       authToken: apiKey,

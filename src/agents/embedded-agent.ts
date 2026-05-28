@@ -3,6 +3,9 @@ export type {
   EmbeddedAgentMeta,
   EmbeddedAgentRunMeta,
   EmbeddedAgentRunResult,
+  EmbeddedPiCompactResult,
+  EmbeddedPiMeta,
+  EmbeddedPiRunResult,
 } from "./embedded-agent-runner.js";
 export {
   abortAndDrainEmbeddedAgentRun,
@@ -17,5 +20,6 @@ export {
   resolveActiveEmbeddedRunSessionIdBySessionFile,
   resolveEmbeddedSessionLane,
   runEmbeddedAgent,
+  runEmbeddedPiAgent,
   waitForEmbeddedAgentRunEnd,
 } from "./embedded-agent-runner.js";

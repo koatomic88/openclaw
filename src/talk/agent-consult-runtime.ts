@@ -203,10 +203,10 @@ export async function consultRealtimeVoiceAgent(params: {
   agentId?: string;
   spawnedBy?: string | null;
   contextMode?: RealtimeVoiceAgentConsultContextMode;
-  provider?: RunEmbeddedAgentParams["provider"];
-  model?: RunEmbeddedAgentParams["model"];
-  thinkLevel?: RunEmbeddedAgentParams["thinkLevel"];
-  fastMode?: RunEmbeddedAgentParams["fastMode"];
+  provider?: RunEmbeddedPiAgentParams["provider"];
+  model?: RunEmbeddedPiAgentParams["model"];
+  thinkLevel?: RunEmbeddedPiAgentParams["thinkLevel"];
+  fastMode?: RunEmbeddedPiAgentParams["fastMode"];
   timeoutMs?: number;
   toolsAllow?: string[];
   extraSystemPrompt?: string;

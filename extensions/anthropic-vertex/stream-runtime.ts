@@ -1,8 +1,9 @@
 import { AnthropicVertex as AnthropicVertexSdk } from "@anthropic-ai/vertex-sdk";
 import type { StreamFn } from "openclaw/plugin-sdk/agent-core";
 import {
-  stream as streamDefault,
   type Model,
+  type ProviderStreamOptions,
+  streamAnthropic as streamDefault,
 } from "openclaw/plugin-sdk/provider-ai";
 import {
   applyAnthropicPayloadPolicyToParams,

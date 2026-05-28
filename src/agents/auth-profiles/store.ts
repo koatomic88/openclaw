@@ -40,6 +40,8 @@ import {
 } from "./store-cache.js";
 import type { AuthProfileStore } from "./types.js";
 
+export { getRuntimeAuthProfileStoreSnapshot };
+
 type LoadAuthProfileStoreOptions = {
   allowKeychainPrompt?: boolean;
   config?: OpenClawConfig;

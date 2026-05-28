@@ -1,5 +1,6 @@
 import type { SessionEntry } from "../config/sessions/types.js";
 import { normalizeAgentId } from "../routing/session-key.js";
+import { uniqueStrings } from "../shared/string-normalization.js";
 
 export { loadCombinedSessionEntriesForGateway } from "../config/sessions/combined-session-entries-gateway.js";
 

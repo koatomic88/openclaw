@@ -11,6 +11,7 @@ import type { ImageContent } from "../../../llm/types.js";
 import type { PromptImageOrderEntry } from "../../../media/prompt-image-order.js";
 import type { CommandQueueEnqueueFn } from "../../../process/command-queue.types.js";
 import type { InputProvenance } from "../../../sessions/input-provenance.js";
+import type { UserTurnTranscriptRecorder } from "../../../sessions/user-turn-transcript.js";
 import type { AgentMessage } from "../../agent-core-contract.js";
 import type { ExecElevatedDefaults, ExecToolDefaults } from "../../bash-tools.exec-types.js";
 import type { AgentStreamParams, ClientToolDefinition } from "../../command/shared-types.js";
@@ -258,3 +259,5 @@ export type RunEmbeddedAgentParams = {
    */
   cleanupBundleMcpOnRunEnd?: boolean;
 };
+
+export type RunEmbeddedPiAgentParams = RunEmbeddedAgentParams;

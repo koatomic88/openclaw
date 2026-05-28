@@ -25,6 +25,8 @@ export type EmbeddedAgentQueueMessageOptions = {
   sourceReplyDeliveryMode?: SourceReplyDeliveryMode;
 };
 
+export type EmbeddedPiQueueMessageOptions = EmbeddedAgentQueueMessageOptions;
+
 export type ActiveEmbeddedRunSnapshot = {
   transcriptLeafId: string | null;
   messages?: unknown[];

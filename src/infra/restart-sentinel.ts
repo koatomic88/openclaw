@@ -15,6 +15,7 @@ import {
   executeSqliteQueryTakeFirstSync,
   getNodeSqliteKysely,
 } from "./kysely-sync.js";
+import { isPlainObject as isPlainRecord } from "./plain-object.js";
 
 export type RestartSentinelLog = {
   stdoutTail?: string | null;

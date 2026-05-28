@@ -32,6 +32,10 @@ import { isReasoningTagProvider } from "../../utils/provider-utils.js";
 import { createBundleLspToolRuntime } from "../agent-bundle-lsp-runtime.js";
 import { createBundleMcpToolRuntime } from "../agent-bundle-mcp-tools.js";
 import type { AgentMessage } from "../agent-core-contract.js";
+import {
+  consumeCompactionSafeguardCancelReason,
+  setCompactionSafeguardCancelReason,
+} from "../agent-hooks/compaction-safeguard-runtime.js";
 import { createPreparedEmbeddedAgentSettingsManager } from "../agent-project-settings.js";
 import {
   resolveAgentDir,
@@ -85,10 +89,6 @@ import {
   DefaultResourceLoader,
   estimateTokens,
 } from "../pi-coding-agent-contract.js";
-import {
-  consumeCompactionSafeguardCancelReason,
-  setCompactionSafeguardCancelReason,
-} from "../pi-hooks/compaction-safeguard-runtime.js";
 import { wrapStreamFnTextTransforms } from "../plugin-text-transforms.js";
 import { resolveAgentPromptSurfaceForSessionKey } from "../prompt-surface.js";
 import { registerProviderStreamForModel } from "../provider-stream.js";
@@ -164,7 +164,7 @@ import {
   toSessionToolAllowlist,
 } from "./tool-name-allowlist.js";
 import { splitSdkTools } from "./tool-split.js";
-import type { EmbeddedPiCompactResult } from "./types.js";
+import type { EmbeddedAgentCompactResult } from "./types.js";
 import { mapThinkingLevel, normalizeContextTokenBudget } from "./utils.js";
 import { flushPendingToolResultsAfterIdle } from "./wait-for-idle-before-flush.js";
 export type { CompactEmbeddedAgentSessionParams } from "./compact.types.js";
@@ -517,20 +517,11 @@ async function compactEmbeddedAgentSessionDirectOnce(
     config: params.config,
   });
   const runtimeHarnessPolicy = resolveAgentHarnessPolicy({
-    provider: modelConfigProvider,
+    provider: runtimeProvider,
     modelId,
     config: params.config,
     agentId: earlyAgentIds.sessionAgentId,
     sessionKey: params.sessionKey,
-  });
-  const selectedHarnessRuntime = params.agentHarnessId ?? runtimeHarnessPolicy.runtime;
-  const provider = resolveOpenAICompactionRuntimeProvider({
-    provider: modelConfigProvider,
-    harnessRuntime: runtimeHarnessPolicy.runtime,
-    agentHarnessId: params.agentHarnessId,
-    authProfileId,
-    config: params.config,
-    workspaceDir: resolvedWorkspace,
   });
   let thinkLevel: ThinkLevel = params.thinkLevel ?? "off";
   const attemptedThinking = new Set<ThinkLevel>();

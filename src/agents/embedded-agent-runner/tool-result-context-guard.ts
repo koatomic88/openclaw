@@ -21,10 +21,15 @@ import {
 
 const SINGLE_TOOL_RESULT_CONTEXT_SHARE = 0.5;
 const PREEMPTIVE_OVERFLOW_RATIO = 0.9;
+const TRANSCRIPT_PROMPT_TEXT = new WeakMap<AgentMessage, string>();
 
 export const PREEMPTIVE_CONTEXT_OVERFLOW_MESSAGE =
   "Context overflow: estimated context size exceeds safe threshold during tool loop.";
 const TOOL_RESULT_ESTIMATE_TO_TEXT_RATIO = 4 / TOOL_RESULT_CHARS_PER_TOKEN_ESTIMATE;
+
+export function markTranscriptPromptText(message: AgentMessage, transcriptText: string): void {
+  TRANSCRIPT_PROMPT_TEXT.set(message, transcriptText);
+}
 
 type GuardableTransformContext = (
   messages: AgentMessage[],
@@ -133,6 +138,19 @@ function cloneMessagesForGuard(messages: AgentMessage[]): AgentMessage[] {
   return messages.map(
     (msg) => ({ ...(msg as unknown as Record<string, unknown>) }) as unknown as AgentMessage,
   );
+}
+
+function projectTranscriptPromptMessages(messages: AgentMessage[]): AgentMessage[] {
+  let projected: AgentMessage[] | undefined;
+  for (const [index, message] of messages.entries()) {
+    const transcriptText = TRANSCRIPT_PROMPT_TEXT.get(message);
+    if (transcriptText === undefined) {
+      continue;
+    }
+    projected ??= messages.slice();
+    projected[index] = { ...message, content: transcriptText } as AgentMessage;
+  }
+  return projected ?? messages;
 }
 
 function toolResultsNeedTruncation(params: {
@@ -294,7 +312,7 @@ export function installContextEngineLoopHook(params: {
         await contextEngine.afterTurn({
           sessionId,
           sessionKey,
-          messages: sourceMessages,
+          messages: projectTranscriptPromptMessages(sourceMessages),
           prePromptMessageCount,
           tokenBudget,
           runtimeContext: params.getRuntimeContext?.({

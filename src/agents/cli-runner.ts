@@ -10,7 +10,7 @@ import { DEFAULT_AGENT_ID } from "../routing/session-key.js";
 import { loadCliSessionHistoryMessages } from "./cli-runner/session-history.js";
 import type { PreparedCliRunContext, RunCliAgentParams } from "./cli-runner/types.js";
 import { classifyFailoverReason, isFailoverErrorMessage } from "./embedded-agent-helpers.js";
-import type { EmbeddedAgentRunResult } from "./embedded-agent-runner.js";
+import type { EmbeddedAgentRunResult, EmbeddedPiRunResult } from "./embedded-agent-runner.js";
 import { FailoverError, isFailoverError, resolveFailoverStatus } from "./failover-error.js";
 import { buildAgentHookContext } from "./harness/hook-context.js";
 import { buildAgentHookConversationMessages } from "./harness/hook-history.js";
@@ -19,8 +19,6 @@ import {
   runAgentHarnessLlmInputHook,
   runAgentHarnessLlmOutputHook,
 } from "./harness/lifecycle-hook-helpers.js";
-import type { AgentMessage } from "./runtime/index.js";
-import { SessionManager } from "./sessions/index.js";
 
 const log = createSubsystemLogger("agents/cli-runner");
 
@@ -69,6 +67,35 @@ function buildCliHookAssistantMessage(params: {
     stopReason: "stop",
     timestamp: Date.now(),
   };
+}
+
+async function persistApprovedCliUserTurnTranscript(params: RunCliAgentParams): Promise<void> {
+  if (params.suppressNextUserMessagePersistence === true || !params.userTurnTranscriptRecorder) {
+    return;
+  }
+
+  const target = {
+    sessionId: params.sessionId,
+    agentId: params.agentId,
+    ...(params.sessionKey ? { sessionKey: params.sessionKey } : {}),
+    cwd: params.cwd ?? params.workspaceDir,
+    ...(params.config ? { config: params.config } : {}),
+  };
+  const persisted = await params.userTurnTranscriptRecorder.persistApproved({ target });
+  if (!persisted) {
+    return;
+  }
+
+  try {
+    const notification = params.onUserMessagePersisted?.(persisted.message);
+    if (notification) {
+      void Promise.resolve(notification).catch((error) => {
+        log.warn(`CLI user turn persistence notification failed: ${formatErrorMessage(error)}`);
+      });
+    }
+  } catch (error) {
+    log.warn(`CLI user turn persistence notification failed: ${formatErrorMessage(error)}`);
+  }
 }
 
 export async function runCliAgent(params: RunCliAgentParams): Promise<EmbeddedPiRunResult> {

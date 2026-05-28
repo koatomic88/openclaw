@@ -223,6 +223,18 @@ function resolveCanUseInternalRuntimeHandoff(
   return client?.connect?.client?.mode === GATEWAY_CLIENT_MODES.BACKEND;
 }
 
+function isGatewayAgentAbortRejection(err: unknown, signal: AbortSignal): boolean {
+  if (signal.aborted) {
+    return true;
+  }
+  return err instanceof Error && err.name === "AbortError";
+}
+
+function resolveGatewayAgentAbortStopReason(signal: AbortSignal): string {
+  const reason = signal.reason;
+  return reason instanceof Error ? reason.message : typeof reason === "string" ? reason : "rpc";
+}
+
 function emitAgentSendSessionLifecycleTransition(
   transition: AgentSendSessionLifecycleTransition | undefined,
 ): void {
@@ -234,8 +246,6 @@ function emitAgentSendSessionLifecycleTransition(
       cfg: transition.cfg,
       sessionKey: transition.sessionKey,
       sessionId: transition.previousSessionId,
-      storePath: transition.storePath,
-      sessionFile: transition.previousSessionFile,
       agentId: transition.agentId,
       reason: transition.previousEndReason ?? "unknown",
       nextSessionId: transition.sessionId,
@@ -247,8 +257,6 @@ function emitAgentSendSessionLifecycleTransition(
     sessionKey: transition.sessionKey,
     sessionId: transition.sessionId,
     resumedFrom: transition.previousSessionId,
-    storePath: transition.storePath,
-    sessionFile: transition.sessionFile,
     agentId: transition.agentId,
   });
 }
@@ -622,7 +630,7 @@ function dispatchAgentRunFromGateway(params: {
         runId: params.runId,
         status: aborted ? ("timeout" as const) : ("error" as const),
         summary: aborted ? "aborted" : renderedErr,
-        ...(aborted ? { stopReason: "rpc" } : {}),
+        ...(aborted ? { stopReason } : {}),
       };
       setGatewayDedupeEntries({
         dedupe: params.context.dedupe,

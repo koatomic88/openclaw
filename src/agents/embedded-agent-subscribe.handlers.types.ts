@@ -193,6 +193,8 @@ export type EmbeddedAgentSubscribeContext = {
   emitBlockReply: (payload: BlockReplyPayload) => void;
 };
 
+export type EmbeddedPiSubscribeContext = EmbeddedAgentSubscribeContext;
+
 /**
  * Minimal context type for tool execution handlers. Allows
  * tests provide only the fields they exercise

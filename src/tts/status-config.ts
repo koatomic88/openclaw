@@ -1,5 +1,6 @@
 import type { OpenClawConfig } from "../config/types.js";
 import type { TtsAutoMode, TtsConfig, TtsProvider } from "../config/types.tts.js";
+import { isPlainObject as isObjectRecord } from "../infra/plain-object.js";
 import {
   normalizeOptionalLowercaseString,
   normalizeOptionalString,

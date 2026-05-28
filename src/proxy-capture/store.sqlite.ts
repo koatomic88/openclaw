@@ -7,6 +7,7 @@ import {
   getNodeSqliteKysely,
 } from "../infra/kysely-sync.js";
 import { runSqliteImmediateTransactionSync } from "../infra/sqlite-transaction.js";
+import { normalizeUniqueStringEntries } from "../shared/string-normalization.js";
 import type { DB as OpenClawStateKyselyDatabase } from "../state/openclaw-state-db.generated.js";
 import { openOpenClawStateDatabase } from "../state/openclaw-state-db.js";
 import { resolveOpenClawStateSqlitePath } from "../state/openclaw-state-db.paths.js";
@@ -37,6 +38,11 @@ function parseMetaJson(metaJson: unknown): Record<string, unknown> | null {
   } catch {
     return null;
   }
+}
+
+function normalizeObservedValue(value: unknown): string | undefined {
+  const text = typeof value === "string" ? value.trim() : "";
+  return text || undefined;
 }
 
 function sortObservedCounts(counts: Map<string, number>): CaptureObservedDimension[] {

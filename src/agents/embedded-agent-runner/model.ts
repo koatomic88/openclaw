@@ -1,6 +1,5 @@
-import type { ModelMediaInputConfig } from "../../config/types.models.js";
+import type { ModelCompatConfig, ModelMediaInputConfig } from "../../config/types.models.js";
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
-import type { ModelRegistry as CoreModelRegistry } from "../../llm/model-registry.js";
 import type { Api, Model } from "../../llm/types.js";
 import type { ProviderRuntimeModel } from "../../plugins/provider-runtime-model.types.js";
 import {
@@ -23,10 +22,6 @@ import {
   shouldSuppressBuiltInModel,
   shouldUnconditionallySuppress,
 } from "../model-suppression.js";
-import {
-  AuthStorage as PiAuthStorageClass,
-  ModelRegistry as PiModelRegistryClass,
-} from "../pi-coding-agent-contract.js";
 import { attachModelProviderLocalService } from "../provider-local-service.js";
 import {
   attachModelProviderRequestTransport,
@@ -104,6 +99,7 @@ const SKIP_PI_DISCOVERY_PROVIDER_RUNTIME_HOOKS: ProviderRuntimeHooks = {
   // skipPiDiscovery is the lean path used before PI model catalog discovery has run.
   ...TARGET_PROVIDER_RUNTIME_HOOKS,
 };
+const SKIP_AGENT_DISCOVERY_PROVIDER_RUNTIME_HOOKS = SKIP_PI_DISCOVERY_PROVIDER_RUNTIME_HOOKS;
 
 function createEmptyAgentDiscoveryStores(): {
   authStorage: AuthStorage;
@@ -731,7 +727,7 @@ function applyConfiguredProviderOverrides(params: {
 function resolveExplicitModelWithRegistry(params: {
   provider: string;
   modelId: string;
-  modelRegistry: CoreModelRegistry;
+  modelRegistry: ModelRegistry;
   cfg?: OpenClawConfig;
   agentDir?: string;
   workspaceDir?: string;
@@ -858,7 +854,7 @@ function resolveExplicitModelWithRegistry(params: {
 function resolvePluginDynamicModelWithRegistry(params: {
   provider: string;
   modelId: string;
-  modelRegistry: CoreModelRegistry;
+  modelRegistry: ModelRegistry;
   cfg?: OpenClawConfig;
   agentDir?: string;
   workspaceDir?: string;
@@ -1136,7 +1132,7 @@ function normalizeProviderModelRef(params: {
 export function resolveModelWithRegistry(params: {
   provider: string;
   modelId: string;
-  modelRegistry: CoreModelRegistry;
+  modelRegistry: ModelRegistry;
   cfg?: OpenClawConfig;
   agentDir?: string;
   workspaceDir?: string;

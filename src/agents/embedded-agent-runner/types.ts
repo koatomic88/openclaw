@@ -60,6 +60,8 @@ export type EmbeddedAgentMeta = {
   contextBudgetStatus?: SessionContextBudgetStatus;
 };
 
+export type EmbeddedPiMeta = EmbeddedAgentMeta;
+
 export type TraceAttempt = {
   provider: string;
   model: string;
@@ -209,6 +211,8 @@ export type EmbeddedAgentRunResult = {
   successfulCronAdds?: number;
 };
 
+export type EmbeddedPiRunResult = EmbeddedAgentRunResult;
+
 export type EmbeddedAgentCompactResult = {
   ok: boolean;
   compacted: boolean;
@@ -229,6 +233,8 @@ export type EmbeddedAgentCompactResult = {
     sessionId?: string;
   };
 };
+
+export type EmbeddedPiCompactResult = EmbeddedAgentCompactResult;
 
 export type EmbeddedFullAccessBlockedReason = "sandbox" | "host-policy" | "channel" | "runtime";
 

@@ -26,7 +26,7 @@ import type { AuthProfileConfig } from "../../../config/types.auth.js";
 import type { OpenClawConfig } from "../../../config/types.openclaw.js";
 import { loadJsonFile } from "../../../infra/json-file.js";
 import { note } from "../../../terminal/note.js";
-import { shortenHomePath } from "../../../utils.js";
+import { isRecord, shortenHomePath } from "../../../utils.js";
 import type { DoctorPrompter } from "../../doctor-prompter.js";
 import { resolveLegacyAuthProfilePath } from "./auth-profile-paths.js";
 

@@ -46,6 +46,7 @@ export {
   type ActiveEmbeddedRunSnapshot,
   type EmbeddedAgentQueueHandle,
   type EmbeddedAgentQueueMessageOptions,
+  type EmbeddedPiQueueMessageOptions,
   type EmbeddedRunModelSwitchRequest,
 } from "./run-state.js";
 
@@ -73,6 +74,9 @@ export type EmbeddedAgentQueueMessageOutcome =
       gatewayHealth: "live";
       errorMessage?: string;
     };
+
+export type EmbeddedPiQueueFailureReason = EmbeddedAgentQueueFailureReason;
+export type EmbeddedPiQueueMessageOutcome = EmbeddedAgentQueueMessageOutcome;
 
 type PreparedEmbeddedAgentQueueMessage =
   | {
@@ -107,6 +111,8 @@ export function formatEmbeddedAgentQueueFailureSummary(
   const errorPart = outcome.errorMessage ? ` error=${outcome.errorMessage}` : "";
   return `queue_message_failed reason=${outcome.reason} sessionId=${outcome.sessionId} gatewayHealth=${outcome.gatewayHealth}${errorPart}`;
 }
+
+export const formatEmbeddedPiQueueFailureSummary = formatEmbeddedAgentQueueFailureSummary;
 function setActiveRunSessionKey(sessionKey: string | undefined, sessionId: string): void {
   const normalizedSessionKey = sessionKey?.trim();
   if (!normalizedSessionKey) {

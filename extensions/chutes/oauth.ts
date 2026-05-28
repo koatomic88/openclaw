@@ -19,6 +19,7 @@ type OAuthCredentials = {
   refresh: string;
   access: string;
   expires: number;
+  email?: string;
   [key: string]: unknown;
 };
 
@@ -32,13 +33,6 @@ type ChutesOAuthAppConfig = {
 type ChutesUserInfo = {
   sub?: string;
   username?: string;
-};
-
-type OAuthCredentials = {
-  access: string;
-  refresh: string;
-  expires: number;
-  email?: string;
 };
 
 type ChutesStoredOAuth = OAuthCredentials & {

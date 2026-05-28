@@ -718,7 +718,7 @@ async function agentCommandInternal(
           finalText: finalTextRaw,
           sessionId,
           sessionKey,
-          sessionEntry,
+          sessionEntry: transcriptSessionEntry,
           sessionStore,
           sessionAgentId,
           threadId: opts.threadId,
@@ -1630,7 +1630,7 @@ async function agentCommandInternal(
       const now = Date.now();
       const combinedPayload = sanitizePendingFinalDeliveryText(
         payloads
-          .map((p) => (typeof p.text === "string" ? p.text : ""))
+          .map((p: { text?: unknown }) => (typeof p.text === "string" ? p.text : ""))
           .filter(Boolean)
           .join("\n\n"),
       );

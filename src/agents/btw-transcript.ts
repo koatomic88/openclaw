@@ -2,7 +2,7 @@ import { loadSqliteSessionTranscriptEvents } from "../config/sessions/transcript
 import { diagnosticLogger as diag } from "../logging/diagnostic.js";
 import {
   buildSessionContext,
-  type SessionEntry as PiSessionEntry,
+  type SessionEntry as AgentSessionEntry,
   type TranscriptEntry,
 } from "./transcript/session-transcript-contract.js";
 

@@ -12,4 +12,4 @@ export {
   ModelRegistry,
   SettingsManager,
 } from "./sessions/index.js";
-export type { CreateAgentSessionOptions, ToolDefinition } from "./sessions/index.js";
+export type { AgentSession, CreateAgentSessionOptions, ToolDefinition } from "./sessions/index.js";
