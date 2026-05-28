@@ -268,7 +268,7 @@ describe("commitment store delivery selection", () => {
 
   it("serializes concurrent markCommitmentsStatus on disjoint ids without losing a write", async () => {
     await useTempStateDir();
-    await saveCommitmentStore(undefined, {
+    await saveCommitmentStore({
       version: 1,
       commitments: [
         commitment({ id: "cm_raceA", dedupeKey: "race-A" }),
@@ -289,7 +289,7 @@ describe("commitment store delivery selection", () => {
 
   it("serializes concurrent markCommitmentsAttempted bumps without losing the counter", async () => {
     await useTempStateDir();
-    await saveCommitmentStore(undefined, {
+    await saveCommitmentStore({
       version: 1,
       commitments: [commitment({ id: "cm_race_attempts", attempts: 0 })],
     });
@@ -306,7 +306,7 @@ describe("commitment store delivery selection", () => {
 
   it("serializes a markCommitmentsStatus dismiss against a concurrent attempted bump", async () => {
     await useTempStateDir();
-    await saveCommitmentStore(undefined, {
+    await saveCommitmentStore({
       version: 1,
       commitments: [
         commitment({ id: "cm_dismiss_target", dedupeKey: "dismiss-target" }),
