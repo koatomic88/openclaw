@@ -171,6 +171,11 @@ const BACKUP_TAR_MAX_ATTEMPTS = 3;
 const BACKUP_TAR_BACKOFF_MS = [250, 1000] as const;
 const VOLATILE_SQLITE_TABLES = ["delivery_queue_entries"] as const;
 
+type BackupTarFilterEntry = {
+  isSymbolicLink?: () => boolean;
+  type?: string;
+};
+
 function isTarEofRaceError(err: unknown): boolean {
   const code = (err as NodeJS.ErrnoException | undefined)?.code;
   if (code === "ENOENT" || code === "EOF" || code === "TAR_BAD_ARCHIVE") {
@@ -232,6 +237,31 @@ async function writeTarArchiveWithRetry(params: {
 }
 
 export const __test = { writeTarArchiveWithRetry, isTarEofRaceError };
+
+function isArchiveLinkEntry(entry: BackupTarFilterEntry): boolean {
+  return (
+    entry.isSymbolicLink?.() === true || entry.type === "SymbolicLink" || entry.type === "Link"
+  );
+}
+
+function buildBackupArchiveFilter(params: {
+  includePath?: (filePath: string) => boolean;
+}): (filePath: string, entry: BackupTarFilterEntry) => boolean {
+  return (filePath, entry) => {
+    if (isArchiveLinkEntry(entry)) {
+      return false;
+    }
+    return params.includePath ? params.includePath(filePath) : true;
+  };
+}
+
+async function isSymbolicLinkPath(sourcePath: string): Promise<boolean> {
+  try {
+    return (await fs.lstat(sourcePath)).isSymbolicLink();
+  } catch {
+    return false;
+  }
+}
 
 // The temp manifest is passed to `tar.c` alongside the asset source paths. If
 // the temp file lives inside any asset, recursive traversal pulls it in a
@@ -594,7 +624,10 @@ async function stageBackupAssets(params: {
     await fs.cp(asset.sourcePath, stagedPath, {
       recursive: true,
       verbatimSymlinks: true,
-      filter: (source) => {
+      filter: async (source) => {
+        if (await isSymbolicLinkPath(source)) {
+          return false;
+        }
         if (!includeExtensionsPath(source)) {
           return false;
         }
@@ -722,9 +755,10 @@ export async function createBackupArchive(
     await writeJson(manifestPath, manifest, { trailingNewline: true });
 
     const tar = await loadTarRuntime();
-    const filter = stagedAssets.state
+    const includePath = stagedAssets.state
       ? buildExtensionsNodeModulesFilter(stagedAssets.state.stagedPath)
       : undefined;
+    const filter = buildBackupArchiveFilter({ includePath });
     await writeTarArchiveWithRetry({
       tempArchivePath,
       log: opts.log,
@@ -732,7 +766,7 @@ export async function createBackupArchive(
         tar.c(
           {
             file: tempArchivePath,
-            ...(filter ? { filter } : {}),
+            filter,
             gzip: true,
             portable: true,
             preservePaths: true,

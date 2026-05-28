@@ -329,6 +329,52 @@ describe("createBackupArchive", () => {
     },
   );
 
+  it.runIf(process.platform !== "win32")(
+    "omits symlinks from state and workspace archives so verification accepts the archive",
+    async () => {
+      await withOpenClawTestState(
+        {
+          layout: "split",
+          prefix: "openclaw-backup-symlink-skip-",
+          scenario: "minimal",
+        },
+        async (state) => {
+          await state.writeConfig({
+            agents: { defaults: { workspace: state.workspaceDir } },
+          });
+          const outputDir = state.path("backups");
+          await fs.mkdir(outputDir, { recursive: true });
+
+          const workspaceTarget = path.join(state.workspaceDir, "source.txt");
+          const workspaceLink = path.join(state.workspaceDir, "linked.txt");
+          await fs.writeFile(workspaceTarget, "workspace target\n", "utf8");
+          await fs.symlink(workspaceTarget, workspaceLink);
+
+          const stateTarget = path.join(state.stateDir, "state-target.txt");
+          const stateLink = path.join(state.stateDir, "state-link.txt");
+          await fs.writeFile(stateTarget, "state target\n", "utf8");
+          await fs.symlink(stateTarget, stateLink);
+
+          const result = await createBackupArchive({
+            output: outputDir,
+            includeWorkspace: true,
+            nowMs: Date.UTC(2026, 4, 13, 12, 0, 0),
+          });
+          const entries = await listArchiveEntryTypes(result.archivePath);
+          expect(
+            entries.filter((entry) => entry.type === "SymbolicLink" || entry.type === "Link"),
+          ).toEqual([]);
+          expect(entries.some((entry) => entry.path.endsWith("/workspace/linked.txt"))).toBe(false);
+          expect(entries.some((entry) => entry.path.endsWith("/state/state-link.txt"))).toBe(false);
+
+          const runtime: RuntimeEnv = { log: vi.fn(), error: vi.fn(), exit: vi.fn() };
+          const verification = await backupVerifyCommand(runtime, { archive: result.archivePath });
+          expect(verification.ok).toBe(true);
+        },
+      );
+    },
+  );
+
   it("omits volatile live state files from the staged archive", async () => {
     await withOpenClawTestState(
       {
