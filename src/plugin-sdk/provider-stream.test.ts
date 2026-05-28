@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { StreamFn } from "../agents/agent-core-contract.js";
+import { createAssistantMessageEventStream } from "../agents/pi-ai-contract.js";
 import { VERSION } from "../version.js";
 import {
   composeProviderStreamWrappers as composeProviderStreamWrappersShared,

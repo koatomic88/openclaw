@@ -30,8 +30,9 @@ function createDeps(shell: "zsh" | "bash" | "fish" | "powershell" = "zsh") {
     checkShellCompletionStatus: vi.fn(async (_binName: string) => ({
       shell,
       profileInstalled: false,
-      usesRetiredCache: false,
-      retiredCachePath: null,
+      cacheExists: false,
+      cachePath: "",
+      usesSlowPattern: false,
     })),
     installCompletion: vi.fn(async () => {}),
   };
