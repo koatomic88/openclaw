@@ -12,7 +12,8 @@ import {
 import type { FollowupRun, QueueSettings } from "./queue.js";
 
 const runEmbeddedAgentMock = vi.fn();
-const compactEmbeddedPiSessionMock = vi.fn();
+const runWithModelFallbackMock = vi.fn();
+const compactEmbeddedAgentSessionMock = vi.fn();
 const routeReplyMock = vi.fn();
 const isRoutableChannelMock = vi.fn();
 const runPreflightCompactionIfNeededMock = vi.fn();
@@ -327,16 +328,15 @@ async function persistRunSessionUsageForFollowupTest(
 async function loadFreshFollowupRunnerModuleForTest() {
   vi.resetModules();
   vi.doUnmock("../../config/config.js");
-  vi.doMock(
-    "../../agents/model-fallback.js",
-    async () => await import("../../test-utils/model-fallback.mock.js"),
-  );
+  vi.doMock("../../agents/model-fallback.js", () => ({
+    runWithModelFallback: (params: unknown) => runWithModelFallbackMock(params),
+  }));
   vi.doMock("../../agents/embedded-agent.js", () => ({
-    abortEmbeddedPiRun: vi.fn(async () => false),
-    compactEmbeddedPiSession: (params: unknown) => compactEmbeddedPiSessionMock(params),
-    isEmbeddedPiRunActive: vi.fn(() => false),
-    isEmbeddedPiRunStreaming: vi.fn(() => false),
-    queueEmbeddedPiMessage: vi.fn(async () => undefined),
+    abortEmbeddedAgentRun: vi.fn(async () => false),
+    compactEmbeddedAgentSession: (params: unknown) => compactEmbeddedAgentSessionMock(params),
+    isEmbeddedAgentRunActive: vi.fn(() => false),
+    isEmbeddedAgentRunStreaming: vi.fn(() => false),
+    queueEmbeddedAgentMessage: vi.fn(async () => undefined),
     resolveEmbeddedSessionLane: (key: string) => `session:${key.trim() || "main"}`,
     runEmbeddedAgent: (params: unknown) => runEmbeddedAgentMock(params),
     waitForEmbeddedAgentRunEnd: vi.fn(async () => undefined),
@@ -447,7 +447,8 @@ beforeEach(() => {
   replyRunTestingForTest?.resetReplyRunRegistry();
   clearRuntimeConfigSnapshot?.();
   runEmbeddedAgentMock.mockReset();
-  compactEmbeddedPiSessionMock.mockReset();
+  runWithModelFallbackMock.mockReset();
+  compactEmbeddedAgentSessionMock.mockReset();
   runPreflightCompactionIfNeededMock.mockReset();
   resolveCommandSecretRefsViaGatewayMock.mockReset();
   resolveQueuedReplyExecutionConfigMock.mockReset();
@@ -1234,6 +1235,8 @@ describe("createFollowupRunner progress forwarding", () => {
     const onToolStart = vi.fn(async () => {});
     const onItemEvent = vi.fn(async () => {});
     const onCommandOutput = vi.fn(async () => {});
+    const onCompactionStart = vi.fn(async () => {});
+    const onCompactionEnd = vi.fn(async () => {});
     registerFollowupTestSessionStore(sessionStore);
 
     runEmbeddedAgentMock.mockImplementationOnce(
@@ -1587,7 +1590,7 @@ describe("createFollowupRunner compaction", () => {
       main: sessionEntry,
     };
     const onBlockReply = vi.fn(async () => {});
-    registerFollowupTestSessionStore(storePath, sessionStore);
+    registerFollowupTestSessionStore(sessionStore);
 
     mockCompactionRun({
       willRetry: true,
@@ -1601,7 +1604,6 @@ describe("createFollowupRunner compaction", () => {
       sessionEntry,
       sessionStore,
       sessionKey: "main",
-      storePath,
       defaultModel: "anthropic/claude-opus-4-6",
     });
 
@@ -1811,7 +1813,7 @@ describe("createFollowupRunner compaction", () => {
         sessionStore?: Record<string, SessionEntry>;
         sessionKey?: string;
       }) => {
-        await compactEmbeddedPiSessionMock({
+        await compactEmbeddedAgentSessionMock({
           workspaceDir,
         });
         params.followupRun.run.extraSystemPrompt = joinPromptSections(
@@ -2150,7 +2152,7 @@ describe("createFollowupRunner messaging delivery and dedupe", () => {
       totalTokensFresh: true,
     };
     const sessionStore: Record<string, SessionEntry> = { [sessionKey]: sessionEntry };
-    FOLLOWUP_TEST_SESSION_STORES.set(storePath, sessionStore);
+    registerFollowupTestSessionStore(sessionStore);
     const persistSpy = vi.spyOn(sessionRunAccounting, "persistRunSessionUsage");
     runEmbeddedAgentMock.mockResolvedValueOnce({
       payloads: [{ text: "internal announce complete" }],
@@ -2172,7 +2174,6 @@ describe("createFollowupRunner messaging delivery and dedupe", () => {
       sessionEntry,
       sessionStore,
       sessionKey,
-      storePath,
     });
 
     await expect(

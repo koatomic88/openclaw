@@ -9,7 +9,7 @@ import {
   installTriggerHandlingReplyHarness,
   MAIN_SESSION_KEY,
   makeCfg,
-  mockRunEmbeddedPiAgentOk,
+  mockRunEmbeddedAgentOk,
   expectBareNewOrResetAcknowledged,
   withTempHome,
 } from "../../test/helpers/auto-reply/trigger-handling-test-harness.js";
@@ -570,7 +570,7 @@ describe("trigger handling", () => {
       );
       const text = maybeReplyText(res);
       expect(text?.startsWith("⚙️ Compacted")).toBe(true);
-      expect(getCompactEmbeddedPiSessionMock()).toHaveBeenCalledOnce();
+      expect(getCompactEmbeddedAgentSessionMock()).toHaveBeenCalledOnce();
       const store = readSessionStore("main");
       const sessionKey = resolveSessionKey("per-sender", request);
       expect(store[sessionKey]?.compactionCount).toBe(1);
@@ -596,8 +596,8 @@ describe("trigger handling", () => {
 
       const text = maybeReplyText(res);
       expect(text?.startsWith("⚙️ Compacted")).toBe(true);
-      expect(getCompactEmbeddedPiSessionMock()).toHaveBeenCalledOnce();
-      expect(getCompactEmbeddedPiSessionMock().mock.calls[0]?.[0]).toMatchObject({
+      expect(getCompactEmbeddedAgentSessionMock()).toHaveBeenCalledOnce();
+      expect(getCompactEmbeddedAgentSessionMock().mock.calls[0]?.[0]).toMatchObject({
         agentId: "worker1",
       });
     });
@@ -606,7 +606,7 @@ describe("trigger handling", () => {
   it("aborts native target sessions and clears queued followups", async () => {
     await withTempHome(async (home) => {
       const cfg = makeCfg(home);
-      getAbortEmbeddedPiRunMock().mockReset().mockReturnValue(false);
+      getAbortEmbeddedAgentRunMock().mockReset().mockReturnValue(false);
       const targetSessionKey = "agent:main:telegram:group:123";
       const targetSessionId = "session-target";
       await replaceSessionStore("main", {
@@ -660,7 +660,7 @@ describe("trigger handling", () => {
 
       const text = Array.isArray(res) ? res[0]?.text : res?.text;
       expect(text).toBe("⚙️ Agent was aborted.");
-      expect(getAbortEmbeddedPiRunMock()).toHaveBeenCalledWith(targetSessionId);
+      expect(getAbortEmbeddedAgentRunMock()).toHaveBeenCalledWith(targetSessionId);
       const store = readSessionStore("main");
       expect(store[targetSessionKey]?.abortedLastRun).toBe(true);
       expect(getFollowupQueueDepth(targetSessionKey)).toBe(0);

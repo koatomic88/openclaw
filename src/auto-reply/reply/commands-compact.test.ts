@@ -15,10 +15,10 @@ vi.mock("./commands-compact.runtime.js", () => ({
   incrementCompactionCount: vi.fn(),
   isEmbeddedAgentRunActive: vi.fn().mockReturnValue(false),
   resolveFreshSessionTotalTokens: vi.fn(() => 12_345),
-  waitForEmbeddedPiRunEnd: vi.fn().mockResolvedValue(undefined),
+  waitForEmbeddedAgentRunEnd: vi.fn().mockResolvedValue(undefined),
 }));
 
-const { compactEmbeddedPiSession, formatContextUsageShort, incrementCompactionCount } =
+const { compactEmbeddedAgentSession, formatContextUsageShort, incrementCompactionCount } =
   await import("./commands-compact.runtime.js");
 const { handleCompactCommand } = await import("./commands-compact.js");
 
@@ -185,7 +185,7 @@ describe("handleCompactCommand", () => {
   });
 
   it("uses the canonical session agent when compacting the SQLite session", async () => {
-    vi.mocked(compactEmbeddedPiSession).mockResolvedValueOnce({
+    vi.mocked(compactEmbeddedAgentSession).mockResolvedValueOnce({
       ok: true,
       compacted: false,
     });
@@ -209,7 +209,7 @@ describe("handleCompactCommand", () => {
     const resolveCall = requireResolveSessionAgentIdCall();
     expect(resolveCall.sessionKey).toBe("agent:target:whatsapp:direct:12345");
     expect(resolveCall.config).toBe(cfg);
-    const call = requireCompactEmbeddedPiSessionCall();
+    const call = requireCompactEmbeddedAgentSessionCall();
     expect(call.agentId).toBe("target");
     expect(call.sessionId).toBe("session-1");
   });
