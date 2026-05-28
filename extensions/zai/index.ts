@@ -1,6 +1,3 @@
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
 import {
   definePluginEntry,
   type ProviderAuthContext,
@@ -40,34 +37,6 @@ const PROVIDER_ID = "zai";
 const GLM5_TEMPLATE_MODEL_ID = "glm-4.7";
 const PROFILE_ID = "zai:default";
 type UpsertAuthProfileParams = Parameters<typeof upsertAuthProfileWithLock>[0];
-
-function resolveDeprecatedPiAgentAuthPath(env: NodeJS.ProcessEnv): string {
-  const home = env.HOME?.trim() || env.USERPROFILE?.trim() || os.homedir();
-  return path.join(home, ".pi", "agent", "auth.json");
-}
-
-function resolveDeprecatedPiAgentAccessToken(
-  env: NodeJS.ProcessEnv,
-  providerIds: readonly string[],
-): string | undefined {
-  try {
-    const authPath = resolveDeprecatedPiAgentAuthPath(env);
-    if (!fs.existsSync(authPath)) {
-      return undefined;
-    }
-    const parsed = JSON.parse(fs.readFileSync(authPath, "utf-8")) as Record<
-      string,
-      { access?: unknown }
-    >;
-    for (const providerId of providerIds) {
-      const token = parsed[providerId]?.access;
-      if (typeof token === "string" && token.trim()) {
-        return token;
-      }
-    }
-  } catch {}
-  return undefined;
-}
 
 async function upsertAuthProfileWithLockOrThrow(params: UpsertAuthProfileParams): Promise<void> {
   const updated = await upsertAuthProfileWithLock(params);
