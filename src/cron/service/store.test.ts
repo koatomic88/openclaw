@@ -95,7 +95,7 @@ describe("cron service store seam coverage", () => {
       createdAtMs: STORE_TEST_NOW - 60_000,
       updatedAtMs: STORE_TEST_NOW - 60_000,
       schedule: { kind: "every", everyMs: 60_000 },
-      sessionTarget,
+      sessionTarget: "session:../../outside",
       wakeMode: "now",
       payload: { kind: "agentTurn", message: "ping" },
       state: {},
