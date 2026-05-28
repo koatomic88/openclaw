@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { OpenClawConfig } from "../../config/config.js";
 import type { SessionEntry } from "../../config/sessions.js";
-import type { EmbeddedPiRunResult } from "../embedded-agent.js";
+import type { EmbeddedAgentRunResult, EmbeddedPiRunResult } from "../embedded-agent.js";
 import { clearCliSessionEntry, updateSessionEntryAfterAgentRun } from "./session-entry-updates.js";
 import { resolveSession } from "./session.js";
 
@@ -553,35 +553,23 @@ describe("updateSessionEntryAfterAgentRun", () => {
   });
 
   it("reuses a completed run entry while the session is still fresh", async () => {
-    await withTempSessionStore(async ({ storePath }) => {
+    await withMockSessionRows(async ({ agentId }) => {
       const sessionKey = "agent:main:explicit:terminal-cli-session";
       const existingSessionId = "terminal-cli-session-old";
       const now = Date.now();
-      await fs.writeFile(
-        storePath,
-        JSON.stringify(
-          {
-            [sessionKey]: {
-              sessionId: existingSessionId,
-              updatedAt: now,
-              status: "done",
-              startedAt: now - 1_000,
-              endedAt: now - 100,
-              runtimeMs: 900,
-            },
-          },
-          null,
-          2,
-        ),
-      );
+      await replaceMockSessionEntries(agentId, {
+        [sessionKey]: {
+          sessionId: existingSessionId,
+          updatedAt: now,
+          status: "done",
+          startedAt: now - 1_000,
+          endedAt: now - 100,
+          runtimeMs: 900,
+        },
+      });
 
       const result = resolveSession({
-        cfg: {
-          session: {
-            store: storePath,
-            mainKey: "main",
-          },
-        } as OpenClawConfig,
+        cfg: {} as OpenClawConfig,
         sessionKey,
       });
 
