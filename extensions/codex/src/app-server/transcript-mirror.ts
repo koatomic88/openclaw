@@ -3,9 +3,11 @@ import {
   appendSessionTranscriptMessage,
   embeddedAgentLog,
   emitSessionTranscriptUpdate,
+  formatErrorMessage,
   runAgentHarnessBeforeMessageWriteHook,
   type AgentMessage,
   type EmbeddedRunAttemptParams,
+  type EmbeddedRunAttemptResult,
   loadSqliteSessionTranscriptEvents,
 } from "openclaw/plugin-sdk/agent-harness-runtime";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
@@ -99,6 +101,7 @@ export async function mirrorTranscriptBestEffort(params: {
   notifyUserMessagePersisted: (message: Extract<AgentMessage, { role: "user" }>) => void;
   result: EmbeddedRunAttemptResult;
   sessionKey?: string;
+  cwd?: string;
   threadId: string;
   turnId: string;
 }): Promise<void> {
@@ -109,10 +112,12 @@ export async function mirrorTranscriptBestEffort(params: {
       turnId: params.turnId,
     });
     const mirrorResult = await mirrorCodexAppServerTranscript({
-      sessionFile: params.params.sessionFile,
       agentId: params.agentId,
+      path: params.params.path,
+      sessionId: params.params.sessionId,
       sessionKey: params.sessionKey,
       messages,
+      cwd: params.cwd,
       // Scope is thread-stable. Each entry in `messagesSnapshot` is tagged
       // with a per-turn `attachCodexMirrorIdentity` value carrying its own
       // turnId, so distinct turns produce distinct dedupe keys via the
@@ -178,6 +183,7 @@ export async function mirrorPromptAtTurnStartBestEffort(params: {
   agentId?: string;
   notifyUserMessagePersisted: (message: Extract<AgentMessage, { role: "user" }>) => void;
   sessionKey?: string;
+  cwd?: string;
   threadId: string;
   turnId: string;
 }): Promise<void> {
@@ -191,10 +197,12 @@ export async function mirrorPromptAtTurnStartBestEffort(params: {
         `${params.turnId}:prompt`,
       );
       const mirrorResult = await mirrorCodexAppServerTranscript({
-        sessionFile: params.params.sessionFile,
         agentId: params.agentId,
+        path: params.params.path,
+        sessionId: params.params.sessionId,
         sessionKey: params.sessionKey,
         messages: [userPromptMessage],
+        cwd: params.cwd,
         idempotencyScope: `codex-app-server:${params.threadId}`,
         config: params.params.config,
       });
@@ -271,6 +279,7 @@ export async function mirrorCodexAppServerTranscript(params: {
   sessionKey?: string;
   messages: AgentMessage[];
   idempotencyScope?: string;
+  cwd?: string;
   config?: OpenClawConfig;
 }): Promise<CodexAppServerTranscriptMirrorResult> {
   const agentId = params.agentId?.trim() || "main";
@@ -333,16 +342,18 @@ export async function mirrorCodexAppServerTranscript(params: {
       ...(transcriptPath ? { path: transcriptPath } : {}),
       sessionId,
       message: messageToAppend,
+      cwd: params.cwd,
       config: params.config,
     });
-    if (appendedMessage.role === "user") {
-      userMessagesPresent.push(appendedMessage);
+    const appendedAgentMessage = appendedMessage as AgentMessage;
+    if (appendedAgentMessage.role === "user") {
+      userMessagesPresent.push(appendedAgentMessage);
       if (idempotencyKey) {
-        mirrorState.userMessagesByIdempotencyKey.set(idempotencyKey, appendedMessage);
+        mirrorState.userMessagesByIdempotencyKey.set(idempotencyKey, appendedAgentMessage);
       }
     }
     nextMessageSeq += 1;
-    appendedUpdates.push({ messageId, message: appendedMessage, messageSeq: nextMessageSeq });
+    appendedUpdates.push({ messageId, message: appendedAgentMessage, messageSeq: nextMessageSeq });
     if (idempotencyKey) {
       mirrorState.idempotencyKeys.add(idempotencyKey);
     }

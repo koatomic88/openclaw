@@ -7,7 +7,11 @@ import {
 } from "openclaw/plugin-sdk/agent-harness-runtime";
 import { resolveCodexAppServerHomeDir } from "./auth-bridge.js";
 import { isJsonObject, type JsonValue } from "./protocol.js";
-import { clearCodexAppServerBinding, type CodexAppServerThreadBinding } from "./session-binding.js";
+import {
+  clearCodexAppServerBinding,
+  type CodexAppServerBindingIdentity,
+  type CodexAppServerThreadBinding,
+} from "./session-binding.js";
 
 // Codex owns proactive auto-compaction and derives its limit from the active model context
 // window. OpenClaw only clears a bound native thread as a recovery fuse when Codex does
@@ -231,7 +235,8 @@ function hasContextEngineThreadBootstrapProjection(binding: CodexAppServerThread
 
 export async function rotateOversizedCodexAppServerStartupBinding(params: {
   binding: CodexAppServerThreadBinding | undefined;
-  sessionFile: string;
+  bindingIdentity?: CodexAppServerBindingIdentity;
+  sessionFile?: string;
   agentDir: string;
   codexHome?: string;
   config: EmbeddedRunAttemptParams["config"] | undefined;
@@ -241,7 +246,8 @@ export async function rotateOversizedCodexAppServerStartupBinding(params: {
   if (!binding?.threadId) {
     return binding;
   }
-  if (params.config?.agents?.defaults?.compaction?.truncateAfterCompaction !== true) {
+  const clearIdentity = params.bindingIdentity ?? params.sessionFile ?? binding.sessionId;
+  if (params.config?.agents?.defaults?.compaction?.rotateAfterCompaction !== true) {
     return binding;
   }
   if (params.contextEngineActive === true && hasContextEngineThreadBootstrapProjection(binding)) {
@@ -256,7 +262,9 @@ export async function rotateOversizedCodexAppServerStartupBinding(params: {
     );
     return binding;
   }
-  const sessionRecord = await readCodexSessionRecordForSessionFile(params.sessionFile);
+  const sessionRecord = params.sessionFile
+    ? await readCodexSessionRecordForSessionFile(params.sessionFile)
+    : undefined;
   const maxBytes = parseCodexAppServerByteLimit(
     params.config?.agents?.defaults?.compaction?.maxActiveTranscriptBytes,
   );
@@ -276,7 +284,7 @@ export async function rotateOversizedCodexAppServerStartupBinding(params: {
           files: oversizedFiles.map((file) => ({ path: file.path, bytes: file.bytes })),
         },
       );
-      await clearCodexAppServerBinding(params.sessionFile);
+      await clearCodexAppServerBinding(clearIdentity);
       return undefined;
     }
   }
@@ -309,7 +317,7 @@ export async function rotateOversizedCodexAppServerStartupBinding(params: {
         nativeModelContextWindow,
       },
     );
-    await clearCodexAppServerBinding(params.sessionFile);
+    await clearCodexAppServerBinding(clearIdentity);
     return undefined;
   }
   return binding;

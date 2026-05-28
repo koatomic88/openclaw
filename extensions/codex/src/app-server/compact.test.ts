@@ -590,7 +590,7 @@ describe("maybeCompactCodexAppServerSession", () => {
     expect(factory).not.toHaveBeenCalled();
   });
 
-  it("forwards compaction to native Codex even when a context engine owns compaction", async () => {
+  it("forwards compaction to native Codex when the context engine does not own compaction", async () => {
     const fake = createFakeCodexClient();
     setCodexAppServerClientFactoryForTest(async () => fake.client);
     const sessionFile = await writeTestBinding();
@@ -611,7 +611,7 @@ describe("maybeCompactCodexAppServerSession", () => {
       }),
     );
     const contextEngine: ContextEngine = {
-      info: { id: "lossless-claw", name: "Lossless Claw", ownsCompaction: true },
+      info: { id: "lossless-claw", name: "Lossless Claw", ownsCompaction: false },
       assemble: vi.fn() as never,
       ingest: vi.fn() as never,
       compact,
@@ -647,7 +647,8 @@ describe("maybeCompactCodexAppServerSession", () => {
     });
   });
 
-  it("requires a Codex binding instead of delegating to an owning context engine", async () => {
+  it("delegates to an owning context engine without requiring a Codex binding", async () => {
+    const info = vi.spyOn(embeddedAgentLog, "info").mockImplementation(() => undefined);
     const compact = vi.fn(async () => ({
       ok: true,
       compacted: true,
@@ -657,32 +658,48 @@ describe("maybeCompactCodexAppServerSession", () => {
         tokensBefore: 123,
       },
     }));
+    const maintain = vi.fn(
+      async (_params: Parameters<NonNullable<ContextEngine["maintain"]>>[0]) => ({
+        changed: false,
+        bytesFreed: 0,
+        rewrittenEntries: 0,
+      }),
+    );
     const contextEngine: ContextEngine = {
       info: { id: "lossless-claw", name: "Lossless Claw", ownsCompaction: true },
       assemble: vi.fn() as never,
       ingest: vi.fn() as never,
       compact,
+      maintain,
     };
 
-    const result = await maybeCompactCodexAppServerSession({
-      sessionId: "session-1",
-      sessionKey: "agent:main:session-1",
-      sessionFile: path.join(tempDir, "missing-binding.jsonl"),
-      workspaceDir: tempDir,
-      contextEngine,
-      trigger: "manual",
-    });
-
-    const result = requireCompactResult(await pendingResult);
+    const result = requireCompactResult(
+      await maybeCompactCodexAppServerSession({
+        sessionId: "session-1",
+        sessionKey: "agent:main:session-1",
+        sessionFile: path.join(tempDir, "missing-binding.jsonl"),
+        workspaceDir: tempDir,
+        contextEngine,
+        contextEngineRuntimeContext: { workspaceDir: tempDir, provider: "codex" },
+        contextTokenBudget: 777,
+        currentTokenCount: 123,
+        trigger: "manual",
+      }),
+    );
     expect(result.ok).toBe(true);
     expect(result.compacted).toBe(true);
     expect(result.result?.summary).toBe("engine summary");
     expect(result.result?.firstKeptEntryId).toBe("entry-1");
-    expect(result.result?.tokensBefore).toBe(55);
+    expect(result.result?.tokensBefore).toBe(123);
     const details = compactDetails(result);
     expect(details.engine).toBe("lossless-claw");
     expect(details.codexThreadBindingInvalidated).toBe(true);
-    expect(await readCodexAppServerBinding(sessionFile)).toBeUndefined();
+    expect(
+      await readCodexAppServerBinding({
+        sessionKey: "agent:main:session-1",
+        sessionId: "session-1",
+      }),
+    ).toBeUndefined();
     expect(compact).toHaveBeenCalledTimes(1);
     expect(compact).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -1042,7 +1059,6 @@ describe("maybeCompactCodexAppServerSession", () => {
       expect(result.reason).toContain("run aborted");
       expect(compact).toHaveBeenCalledTimes(1);
     });
-    expect(compact).not.toHaveBeenCalled();
   });
 });
 

@@ -1,5 +1,9 @@
 import {
+  compactContextEngineWithSafetyTimeout,
   embeddedAgentLog,
+  formatErrorMessage,
+  resolveCompactionTimeoutMs,
+  runHarnessContextEngineMaintenance,
   type CompactEmbeddedAgentSessionParams,
   type EmbeddedAgentCompactResult,
 } from "openclaw/plugin-sdk/agent-harness-runtime";
@@ -23,33 +27,16 @@ export async function maybeCompactCodexAppServerSession(
   options: { pluginConfig?: unknown; clientFactory?: CodexAppServerClientFactory } = {},
 ): Promise<EmbeddedAgentCompactResult | undefined> {
   warnIfIgnoringOpenClawCompactionOverrides(params);
-  const nativeResult = await compactCodexNativeThread(params, options);
-  if (activeContextEngine && nativeResult?.ok && nativeResult.compacted) {
-    try {
-      await runHarnessContextEngineMaintenance({
-        contextEngine: activeContextEngine,
-        sessionId: params.sessionId,
-        sessionKey: params.sessionKey,
-        transcriptScope: buildContextEngineTranscriptScope(params),
-        reason: "compaction",
-        runtimeContext: params.contextEngineRuntimeContext,
-        config: params.config,
-      });
-    } catch (error) {
-      embeddedAgentLog.warn("context engine compaction maintenance failed after Codex compaction", {
-        sessionId: params.sessionId,
-        engineId: activeContextEngine.info.id,
-        error: formatErrorMessage(error),
-      });
-    }
+  if (params.contextEngine?.info.ownsCompaction === true) {
+    return compactOwningContextEngine(params, params.contextEngine);
   }
-  return nativeResult;
+  return compactCodexNativeThread(params, options);
 }
 
 async function compactOwningContextEngine(
-  params: CompactEmbeddedPiSessionParams,
-  contextEngine: NonNullable<CompactEmbeddedPiSessionParams["contextEngine"]>,
-): Promise<EmbeddedPiCompactResult> {
+  params: CompactEmbeddedAgentSessionParams,
+  contextEngine: NonNullable<CompactEmbeddedAgentSessionParams["contextEngine"]>,
+): Promise<EmbeddedAgentCompactResult> {
   const compactionTarget = params.trigger === "manual" ? "threshold" : "budget";
   const force = params.force === true || params.trigger === "manual";
   embeddedAgentLog.info("starting context-engine-owned Codex app-server compaction", {
@@ -64,11 +51,6 @@ async function compactOwningContextEngine(
   });
   let result: Awaited<ReturnType<typeof contextEngine.compact>>;
   try {
-    // Bound the plugin-owned compaction with the same finite safety timeout
-    // that protects native runtime compaction, and thread the caller's abort
-    // signal through, so a slow/hung plugin compact() cannot hang the Codex
-    // compaction lane indefinitely. A timeout/abort (or any thrown error) is
-    // converted to a clean { ok: false } result by the catch below.
     result = await compactContextEngineWithSafetyTimeout(
       contextEngine,
       {
@@ -146,6 +128,7 @@ async function compactOwningContextEngine(
           summary: result.result.summary ?? "",
           firstKeptEntryId: result.result.firstKeptEntryId ?? "",
           details: mergeContextEngineCompactionDetails(result.result.details, {
+            engine: contextEngine.info.id,
             codexThreadBindingInvalidated: result.ok && result.compacted,
           }),
         }
@@ -154,7 +137,7 @@ async function compactOwningContextEngine(
             summary: "",
             firstKeptEntryId: "",
             tokensBefore: params.currentTokenCount ?? 0,
-            details: { codexThreadBindingInvalidated: true },
+            details: { engine: contextEngine.info.id, codexThreadBindingInvalidated: true },
           }
         : undefined,
   };
@@ -174,7 +157,7 @@ function mergeContextEngineCompactionDetails(
 }
 
 function buildContextEngineTranscriptScope(
-  params: Pick<CompactEmbeddedPiSessionParams, "agentId" | "path" | "sessionId">,
+  params: Pick<CompactEmbeddedAgentSessionParams, "agentId" | "path" | "sessionId">,
 ): { agentId: string; path?: string; sessionId: string } {
   return {
     agentId: params.agentId ?? "main",
@@ -356,7 +339,7 @@ async function compactCodexNativeThread(
     });
   } catch (error) {
     if (isCodexThreadNotFoundError(error)) {
-      await clearCodexAppServerBinding(bindingIdentity, { config: params.config });
+      await clearCodexAppServerBinding(bindingIdentity);
       return failedCodexThreadBindingCompactionResult(params, {
         threadId: binding.threadId,
         reason: formatCompactionError(error),
