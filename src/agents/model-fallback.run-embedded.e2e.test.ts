@@ -11,6 +11,8 @@ import {
   savePersistedAuthProfileState,
 } from "./auth-profiles/state.js";
 import type { AuthProfileSecretsStore } from "./auth-profiles/types.js";
+import { classifyEmbeddedAgentRunResultForModelFallback } from "./embedded-agent-runner/result-fallback-classifier.js";
+import type { EmbeddedRunAttemptResult } from "./embedded-agent-runner/run/types.js";
 import { runWithModelFallback } from "./model-fallback.js";
 import {
   buildEmbeddedRunnerAssistant,
