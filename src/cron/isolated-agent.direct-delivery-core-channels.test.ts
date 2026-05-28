@@ -322,8 +322,8 @@ describe("runCronIsolatedAgentTurn core-channel direct delivery", () => {
     if (testCase.channel === "discord") {
       it("keeps isolated Discord delivery on the active runtime snapshot after agent-default derivation", async () => {
         await withTempCronHome(async (home) => {
-          const storePath = await writeSessionStore(home, { lastProvider: "webchat", lastTo: "" });
-          const sourceCfg = makeCfg(home, storePath, {
+          await seedMainRouteSession(home, { lastChannel: "webchat", lastTo: "" });
+          const sourceCfg = makeCfg(home, {
             channels: {
               discord: {
                 accounts: {
@@ -334,7 +334,7 @@ describe("runCronIsolatedAgentTurn core-channel direct delivery", () => {
               },
             },
           });
-          const runtimeCfg = makeCfg(home, storePath, {
+          const runtimeCfg = makeCfg(home, {
             channels: {
               discord: {
                 accounts: { default: { token: "resolved-discord-token" } },

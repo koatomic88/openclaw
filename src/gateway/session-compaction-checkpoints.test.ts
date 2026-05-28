@@ -24,6 +24,7 @@ import {
   forkCompactionCheckpointTranscriptAsync,
   MAX_COMPACTION_CHECKPOINT_LEAF_SCAN_BYTES,
   MAX_COMPACTION_CHECKPOINT_RETAINED_BYTES_PER_SESSION,
+  MAX_COMPACTION_CHECKPOINT_SNAPSHOT_BYTES,
   persistSessionCompactionCheckpoint,
   readSessionLeafIdFromTranscriptAsync,
 } from "./session-compaction-checkpoints.js";
@@ -529,7 +530,7 @@ describe("session-compaction-checkpoints", () => {
       ],
     });
 
-    await persistSessionCompactionCheckpoint({
+    const stored = await persistSessionCompactionCheckpoint({
       cfg: {
         session: {},
         agents: { list: [{ id: "main", default: true }] },

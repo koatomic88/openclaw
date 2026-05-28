@@ -256,6 +256,7 @@ async function emitTranscriptUpdateAndCollectEvents(params: {
   messageSeq?: number;
 }) {
   const messageEventPromise = waitForSessionMessageEvent(params.ws, params.sessionKey);
+  const changedEventPromise = waitForSessionsChangedMessagePhase(params.ws, params.sessionKey);
 
   await emitTranscriptUpdate({
     agentId: "main",
@@ -266,8 +267,11 @@ async function emitTranscriptUpdateAndCollectEvents(params: {
     ...(typeof params.messageSeq === "number" ? { messageSeq: params.messageSeq } : {}),
   });
 
-  const messageEvent = await messageEventPromise;
-  return { messageEvent };
+  const [messageEvent, changedEvent] = await Promise.all([
+    messageEventPromise,
+    changedEventPromise,
+  ]);
+  return { messageEvent, changedEvent };
 }
 
 async function expectNoMessageWithin(params: {
@@ -476,7 +480,7 @@ describe("session.message websocket events", () => {
     });
 
     await withOperatorSessionSubscriber(async (ws) => {
-      const { messageEvent } = await emitTranscriptUpdateAndCollectMessageEvent({
+      const { messageEvent } = await emitTranscriptUpdateAndCollectEvents({
         ws,
         sessionKey: "agent:main:main",
         sessionId: "sess-main",
@@ -638,7 +642,7 @@ describe("session.message websocket events", () => {
     });
 
     await withOperatorSessionSubscriber(async (ws) => {
-      const { messageEvent } = await emitTranscriptUpdateAndCollectMessageEvent({
+      const { messageEvent } = await emitTranscriptUpdateAndCollectEvents({
         ws,
         sessionKey: "agent:main:main",
         sessionId: "sess-main",
@@ -671,7 +675,7 @@ describe("session.message websocket events", () => {
     });
 
     await withOperatorSessionSubscriber(async (ws) => {
-      const { messageEvent } = await emitTranscriptUpdateAndCollectMessageEvent({
+      const { messageEvent } = await emitTranscriptUpdateAndCollectEvents({
         ws,
         sessionKey: "agent:main:main",
         sessionId: "sess-main",
@@ -793,7 +797,7 @@ describe("session.message websocket events", () => {
     });
 
     await withOperatorSessionSubscriber(async (ws) => {
-      const { messageEvent } = await emitTranscriptUpdateAndCollectMessageEvent({
+      const { messageEvent, changedEvent } = await emitTranscriptUpdateAndCollectEvents({
         ws,
         sessionKey: "agent:main:main",
         sessionId: "sess-thread",

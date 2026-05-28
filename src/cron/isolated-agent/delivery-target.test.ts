@@ -107,8 +107,6 @@ beforeEach(() => {
   extractDeliveryInfoMock.mockReset();
   extractDeliveryInfoMock.mockReturnValue({ deliveryContext: undefined, threadId: undefined });
   normalizeTelegramTargetForDeliveryTest.mockClear();
-  vi.mocked(readChannelAllowFromStoreEntriesSync).mockReset();
-  vi.mocked(readChannelAllowFromStoreEntriesSync).mockReturnValue([]);
   vi.mocked(getSessionEntry).mockReset();
   vi.mocked(getSessionEntry).mockReturnValue(undefined);
   vi.mocked(resolveOutboundTarget).mockReset();
