@@ -102,6 +102,17 @@ async function waitForNativeHookRelayBridgeRecord(
   return record as Record<string, unknown>;
 }
 
+async function writeNativeHookRelayBridgeRecordForTest(
+  relayId: string,
+  record: Record<string, unknown>,
+): Promise<void> {
+  await fs.writeFile(
+    __testing.getNativeHookRelayBridgeRegistryPathForTests(relayId),
+    `${JSON.stringify(record)}\n`,
+    "utf8",
+  );
+}
+
 function openDeferredNativeHookRelayBridgeRequest(
   record: Record<string, unknown>,
   payload: Record<string, unknown>,
@@ -282,7 +293,7 @@ describe("native hook relay registry", () => {
       resolveDecision = resolve;
     });
     const approvalRequester = vi.fn(() => pendingDecision);
-    testing.setNativeHookRelayPermissionApprovalRequesterForTests(approvalRequester);
+    __testing.setNativeHookRelayPermissionApprovalRequesterForTests(approvalRequester);
 
     const first = invokeNativeHookRelay({
       provider: "codex",
@@ -352,7 +363,7 @@ describe("native hook relay registry", () => {
     });
 
     const duplicateApprovalRequester = vi.fn(async () => "allow-always" as const);
-    duplicateModule.testing.setNativeHookRelayPermissionApprovalRequesterForTests(
+    duplicateModule.__testing.setNativeHookRelayPermissionApprovalRequesterForTests(
       duplicateApprovalRequester,
     );
     const duplicateApproval = await duplicateModule.invokeNativeHookRelay({
@@ -375,7 +386,7 @@ describe("native hook relay registry", () => {
     });
 
     const primaryApprovalRequester = vi.fn(async () => "deny" as const);
-    testing.setNativeHookRelayPermissionApprovalRequesterForTests(primaryApprovalRequester);
+    __testing.setNativeHookRelayPermissionApprovalRequesterForTests(primaryApprovalRequester);
     const primaryApproval = await invokeNativeHookRelay({
       provider: "codex",
       relayId: relay.relayId,
@@ -405,13 +416,13 @@ describe("native hook relay registry", () => {
       runId: "run-2",
       allowedEvents: ["post_tool_use"],
     });
-    expect(testing.getNativeHookRelayRegistrationForTests(relay.relayId)).toMatchObject({
+    expect(__testing.getNativeHookRelayRegistrationForTests(relay.relayId)).toMatchObject({
       runId: "run-2",
       allowedEvents: ["post_tool_use"],
     });
 
     relay.unregister();
-    expect(testing.getNativeHookRelayRegistrationForTests(relay.relayId)).toMatchObject({
+    expect(__testing.getNativeHookRelayRegistrationForTests(relay.relayId)).toMatchObject({
       runId: "run-2",
       allowedEvents: ["post_tool_use"],
     });
@@ -579,14 +590,14 @@ describe("native hook relay registry", () => {
       },
     );
     const secondExpiresAtMs = requireRecord(
-      testing.getNativeHookRelayRegistrationForTests(first.relayId),
+      __testing.getNativeHookRelayRegistrationForTests(first.relayId),
       "replacement native hook relay registration",
     ).expiresAtMs;
 
     first.renew(60_000);
     expect(
       requireRecord(
-        testing.getNativeHookRelayRegistrationForTests(first.relayId),
+        __testing.getNativeHookRelayRegistrationForTests(first.relayId),
         "replacement native hook relay registration",
       ).expiresAtMs,
     ).toBe(secondExpiresAtMs);
@@ -594,7 +605,7 @@ describe("native hook relay registry", () => {
     first.unregister();
     expectRecordFields(
       requireRecord(
-        testing.getNativeHookRelayRegistrationForTests(first.relayId),
+        __testing.getNativeHookRelayRegistrationForTests(first.relayId),
         "replacement native hook relay registration",
       ),
       {
@@ -620,7 +631,7 @@ describe("native hook relay registry", () => {
     ).resolves.toEqual({ stdout: "", stderr: "", exitCode: 0 });
 
     second.unregister();
-    expect(testing.getNativeHookRelayRegistrationForTests(first.relayId)).toBeUndefined();
+    expect(__testing.getNativeHookRelayRegistrationForTests(first.relayId)).toBeUndefined();
   });
 
   it("exposes registered relays through the direct hook bridge", async () => {
@@ -689,7 +700,7 @@ describe("native hook relay registry", () => {
       ok: false,
       error: "native hook relay bridge stale registration",
     });
-    expect(testing.getNativeHookRelayInvocationsForTests()).toStrictEqual([]);
+    expect(__testing.getNativeHookRelayInvocationsForTests()).toStrictEqual([]);
 
     await expect(
       invokeNativeHookRelayBridge({
@@ -742,7 +753,7 @@ describe("native hook relay registry", () => {
         },
       }),
     ).rejects.toThrow("native hook relay bridge stale registration");
-    expect(testing.getNativeHookRelayInvocationsForTests()).toStrictEqual([]);
+    expect(__testing.getNativeHookRelayInvocationsForTests()).toStrictEqual([]);
 
     await expect(
       invokeNativeHookRelayBridge({
@@ -836,7 +847,7 @@ describe("native hook relay registry", () => {
         },
       }),
     ).rejects.toThrow("native hook relay bridge stale registration");
-    expect(testing.getNativeHookRelayInvocationsForTests()).toStrictEqual([]);
+    expect(__testing.getNativeHookRelayInvocationsForTests()).toStrictEqual([]);
   });
 
   it("renews relay ttl without rotating the direct hook bridge", async () => {
@@ -884,7 +895,7 @@ describe("native hook relay registry", () => {
     });
 
     const record = await waitForNativeHookRelayBridgeRecord(relay.relayId);
-    __testing.setNativeHookRelayBridgeRecordForTests(relay.relayId, {
+    await writeNativeHookRelayBridgeRecordForTest(relay.relayId, {
       ...record,
       hostname: "192.0.2.1",
       expiresAtMs: Date.now() + 10_000,
@@ -925,7 +936,7 @@ describe("native hook relay registry", () => {
 
     const firstRecord = await waitForNativeHookRelayBridgeRecord(first.relayId);
     await waitForNativeHookRelayBridgeRecord(second.relayId);
-    __testing.setNativeHookRelayBridgeRecordForTests(second.relayId, {
+    await writeNativeHookRelayBridgeRecordForTest(second.relayId, {
       ...firstRecord,
       relayId: second.relayId,
       expiresAtMs: Date.now() + 10_000,
@@ -969,7 +980,7 @@ describe("native hook relay registry", () => {
       if (!address || typeof address === "string") {
         throw new Error("test bridge server address unavailable");
       }
-      __testing.setNativeHookRelayBridgeRecordForTests(relay.relayId, {
+      await writeNativeHookRelayBridgeRecordForTest(relay.relayId, {
         ...record,
         port: address.port,
         token: "test-token",
@@ -2598,7 +2609,7 @@ describe("native hook relay registry", () => {
           resolvers.push(resolve);
         }),
     );
-    testing.setNativeHookRelayPermissionApprovalRequesterForTests(approvalRequester);
+    __testing.setNativeHookRelayPermissionApprovalRequesterForTests(approvalRequester);
     const payload = {
       hook_event_name: "PermissionRequest",
       tool_name: "Bash",
