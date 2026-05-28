@@ -592,7 +592,7 @@ export async function monitorTlonProvider(opts: MonitorTlonOpts = {}): Promise<v
       runtime.log?.(`[tlon] Now tracking thread for future replies: ${parentId}`);
     };
 
-    await core.channel.turn.runAssembled({
+    await core.channel.inbound.dispatchReply({
       cfg,
       channel: "tlon",
       accountId: route.accountId,

@@ -232,7 +232,7 @@ export async function dispatchOutbound(
   }
 
   const agentId = inbound.route.agentId ?? "default";
-  const dispatchPromise = runtime.channel.turn.run({
+  const dispatchPromise = runtime.channel.inbound.run({
     channel: "qqbot",
     accountId: inbound.route.accountId,
     raw: inbound,

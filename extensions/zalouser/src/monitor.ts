@@ -676,7 +676,7 @@ async function processMessage(
     },
   };
 
-  await core.channel.turn.runAssembled({
+  await core.channel.inbound.dispatchReply({
     cfg: config,
     channel: "zalouser",
     accountId: account.accountId,

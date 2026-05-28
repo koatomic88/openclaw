@@ -346,7 +346,11 @@ export async function handleIrcInbound(params: {
     return;
   }
 
-  const peerId = message.isGroup ? message.target : message.senderNick;
+  const channelTarget =
+    message.target.startsWith("#") || message.target.startsWith("&")
+      ? message.target
+      : `#${message.target}`;
+  const peerId = message.isGroup ? channelTarget : message.senderNick;
   const { route } = resolveInboundRouteEnvelopeBuilderWithRuntime({
     cfg: config as OpenClawConfig,
     channel: CHANNEL_ID,
@@ -405,7 +409,7 @@ export async function handleIrcInbound(params: {
     channel: CHANNEL_ID,
     accountId: account.accountId,
   });
-  await core.channel.turn.runPrepared({
+  await core.channel.inbound.runPreparedReply({
     channel: CHANNEL_ID,
     accountId: account.accountId,
     agentId: route.agentId,

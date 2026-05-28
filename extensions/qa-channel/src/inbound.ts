@@ -227,7 +227,7 @@ export async function handleQaInbound(params: {
     channel: params.channelId,
     accountId: params.account.accountId,
   });
-  await runtime.channel.turn.runPrepared({
+  await runtime.channel.inbound.runPreparedReply({
     channel: params.channelId,
     accountId: params.account.accountId,
     agentId: route.agentId,

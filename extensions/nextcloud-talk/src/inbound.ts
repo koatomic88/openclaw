@@ -361,7 +361,7 @@ export async function handleNextcloudTalkInbound(params: {
     channel: CHANNEL_ID,
     accountId: account.accountId,
   });
-  await core.channel.turn.runPrepared({
+  await core.channel.inbound.runPreparedReply({
     channel: CHANNEL_ID,
     accountId: account.accountId,
     agentId: route.agentId,
