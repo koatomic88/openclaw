@@ -454,6 +454,7 @@ type PreparedCronRunContext = {
   agentCfg: AgentDefaultsConfig;
   agentDir: string;
   agentSessionKey: string;
+  currentRunSessionId: () => string;
   runSessionId: string;
   runSessionKey: string;
   workspaceDir: string;
@@ -824,6 +825,7 @@ async function prepareCronRunContext(params: {
       agentCfg,
       agentDir,
       agentSessionKey,
+      currentRunSessionId: () => cronSession.sessionEntry.sessionId ?? runSessionId,
       runSessionId,
       runSessionKey,
       workspaceDir,
