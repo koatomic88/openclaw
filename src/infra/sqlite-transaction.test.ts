@@ -92,4 +92,32 @@ describe("runSqliteImmediateTransactionSync", () => {
     expect(result).toBe("committed");
     expect(execCalls).toEqual(["BEGIN IMMEDIATE", "COMMIT", "COMMIT"]);
   });
+
+  it("rolls back and clears depth after exhausted retryable commit failures", () => {
+    const execCalls: string[] = [];
+    let failCommits = true;
+    const db = {
+      exec(sql: string) {
+        execCalls.push(sql);
+        if (failCommits && sql === "COMMIT") {
+          throw Object.assign(new Error("database is busy"), { code: "SQLITE_BUSY" });
+        }
+      },
+      close() {},
+    } as import("node:sqlite").DatabaseSync;
+
+    expect(() => runSqliteImmediateTransactionSync(db, () => "not committed")).toThrow(
+      "database is busy",
+    );
+
+    expect(execCalls.filter((sql) => sql === "COMMIT")).toHaveLength(8);
+    expect(execCalls.at(-1)).toBe("ROLLBACK");
+
+    execCalls.length = 0;
+    failCommits = false;
+    const result = runSqliteImmediateTransactionSync(db, () => "committed later");
+
+    expect(result).toBe("committed later");
+    expect(execCalls).toEqual(["BEGIN IMMEDIATE", "COMMIT"]);
+  });
 });

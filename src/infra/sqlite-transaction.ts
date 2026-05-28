@@ -42,6 +42,20 @@ function commitImmediateTransaction(db: DatabaseSync): void {
   }
 }
 
+function abortImmediateTransaction(db: DatabaseSync): void {
+  try {
+    db.exec("ROLLBACK");
+  } catch {
+    // If rollback itself fails, close the handle so callers cannot keep using a
+    // connection that may still hold an abandoned write transaction.
+    try {
+      db.close();
+    } catch {
+      // Preserve the original transaction error; close failure is secondary.
+    }
+  }
+}
+
 function getTransactionDepth(db: DatabaseSync): number {
   return transactionDepthByDatabase.get(db) ?? 0;
 }
@@ -86,7 +100,7 @@ export function runSqliteImmediateTransactionSync<T>(db: DatabaseSync, operation
     assertSyncTransactionResult(result);
   } catch (error) {
     try {
-      db.exec("ROLLBACK");
+      abortImmediateTransaction(db);
       transactionStillActive = false;
     } catch {
       // Preserve the original error; rollback failure is secondary.
@@ -103,11 +117,8 @@ export function runSqliteImmediateTransactionSync<T>(db: DatabaseSync, operation
     transactionStillActive = false;
     return result;
   } catch (error) {
-    if (isRetryableCommitError(error)) {
-      throw error;
-    }
     try {
-      db.exec("ROLLBACK");
+      abortImmediateTransaction(db);
       transactionStillActive = false;
     } catch {
       // Preserve the original error; rollback failure is secondary.
