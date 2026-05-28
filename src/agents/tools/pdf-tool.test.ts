@@ -7,6 +7,7 @@ import * as pdfExtractModule from "../../media/pdf-extract.js";
 import { saveMediaBuffer } from "../../media/store.js";
 import * as webMedia from "../../media/web-media.js";
 import { closeOpenClawStateDatabaseForTest } from "../../state/openclaw-state-db.js";
+import * as modelDiscovery from "../agent-model-discovery.js";
 import type { AuthProfileStore } from "../auth-profiles/types.js";
 import * as modelAuth from "../model-auth.js";
 import * as modelsConfig from "../models-config.js";

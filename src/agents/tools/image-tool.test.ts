@@ -4,6 +4,8 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { OpenClawConfig } from "../../config/config.js";
 import type { ModelDefinitionConfig } from "../../config/types.models.js";
+import { isInboundPathAllowed } from "../../media/inbound-path-policy.js";
+import { encodePngRgba, fillPixel } from "../../media/png-encode.js";
 import { saveMediaBuffer } from "../../media/store.js";
 import type {
   ImageDescriptionRequest,
@@ -12,6 +14,7 @@ import type {
 } from "../../plugin-sdk/media-understanding.js";
 import { closeOpenClawStateDatabaseForTest } from "../../state/openclaw-state-db.js";
 import { withFetchPreconnect } from "../../test-utils/fetch-mock.js";
+import { createOpenClawCodingTools } from "../agent-tools.js";
 import {
   loadPersistedAuthProfileStore,
   savePersistedAuthProfileSecretsStore,

@@ -6,14 +6,15 @@ import {
   OPENAI_GPT5_TRANSPORT_DEFAULTS,
   UNRELATED_TOOL_CALLS_PAYLOAD_APIS,
 } from "../../test/helpers/agents/transport-params-runtime-contract.js";
+import { createOpenAIThinkingLevelWrapper } from "../llm/providers/stream-wrappers/openai.js";
 import type { StreamFn } from "./agent-core-contract.js";
-import type { Context, Model } from "./pi-ai-contract.js";
 import {
   testing as extraParamsTesting,
   applyExtraParamsToAgent,
   resolveExtraParams,
   resolvePreparedExtraParams,
 } from "./embedded-agent-runner/extra-params.js";
+import type { Context, Model } from "./pi-ai-contract.js";
 import { supportsGptParallelToolCallsPayload } from "./provider-api-families.js";
 
 beforeEach(() => {
