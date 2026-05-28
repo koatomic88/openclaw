@@ -681,8 +681,18 @@ export function loadAuthProfileStoreForRuntime(
   );
 }
 
-export function loadAuthProfileStoreForSecretsRuntime(agentDir?: string): AuthProfileStore {
-  return loadAuthProfileStoreForRuntime(agentDir, { readOnly: true, allowKeychainPrompt: false });
+export function loadAuthProfileStoreForSecretsRuntime(
+  agentDir?: string,
+  options?: Pick<
+    LoadAuthProfileStoreOptions,
+    "config" | "env" | "externalCli" | "externalCliProfileIds" | "externalCliProviderIds"
+  >,
+): AuthProfileStore {
+  return loadAuthProfileStoreForRuntime(agentDir, {
+    ...options,
+    readOnly: true,
+    allowKeychainPrompt: false,
+  });
 }
 
 export function loadAuthProfileStoreWithoutExternalProfiles(
@@ -714,6 +724,8 @@ export function ensureAuthProfileStore(
     allowKeychainPrompt?: boolean;
     config?: OpenClawConfig;
     externalCli?: ExternalCliAuthDiscovery;
+    readOnly?: boolean;
+    syncExternalCli?: boolean;
     externalCliProviderIds?: Iterable<string>;
     externalCliProfileIds?: Iterable<string>;
   },

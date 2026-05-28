@@ -1,5 +1,6 @@
 import { isSilentReplyText, SILENT_REPLY_TOKEN } from "../auto-reply/tokens.js";
 import { extractTextFromChatContent } from "../shared/chat-content.js";
+import { asFiniteNumber } from "../shared/number-coercion.js";
 import { readLatestAssistantReply } from "./run-wait.js";
 import { wrapPromptDataBlock } from "./sanitize-for-prompt.js";
 import {
@@ -10,6 +11,7 @@ import {
   callGateway,
   getSessionEntry,
   getRuntimeConfig,
+  readSessionMessagesAsync,
   resolveAgentIdFromSessionKey,
 } from "./subagent-announce.runtime.js";
 import { assistantCallsSessionsYield, isSessionsYieldToolResult } from "./subagent-yield-output.js";
@@ -22,12 +24,14 @@ type SubagentAnnounceOutputDeps = {
   callGateway: typeof callGateway;
   getRuntimeConfig: typeof getRuntimeConfig;
   readLatestAssistantReply: typeof readLatestAssistantReply;
+  readSessionMessagesAsync: typeof readSessionMessagesAsync;
 };
 
 const defaultSubagentAnnounceOutputDeps: SubagentAnnounceOutputDeps = {
   callGateway,
   getRuntimeConfig,
   readLatestAssistantReply,
+  readSessionMessagesAsync,
 };
 
 let subagentAnnounceOutputDeps: SubagentAnnounceOutputDeps = defaultSubagentAnnounceOutputDeps;

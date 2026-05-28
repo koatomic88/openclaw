@@ -498,7 +498,6 @@ async function loadArtifacts(
     {
       mode: "full",
       reason: "artifact query transcript scan",
-      cache: "skip",
     },
   );
   return {

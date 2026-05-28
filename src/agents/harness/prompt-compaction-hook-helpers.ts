@@ -6,6 +6,7 @@ import type {
 } from "../../plugins/types.js";
 import { joinPresentTextSegments } from "../../shared/text/join-segments.js";
 import type { AgentMessage } from "../agent-core-contract.js";
+import { wrapPluginSystemContextSection } from "../hook-system-context-boundary.js";
 import { buildAgentHookContext, type AgentHarnessHookContext } from "./hook-context.js";
 
 const log = createSubsystemLogger("agents/harness");

@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import {
   CURRENT_SESSION_VERSION,
-  type SessionEntry as PiSessionEntry,
+  type SessionEntry as AgentSessionEntry,
   type SessionHeader,
   type TranscriptEntry,
 } from "../../agents/transcript/session-transcript-contract.js";
@@ -107,7 +107,7 @@ export async function resolveParentForkTokenCountRuntime(params: {
   return maxPositiveTokenCount(cachedTokens, byteEstimateTokens);
 }
 
-function isSessionEntry(entry: TranscriptEntry): entry is PiSessionEntry {
+function isSessionEntry(entry: TranscriptEntry): entry is AgentSessionEntry {
   return (
     entry.type !== "session" &&
     typeof (entry as { id?: unknown }).id === "string" &&

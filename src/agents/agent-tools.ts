@@ -423,6 +423,8 @@ export function createOpenClawCodingTools(options?: {
   /** Relative workspace path that memory-triggered writes may append to. */
   memoryFlushWritePath?: string;
   agentDir?: string;
+  /** Task working directory for coding tools. Defaults to workspaceDir. */
+  cwd?: string;
   workspaceDir?: string;
   /**
    * Workspace directory that spawned subagents should inherit.
@@ -433,6 +435,8 @@ export function createOpenClawCodingTools(options?: {
   spawnWorkspaceDir?: string;
   config?: OpenClawConfig;
   abortSignal?: AbortSignal;
+  /** Disable hook-owned diagnostics when an outer runtime owns tool diagnostics. */
+  emitBeforeToolCallDiagnostics?: boolean;
   /**
    * Provider of the currently selected model (used for provider-specific tool quirks).
    * Example: "anthropic", "openai", "google", "openai-codex".
@@ -521,7 +525,6 @@ export function createOpenClawCodingTools(options?: {
   recordToolPrepStage?: (name: string) => void;
   /** Live observer called after wrapped tool outcomes are recorded. */
   onToolOutcome?: ToolOutcomeObserver;
-  emitBeforeToolCallDiagnostics?: boolean;
   /** Optional run-scoped store for tool-generated artifact manifests. */
   artifactStore?: AgentToolArtifactStore;
   /** Runtime-only resolved skill paths that the read tool may load under workspaceOnly. */

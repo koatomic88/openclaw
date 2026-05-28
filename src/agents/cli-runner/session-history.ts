@@ -77,6 +77,29 @@ function coerceHistoryText(content: unknown): string {
     .trim();
 }
 
+function renderHistoryMessage(message: unknown): string | undefined {
+  if (!message || typeof message !== "object") {
+    return undefined;
+  }
+  const entry = message as HistoryMessage;
+  const role =
+    entry.role === "assistant"
+      ? "Assistant"
+      : entry.role === "user"
+        ? "User"
+        : entry.role === "compactionSummary"
+          ? "Compaction summary"
+          : undefined;
+  if (!role) {
+    return undefined;
+  }
+  const text =
+    entry.role === "compactionSummary" && typeof entry.summary === "string"
+      ? entry.summary.trim()
+      : coerceHistoryText(entry.content);
+  return text ? `${role}: ${text}` : undefined;
+}
+
 export function buildCliSessionHistoryPrompt(params: {
   messages: unknown[];
   prompt: string;

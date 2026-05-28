@@ -167,7 +167,6 @@ export async function commitConfigWriteWithPendingPluginInstalls(params: {
     };
   }
 
-  const pendingInstallRecords = params.nextConfig.plugins?.installs ?? {};
   const previousInstallRecords = await loadInstalledPluginIndexInstallRecords();
   const nextInstallRecords = {
     ...previousInstallRecords,

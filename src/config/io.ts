@@ -19,6 +19,7 @@ import {
 } from "../infra/shell-env.js";
 import {
   loadPluginMetadataSnapshot,
+  resolvePluginMetadataSnapshot,
   type PluginMetadataSnapshot,
 } from "../plugins/plugin-metadata-snapshot.js";
 import { sanitizeTerminalText } from "../terminal/safe-text.js";
@@ -1367,7 +1368,7 @@ export function createConfigIO(
           return pluginMetadataSnapshot;
         }
         const defaultAgentId = resolveDefaultAgentId(config);
-        pluginMetadataSnapshot = loadPluginMetadataSnapshot({
+        pluginMetadataSnapshot = resolvePluginMetadataSnapshot({
           config,
           workspaceDir: resolveAgentWorkspaceDir(config, defaultAgentId),
           env: deps.env,
@@ -1569,7 +1570,7 @@ export function createConfigIO(
           return pluginMetadataSnapshot;
         }
         const defaultAgentId = resolveDefaultAgentId(config);
-        pluginMetadataSnapshot = loadPluginMetadataSnapshot({
+        pluginMetadataSnapshot = resolvePluginMetadataSnapshot({
           config,
           workspaceDir: resolveAgentWorkspaceDir(config, defaultAgentId),
           env: deps.env,

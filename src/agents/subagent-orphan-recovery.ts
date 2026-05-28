@@ -21,7 +21,14 @@ import { callGateway } from "../gateway/call.js";
 import { readSessionMessagesAsync } from "../gateway/session-transcript-readers.js";
 import { formatErrorMessage } from "../infra/errors.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
+import { buildAnnounceIdempotencyKey } from "./announce-idempotency.js";
 import { resolveInternalSessionEffectsTranscriptPath } from "./internal-session-effects.js";
+import {
+  deliverSubagentAnnouncement,
+  isInternalAnnounceRequesterSession,
+  loadRequesterSessionEntry,
+} from "./subagent-announce-delivery.js";
+import { resolveAnnounceOrigin } from "./subagent-announce-origin.js";
 import {
   evaluateSubagentRecoveryGate,
   markSubagentRecoveryAttempt,
@@ -116,8 +123,8 @@ async function announceRecoveryInProgress(params: {
   const requesterIsSubagent = isInternalAnnounceRequesterSession(requesterSessionKey);
   let directOrigin = requesterOrigin;
   if (!requesterIsSubagent) {
-    const { entry, deliveryContext } = loadRequesterSessionEntry(requesterSessionKey);
-    directOrigin = resolveAnnounceOrigin(entry, requesterOrigin, deliveryContext);
+    const { entry } = loadRequesterSessionEntry(requesterSessionKey);
+    directOrigin = resolveAnnounceOrigin(entry, requesterOrigin);
   }
 
   const prompt = buildRecoveryProgressPrompt({

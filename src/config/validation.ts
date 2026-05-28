@@ -167,7 +167,9 @@ function cloneSessionWithoutDeprecatedValidationKeys(
     delete root().idleMinutes;
     if (typeof idleMinutes === "number" && Number.isFinite(idleMinutes)) {
       const currentSession = root();
-      const reset = isRecord(currentSession.reset) ? { ...currentSession.reset } : { mode: "idle" };
+      const reset: Record<string, unknown> = isRecord(currentSession.reset)
+        ? { ...currentSession.reset }
+        : { mode: "idle" };
       if (!Object.hasOwn(reset, "idleMinutes")) {
         reset.idleMinutes = Math.floor(idleMinutes);
       }

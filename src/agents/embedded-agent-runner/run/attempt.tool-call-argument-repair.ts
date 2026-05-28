@@ -1,6 +1,7 @@
 import { extractBalancedJsonPrefix } from "../../../shared/balanced-json.js";
 import type { StreamFn } from "../../agent-core-contract.js";
 import { normalizeProviderId } from "../../model-selection.js";
+import type { MutableAssistantMessageEventStream } from "../../stream-compat.js";
 import { log } from "../logger.js";
 import {
   createHtmlEntityToolCallArgumentDecodingWrapper,

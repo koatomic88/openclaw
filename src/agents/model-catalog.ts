@@ -487,19 +487,7 @@ export async function loadModelCatalog(params?: {
         readOnly ? { readOnly: true } : undefined,
       );
       logStage("auth-storage-ready");
-      const registry =
-        typeof (piSdk.ModelRegistry as { inMemory?: (authStorage: unknown) => PiRegistryInstance })
-          .inMemory === "function"
-          ? (
-              piSdk.ModelRegistry as { inMemory: (authStorage: unknown) => PiRegistryInstance }
-            ).inMemory(authStorage)
-          : instantiatePiModelRegistry(piSdk, authStorage, undefined as unknown as string);
-      if (typeof piSdk.applyStoredModelsConfigToRegistry === "function") {
-        (piSdk.applyStoredModelsConfigToRegistry as (registry: unknown, agentDir: string) => void)(
-          registry,
-          agentDir,
-        );
-      }
+      const registry = agentDiscovery.discoverModels(authStorage, agentDir);
       logStage("registry-ready");
       const entries = registry.getAll() as DiscoveredModel[];
       logStage("registry-read", `entries=${entries.length}`);

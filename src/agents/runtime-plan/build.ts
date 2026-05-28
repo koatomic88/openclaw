@@ -19,7 +19,7 @@ import {
 } from "../../plugins/provider-runtime.js";
 import type { AgentTool } from "../agent-core-contract.js";
 import { resolvePreparedExtraParams } from "../embedded-agent-runner/extra-params.js";
-import { classifyEmbeddedPiRunResultForModelFallback } from "../embedded-agent-runner/result-fallback-classifier.js";
+import { classifyEmbeddedAgentRunResultForModelFallback } from "../embedded-agent-runner/result-fallback-classifier.js";
 import {
   logProviderToolSchemaDiagnostics,
   normalizeProviderToolSchemas,

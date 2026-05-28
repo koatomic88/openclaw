@@ -49,7 +49,7 @@ type SessionEntryCache = Map<string, SessionEntry | undefined>;
 const steerRateLimit = new Map<string, number>();
 
 type GatewayCaller = typeof callGateway;
-type AbortEmbeddedPiRun = (sessionId: string) => boolean;
+type AbortEmbeddedAgentRun = (sessionId: string) => boolean;
 type ClearSessionQueues = (keys: Array<string | undefined>) => ClearSessionQueueResult;
 
 const defaultSubagentControlDeps = {
@@ -58,7 +58,7 @@ const defaultSubagentControlDeps = {
 
 let subagentControlDeps: {
   callGateway: GatewayCaller;
-  abortEmbeddedPiRun?: AbortEmbeddedPiRun;
+  abortEmbeddedAgentRun?: AbortEmbeddedAgentRun;
   clearSessionQueues?: ClearSessionQueues;
 } = defaultSubagentControlDeps;
 
@@ -151,15 +151,8 @@ function ensureControllerOwnsRun(params: {
   return "Subagents can only control runs spawned from their own session.";
 }
 
-function isFinishedForSteerControl(
-  entry: SubagentRunRecord,
-  hasPendingDescendants: boolean,
-) {
-  return (
-    Boolean(entry.endedAt) &&
-    entry.pauseReason !== "sessions_yield" &&
-    !hasPendingDescendants
-  );
+function isFinishedForSteerControl(entry: SubagentRunRecord, hasPendingDescendants: boolean) {
+  return Boolean(entry.endedAt) && entry.pauseReason !== "sessions_yield" && !hasPendingDescendants;
 }
 
 async function killSubagentRun(params: {
@@ -746,7 +739,7 @@ export const testing = {
   setDepsForTest(
     overrides?: Partial<{
       callGateway: GatewayCaller;
-      abortEmbeddedPiRun: AbortEmbeddedPiRun;
+      abortEmbeddedAgentRun: AbortEmbeddedAgentRun;
       clearSessionQueues: ClearSessionQueues;
     }>,
   ) {

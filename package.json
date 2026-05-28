@@ -1401,18 +1401,6 @@
       "types": "./dist/plugin-sdk/zod.d.ts",
       "default": "./dist/plugin-sdk/zod.js"
     },
-    "./plugin-sdk/agent-core": {
-      "types": "./dist/plugin-sdk/agent-core.d.ts",
-      "default": "./dist/plugin-sdk/agent-core.js"
-    },
-    "./plugin-sdk/agent-sessions": {
-      "types": "./dist/plugin-sdk/agent-sessions.d.ts",
-      "default": "./dist/plugin-sdk/agent-sessions.js"
-    },
-    "./plugin-sdk/llm": {
-      "types": "./dist/plugin-sdk/llm.d.ts",
-      "default": "./dist/plugin-sdk/llm.js"
-    },
     "./extension-api": "./dist/extensionAPI.js",
     "./cli-entry": "./openclaw.mjs"
   },

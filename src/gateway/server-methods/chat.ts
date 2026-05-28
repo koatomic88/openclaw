@@ -52,7 +52,11 @@ import { createChannelMessageReplyPipeline } from "../../plugin-sdk/channel-mess
 import { isPluginOwnedSessionBindingRecord } from "../../plugins/conversation-binding.js";
 import { getGlobalHookRunner } from "../../plugins/hook-runner-global.js";
 import { isAcpSessionKey } from "../../routing/session-key.js";
-import { normalizeInputProvenance, type InputProvenance } from "../../sessions/input-provenance.js";
+import {
+  INTER_SESSION_PROMPT_PREFIX_BASE,
+  normalizeInputProvenance,
+  type InputProvenance,
+} from "../../sessions/input-provenance.js";
 import { resolveSendPolicy } from "../../sessions/send-policy.js";
 import { emitSessionTranscriptUpdate } from "../../sessions/transcript-events.js";
 import {
@@ -60,6 +64,8 @@ import {
   type UserTurnInput,
   type UserTurnTranscriptRecorder,
 } from "../../sessions/user-turn-transcript.js";
+import { asOptionalRecord } from "../../shared/record-coerce.js";
+import { uniqueStrings } from "../../shared/string-normalization.js";
 import {
   stripInlineDirectiveTagsForDisplay,
   sanitizeReplyDirectiveId,
@@ -1058,6 +1064,38 @@ function buildChatSendUserTurnMedia(savedMedia: SavedMedia[]): NonNullable<UserT
   }));
 }
 
+function extractTranscriptUserText(content: unknown): string {
+  if (typeof content === "string") {
+    return content;
+  }
+  if (!Array.isArray(content)) {
+    return "";
+  }
+  return content
+    .map((part) => {
+      if (!part || typeof part !== "object") {
+        return "";
+      }
+      const record = part as Record<string, unknown>;
+      return record.type === "text" && typeof record.text === "string" ? record.text : "";
+    })
+    .filter(Boolean)
+    .join("\n");
+}
+
+function buildChatSendTranscriptMessage(params: {
+  message: string;
+  savedImages: SavedMedia[];
+  timestamp: number;
+}): AgentMessage {
+  return {
+    role: "user",
+    content: params.message,
+    timestamp: params.timestamp,
+    ...resolveChatSendManagedMediaFields(params.savedImages),
+  } as AgentMessage;
+}
+
 async function rewriteChatSendUserTurnMediaPaths(params: {
   agentId: string;
   path?: string;
@@ -1067,7 +1105,7 @@ async function rewriteChatSendUserTurnMediaPaths(params: {
   savedImages: SavedMedia[];
   cfg: OpenClawConfig;
 }) {
-  const mediaFields = resolveChatSendTranscriptMediaFields(params.savedImages);
+  const mediaFields = resolveChatSendManagedMediaFields(params.savedImages);
   if (!("MediaPath" in mediaFields)) {
     return;
   }
@@ -2108,11 +2146,19 @@ export const chatHandlers: GatewayRequestHandlers = {
             sessionId,
           },
           {
-            maxMessages: max,
+            maxMessages: localReadMax,
             maxBytes: Math.max(maxHistoryBytes * 2, 1024 * 1024),
           },
         )
       : [];
+    const overreadContextMessage = localMessages.length > max ? localMessages[0] : undefined;
+    const localMessagesWithBoundaryFilter = dropLocalHistoryOverreadContextMessage(
+      dropPreSessionStartAnnouncePairs(
+        localMessages,
+        typeof entry?.sessionStartedAt === "number" ? entry.sessionStartedAt : undefined,
+      ),
+      overreadContextMessage,
+    );
     const rawMessages = augmentChatHistoryWithCliSessionImports({
       entry,
       provider: resolvedSessionModel.provider,

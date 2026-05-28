@@ -2,6 +2,11 @@ import { visitObjectContentBlocks } from "../../../shared/message-content-blocks
 import { normalizeLowercaseStringOrEmpty } from "../../../shared/string-coerce.js";
 import type { AgentMessage, StreamFn } from "../../agent-core-contract.js";
 import { validateAnthropicTurns, validateGeminiTurns } from "../../embedded-agent-helpers.js";
+import {
+  downgradeOpenAIFunctionCallReasoningPairs,
+  downgradeOpenAIReasoningBlocks,
+  normalizeOpenAIResponsesToolCallIds,
+} from "../../embedded-agent-helpers/openai.js";
 import { sanitizeToolUseResultPairing } from "../../session-transcript-repair.js";
 import type { MutableAssistantMessageEventStream } from "../../stream-compat.js";
 import {

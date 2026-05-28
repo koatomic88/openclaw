@@ -30,6 +30,8 @@ export async function writeSessionEntryRow(params: {
   sessionKey?: string;
   fallbackEntry?: SessionEntry;
   sessionStore?: Record<string, SessionEntry>;
+  skipMaintenance?: boolean;
+  takeCacheOwnership?: boolean;
   update: (
     entry: SessionEntry,
   ) => Promise<Partial<SessionEntry> | null> | Partial<SessionEntry> | null;

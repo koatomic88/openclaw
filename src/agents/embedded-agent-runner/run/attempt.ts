@@ -106,7 +106,7 @@ import {
 import {
   FULL_BOOTSTRAP_COMPLETED_CUSTOM_TYPE,
   buildBootstrapContextForFiles,
-  hasCompletedBootstrapTurn,
+  hasCompletedBootstrapSessionTurn,
   isWorkspaceBootstrapPending,
   makeBootstrapWarn,
   resolveBootstrapFilesForRun,
@@ -173,7 +173,7 @@ import {
   resolveSessionLockMaxHoldFromTimeout,
   resolveSessionWriteLockOptions,
 } from "../../session-write-lock.js";
-import { type AgentSession, SessionManager } from "../../sessions/index.js";
+import type { AgentSession } from "../../sessions/index.js";
 import { detectRuntimeShell } from "../../shell-utils.js";
 import {
   applySkillEnvOverrides,
@@ -219,7 +219,10 @@ import { shouldAllowProviderOwnedThinkingReplay } from "../../transcript-policy.
 import { repairTranscriptSessionStateIfNeeded } from "../../transcript-state-repair.js";
 import { openTranscriptSessionManagerForSession } from "../../transcript/session-manager.js";
 import type { SessionTranscriptScope } from "../../transcript/session-transcript-types.js";
-import { removeTailEntriesFromSqliteTranscript } from "../../transcript/transcript-persistence.js";
+import {
+  readTranscriptStateForSessionSync,
+  removeTailEntriesFromSqliteTranscript,
+} from "../../transcript/transcript-persistence.js";
 import { normalizeUsage, type NormalizedUsage } from "../../usage.js";
 import { DEFAULT_BOOTSTRAP_FILENAME, type WorkspaceBootstrapFile } from "../../workspace.js";
 import { isRunnerAbortError } from "../abort.js";
@@ -291,7 +294,7 @@ import {
 } from "../tool-result-context-guard.js";
 import {
   resolveLiveToolResultMaxChars,
-  truncateOversizedToolResultsInSessionManager,
+  truncateOversizedToolResultsInSessionSync,
 } from "../tool-result-truncation.js";
 import { splitSdkTools } from "../tool-split.js";
 import { mapThinkingLevel } from "../utils.js";
@@ -352,6 +355,7 @@ import {
   acquireEmbeddedAttemptSessionFileOwner,
   EmbeddedAttemptSessionTakeoverError,
   type EmbeddedAttemptSessionFileOwner,
+  type EmbeddedAttemptSessionLockController,
   createEmbeddedAttemptSessionLockController,
   installPromptSubmissionLockRelease,
 } from "./attempt.session-lock.js";
@@ -1308,6 +1312,22 @@ function flushSessionManagerFile(sessionManager: ReturnType<typeof guardSessionM
   (sessionManager as unknown as { rewriteFile?: () => void }).rewriteFile?.();
 }
 
+function createSqliteAttemptSessionLockController(): EmbeddedAttemptSessionLockController {
+  const release = async () => {};
+  const lock = { release } as Awaited<ReturnType<typeof acquireSessionWriteLock>>;
+  return {
+    releaseForPrompt: release,
+    releaseHeldLockForAbort: release,
+    refreshAfterOwnedSessionWrite: () => {},
+    reacquireAfterPrompt: release,
+    waitForSessionEvents: release,
+    withSessionWriteLock: async (run) => await run(),
+    acquireForCleanup: async () => lock,
+    hasSessionTakeover: () => false,
+    dispose: release,
+  };
+}
+
 export function shouldRunLlmOutputHooksForAttempt(params: { promptErrorSource: string | null }) {
   return params.promptErrorSource !== "hook:before_agent_run";
 }
@@ -1961,8 +1981,11 @@ export async function runEmbeddedAttempt(
       warn: (message) => log.warn(message),
     });
     let completedBootstrapTurn: boolean | undefined;
-    const hasCompletedBootstrapTurnForAttempt = async (sessionFile: string) => {
-      completedBootstrapTurn ??= await hasCompletedBootstrapTurn(sessionFile);
+    const hasCompletedBootstrapTurnForAttempt = async () => {
+      completedBootstrapTurn ??= await hasCompletedBootstrapSessionTurn({
+        agentId: sessionAgentId,
+        sessionId: params.sessionId,
+      });
       return completedBootstrapTurn;
     };
     const resolveBootstrapRouting = (bootstrapFiles?: readonly WorkspaceBootstrapFile[]) =>
@@ -1982,7 +2005,7 @@ export async function runEmbeddedAttempt(
       !isRawModelRun &&
       contextInjectionMode === "continuation-skip" &&
       (params.bootstrapContextRunKind ?? "default") !== "heartbeat" &&
-      (await hasCompletedBootstrapTurnForAttempt(params.sessionFile));
+      (await hasCompletedBootstrapTurnForAttempt());
     let preloadedBootstrapFiles: WorkspaceBootstrapFile[] | undefined;
     let bootstrapRouting =
       shouldProbeContinuationSkip || isRawModelRun || contextInjectionMode === "never"
@@ -2019,8 +2042,7 @@ export async function runEmbeddedAttempt(
       bootstrapMode,
       agentId: sessionAgentId,
       sessionId: params.sessionId,
-      hasCompletedBootstrapSessionTurn: async () =>
-        await hasCompletedBootstrapTurnForAttempt(params.sessionFile),
+      hasCompletedBootstrapSessionTurn: async () => await hasCompletedBootstrapTurnForAttempt(),
       resolveBootstrapContextForRun: async () => {
         const bootstrapFiles =
           preloadedBootstrapFiles ??
@@ -2576,18 +2598,22 @@ export async function runEmbeddedAttempt(
       compactionTimeoutMs,
     });
     await throwIfAttemptAbortSignalFiredAfterPrepCleanup();
-    retainedSessionFileOwner = await acquireEmbeddedAttemptSessionFileOwner({
-      sessionFile: params.sessionFile,
-      timeoutMs: sessionWriteLockOptions.maxHoldMs,
-      signal: params.abortSignal,
-    });
-    const sessionLockController = await createEmbeddedAttemptSessionLockController({
-      acquireSessionWriteLock,
-      lockOptions: {
+    if (params.sessionFile) {
+      retainedSessionFileOwner = await acquireEmbeddedAttemptSessionFileOwner({
         sessionFile: params.sessionFile,
-        ...sessionWriteLockOptions,
-      },
-    });
+        timeoutMs: sessionWriteLockOptions.maxHoldMs,
+        signal: params.abortSignal,
+      });
+    }
+    const sessionLockController = params.sessionFile
+      ? await createEmbeddedAttemptSessionLockController({
+          acquireSessionWriteLock,
+          lockOptions: {
+            sessionFile: params.sessionFile,
+            ...sessionWriteLockOptions,
+          },
+        })
+      : createSqliteAttemptSessionLockController();
     releaseRetainedSessionLock = () => sessionLockController.dispose();
     armExternalAbortSignal();
 
@@ -2604,10 +2630,19 @@ export async function runEmbeddedAttempt(
         debug: (message) => log.debug(message),
         warn: (message) => log.warn(message),
       });
-      const hadSessionFile = await fs
-        .stat(params.sessionFile)
-        .then(() => true)
-        .catch(() => false);
+      const activeTranscriptScope: SessionTranscriptScope = {
+        agentId: sessionAgentId,
+        ...(params.path ? { path: params.path } : {}),
+        sessionId: params.sessionId,
+      };
+      const hadTranscript = (() => {
+        try {
+          readTranscriptStateForSessionSync(activeTranscriptScope);
+          return true;
+        } catch {
+          return false;
+        }
+      })();
 
       const transcriptPolicy = resolveAttemptTranscriptPolicy({
         runtimePlan: params.runtimePlan,
@@ -2619,42 +2654,49 @@ export async function runEmbeddedAttempt(
       });
 
       const preparedUserTurnMessage = await params.userTurnTranscriptRecorder?.resolveMessage();
-      sessionManager = guardSessionManager(SessionManager.open(params.sessionFile), {
-        agentId: sessionAgentId,
-        sessionKey: params.sessionKey,
-        config: params.config,
-        contextWindowTokens: params.contextTokenBudget,
-        inputProvenance: params.inputProvenance,
-        preparedUserTurnMessage,
-        allowSyntheticToolResults: transcriptPolicy.allowSyntheticToolResults,
-        missingToolResultText:
-          params.model.api === "openai-responses" ||
-          params.model.api === "azure-openai-responses" ||
-          params.model.api === "openai-codex-responses"
-            ? "aborted"
-            : undefined,
-        allowedToolNames: replayAllowedToolNames,
-        suppressNextUserMessagePersistence: params.suppressNextUserMessagePersistence,
-        suppressTranscriptOnlyAssistantPersistence:
-          params.suppressTranscriptOnlyAssistantPersistence,
-        suppressAssistantErrorPersistence: params.suppressAssistantErrorPersistence,
-        onMessagePersisted: () => {
-          sessionLockController.refreshAfterOwnedSessionWrite();
+      sessionManager = guardSessionManager(
+        openTranscriptSessionManagerForSession({
+          agentId: sessionAgentId,
+          ...(params.path ? { path: params.path } : {}),
+          sessionId: params.sessionId,
+          cwd: effectiveCwd,
+        }),
+        {
+          agentId: sessionAgentId,
+          sessionKey: params.sessionKey,
+          config: params.config,
+          contextWindowTokens: params.contextTokenBudget,
+          inputProvenance: params.inputProvenance,
+          preparedUserTurnMessage,
+          allowSyntheticToolResults: transcriptPolicy.allowSyntheticToolResults,
+          missingToolResultText:
+            params.model.api === "openai-responses" ||
+            params.model.api === "azure-openai-responses" ||
+            params.model.api === "openai-codex-responses"
+              ? "aborted"
+              : undefined,
+          allowedToolNames: replayAllowedToolNames,
+          suppressNextUserMessagePersistence: params.suppressNextUserMessagePersistence,
+          suppressTranscriptOnlyAssistantPersistence:
+            params.suppressTranscriptOnlyAssistantPersistence,
+          suppressAssistantErrorPersistence: params.suppressAssistantErrorPersistence,
+          onMessagePersisted: () => {
+            sessionLockController.refreshAfterOwnedSessionWrite();
+          },
+          onUserMessagePersisted: (message) => {
+            params.onUserMessagePersisted?.(message);
+          },
+          onAssistantErrorMessagePersisted: (message) => {
+            params.onAssistantErrorMessagePersisted?.(message);
+          },
         },
-        onUserMessagePersisted: (message) => {
-          params.onUserMessagePersisted?.(message);
-        },
-        onAssistantErrorMessagePersisted: (message) => {
-          params.onAssistantErrorMessagePersisted?.(message);
-        },
-      });
+      );
       await runAttemptContextEngineBootstrap({
-        hadSessionFile,
+        hadTranscript,
         contextEngine: activeContextEngine,
         sessionId: params.sessionId,
         sessionKey: params.sessionKey,
-        sessionFile: params.sessionFile,
-        sessionManager,
+        transcriptScope: activeTranscriptScope,
         runtimeContext: buildAfterTurnRuntimeContext({
           attempt: params,
           workspaceDir: effectiveWorkspace,
@@ -2667,11 +2709,11 @@ export async function runEmbeddedAttempt(
         runMaintenance: async (contextParams) =>
           await runContextEngineMaintenance({
             contextEngine: contextParams.contextEngine as never,
+            sessionAgentId,
             sessionId: contextParams.sessionId,
             sessionKey: contextParams.sessionKey,
-            sessionFile: contextParams.sessionFile,
+            transcriptScope: contextParams.transcriptScope,
             reason: contextParams.reason,
-            sessionManager: contextParams.sessionManager as never,
             runtimeContext: contextParams.runtimeContext,
             config: params.config,
             agentId: sessionAgentId,
@@ -3006,7 +3048,6 @@ export async function runEmbeddedAttempt(
           contextEngine: activeContextEngine,
           sessionId: params.sessionId,
           sessionKey: params.sessionKey,
-          sessionFile: params.sessionFile,
           tokenBudget: params.contextTokenBudget,
           modelId: params.modelId,
           getPrePromptMessageCount: () => prePromptMessageCount,
@@ -3084,7 +3125,6 @@ export async function runEmbeddedAttempt(
         runId: params.runId,
         sessionId: activeSession.sessionId,
         sessionKey: params.sessionKey,
-        sessionFile: params.sessionFile,
         provider: params.provider,
         modelId: params.modelId,
         modelApi: params.model.api,
@@ -3506,7 +3546,7 @@ export async function runEmbeddedAttempt(
               sessionKey: params.sessionKey,
             });
             const suspension = sessionEntry?.quotaSuspension;
-            if (suspension?.state === "resuming") {
+            if (sessionEntry && suspension?.state === "resuming") {
               const subagents = listSessionEntries({ agentId: sessionAgentId })
                 .map(({ entry }) => entry)
                 .filter((s) => s.spawnedBy === sessionEntry.sessionId)
@@ -3985,11 +4025,10 @@ export async function runEmbeddedAttempt(
             cfg: params.config,
             agentId: sessionAgentId,
           });
-          const truncationResult = truncateOversizedToolResultsInSessionManager({
-            sessionManager: activeSessionManager,
+          const truncationResult = truncateOversizedToolResultsInSessionSync({
+            agentId: sessionAgentId,
             contextWindowTokens: contextTokenBudget,
             maxCharsOverride: toolResultMaxChars,
-            sessionFile: params.sessionFile,
             sessionId: params.sessionId,
             sessionKey: params.sessionKey,
           });
@@ -4000,8 +4039,9 @@ export async function runEmbeddedAttempt(
               handled: true,
               truncatedCount: truncationResult.truncatedCount,
             };
-            const sessionContext = activeSessionManager.buildSessionContext();
-            activeSession.agent.state.messages = sessionContext.messages;
+            if (truncationResult.messages) {
+              activeSession.agent.state.messages = truncationResult.messages;
+            }
             logMidTurnPrecheck(
               request.route,
               `handled=true truncatedCount=${truncationResult.truncatedCount}`,
@@ -4633,11 +4673,10 @@ export async function runEmbeddedAttempt(
               cfg: params.config,
               agentId: sessionAgentId,
             });
-            const truncationResult = truncateOversizedToolResultsInSessionManager({
-              sessionManager,
+            const truncationResult = truncateOversizedToolResultsInSessionSync({
+              agentId: sessionAgentId,
               contextWindowTokens: contextTokenBudget,
               maxCharsOverride: toolResultMaxChars,
-              sessionFile: params.sessionFile,
               sessionId: params.sessionId,
               sessionKey: params.sessionKey,
             });
@@ -4775,7 +4814,14 @@ export async function runEmbeddedAttempt(
             await sessionLockController.releaseHeldLockForAbort();
             await sessionLockController.waitForSessionEvents(activeSession);
             await sessionLockController.withSessionWriteLock(async () => {
-              stripSessionsYieldArtifacts(activeSession);
+              stripSessionsYieldArtifacts(
+                activeSession,
+                activeSessionManager.getTranscriptScope() ?? {
+                  agentId: sessionAgentId,
+                  ...(params.path ? { path: params.path } : {}),
+                  sessionId: sessionIdUsed,
+                },
+              );
               if (yieldMessage) {
                 await persistSessionsYieldContextMessage(activeSession, yieldMessage);
               }
@@ -5010,7 +5056,11 @@ export async function runEmbeddedAttempt(
             yieldAborted,
             sessionIdUsed,
             sessionKey: params.sessionKey,
-            sessionFile: params.sessionFile,
+            transcriptScope: activeSessionManager.getTranscriptScope() ?? {
+              agentId: sessionAgentId,
+              ...(params.path ? { path: params.path } : {}),
+              sessionId: sessionIdUsed,
+            },
             messagesSnapshot,
             prePromptMessageCount: contextEngineAfterTurnCheckpoint ?? prePromptMessageCount,
             tokenBudget: params.contextTokenBudget,
@@ -5018,18 +5068,15 @@ export async function runEmbeddedAttempt(
             runMaintenance: async (contextParams) =>
               await runContextEngineMaintenance({
                 contextEngine: contextParams.contextEngine as never,
+                sessionAgentId,
                 sessionId: contextParams.sessionId,
                 sessionKey: contextParams.sessionKey,
-                sessionFile: contextParams.sessionFile,
+                transcriptScope: contextParams.transcriptScope,
                 reason: contextParams.reason,
-                sessionManager: contextParams.sessionManager as never,
-                withSessionManagerRewriteLock: async (operation) =>
-                  await sessionLockController.withSessionWriteLock(operation),
                 runtimeContext: contextParams.runtimeContext,
                 config: params.config,
                 agentId: sessionAgentId,
               }),
-            sessionManager: activeSessionManager,
             config: params.config,
             warn: (message) => log.warn(message),
           });
@@ -5069,11 +5116,12 @@ export async function runEmbeddedAttempt(
             try {
               const rotation = await rotateTranscriptAfterCompaction({
                 sessionManager: activeSessionManager,
-                sessionFile: params.sessionFile,
+                agentId: sessionAgentId,
+                ...(params.path ? { path: params.path } : {}),
+                sessionId: sessionIdUsed,
               });
               if (rotation.rotated) {
                 sessionIdUsed = rotation.sessionId ?? sessionIdUsed;
-                sessionFileUsed = rotation.sessionFile ?? sessionFileUsed;
                 updateActiveEmbeddedRunSessionFile(params.sessionId, sessionFileUsed);
                 log.info(
                   `[compaction] rotated active transcript after automatic compaction ` +
@@ -5492,7 +5540,7 @@ export async function runEmbeddedAttempt(
         sessionId: params.sessionId,
         step: "openclaw-trajectory-flush",
         log,
-        getTimeoutDetails: () => trajectoryRecorder?.describeFlushState(),
+        getTimeoutDetails: () => trajectoryRecorder?.describeFlushState?.(),
         cleanup: async () => {
           await trajectoryRecorder?.flush();
         },

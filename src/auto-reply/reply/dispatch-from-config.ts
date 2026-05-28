@@ -134,7 +134,7 @@ import { resolveOriginMessageProvider } from "./origin-routing.js";
 import { waitForReplyDispatcherIdle } from "./reply-dispatcher.js";
 import type { ReplyDispatcher } from "./reply-dispatcher.types.js";
 import { replyRunRegistry, type ReplyOperation } from "./reply-run-registry.js";
-import { isReplyProfilerEnabled } from "./reply-timing-tracker.js";
+import { createReplyTimingTracker, isReplyProfilerEnabled } from "./reply-timing-tracker.js";
 import { admitReplyTurn, resolveReplyTurnKind } from "./reply-turn-admission.js";
 import { resolveRoutedDeliveryThreadId } from "./routed-delivery-thread.js";
 import { resolveReplyRoutingDecision } from "./routing-policy.js";
@@ -150,6 +150,8 @@ class DispatchReplyOperationAbortedError extends Error {
     this.name = "AbortError";
   }
 }
+
+const replyHotPathTimingLog = createSubsystemLogger("auto-reply/dispatch-timing");
 
 function isDispatchReplyOperationAbortedError(
   error: unknown,
@@ -692,8 +694,10 @@ export async function dispatchReplyFromConfig(
     hasSessionKey: Boolean(sessionKey),
     hasRunId: typeof params.replyOptions?.runId === "string",
   };
-  const replyHotPathTiming = createReplyHotPathTimingTracker({
-    profilerEnabled: isReplyProfilerEnabled({ config: cfg }),
+  const replyHotPathTiming = createReplyTimingTracker({
+    log: replyHotPathTimingLog,
+    config: cfg,
+    enabled: isReplyProfilerEnabled({ config: cfg }),
   });
   const traceReplyPhase = <T>(name: string, run: () => Promise<T> | T): Promise<T> =>
     replyHotPathTiming.measure(name, () =>
@@ -714,11 +718,16 @@ export async function dispatchReplyFromConfig(
   ) => {
     if (diagnosticsEnabled) {
       replyHotPathTiming.logIfSlow({
-        channel,
-        messageId,
-        sessionKey,
+        message: `reply dispatch timings surface=${channel} messageId=${
+          messageId ?? "unknown"
+        } sessionKey=${sessionKey ?? "unknown"}`,
         outcome,
         reason: opts?.reason,
+        details: {
+          channel,
+          messageId,
+          sessionKey,
+        },
       });
     }
     messageLifecycle.markProcessed(outcome, opts);

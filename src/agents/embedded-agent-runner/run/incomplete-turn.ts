@@ -50,6 +50,7 @@ type IncompleteTurnAttempt = Pick<
   | "replayMetadata"
   | "promptErrorSource"
   | "timedOutDuringCompaction"
+  | "toolMetas"
 >;
 
 type PlanningOnlyAttempt = Pick<

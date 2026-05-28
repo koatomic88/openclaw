@@ -2,7 +2,7 @@ import fsp from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
-  type SessionEntry as PiSessionEntry,
+  type SessionEntry as AgentSessionEntry,
   type SessionHeader,
   type TranscriptEntry,
 } from "../../agents/transcript/session-transcript-contract.js";
@@ -173,7 +173,7 @@ async function readSessionDataFromTranscript(params: {
   const header =
     transcriptEntries.find((entry): entry is SessionHeader => entry.type === "session") ?? null;
   const entries = transcriptEntries.filter(
-    (entry): entry is PiSessionEntry => entry.type !== "session",
+    (entry): entry is AgentSessionEntry => entry.type !== "session",
   );
   const lastEntry = entries.at(-1);
   const leafId = typeof lastEntry?.id === "string" ? lastEntry.id : null;

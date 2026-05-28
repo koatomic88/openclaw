@@ -1,5 +1,6 @@
 import path from "node:path";
 import { resolveAgentMaxConcurrent, resolveSubagentMaxConcurrent } from "../config/agent-limits.js";
+import { resolveCronMaxConcurrentRuns } from "../config/cron-limits.js";
 import { patchSessionEntry } from "../config/sessions.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
@@ -100,7 +101,7 @@ export async function suspendSession(params: {
     await patchSessionEntry({
       agentId,
       sessionKey,
-      patch: {
+      update: () => ({
         quotaSuspension: {
           schemaVersion: 1,
           suspendedAt: now,
@@ -112,7 +113,7 @@ export async function suspendSession(params: {
           expectedResumeBy: now + ttlMs,
           state: "suspended",
         },
-      },
+      }),
     });
   } catch (err) {
     log.warn("failed to persist quota suspension; not throttling lane", {

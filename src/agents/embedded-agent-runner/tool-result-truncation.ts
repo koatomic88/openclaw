@@ -7,7 +7,9 @@ import type { AgentMessage } from "../agent-core-contract.js";
 import { resolveAgentContextLimits } from "../agent-scope.js";
 import {
   persistTranscriptStateMutationForSession,
+  persistTranscriptStateMutationForSessionSync,
   readTranscriptStateForSession,
+  readTranscriptStateForSessionSync,
   type TranscriptState,
 } from "../transcript/transcript-persistence.js";
 import { formatContextLimitTruncationNotice } from "./context-truncation-notice.js";
@@ -709,6 +711,78 @@ async function truncateOversizedToolResultsInTranscriptState(params: {
   };
 }
 
+function truncateOversizedToolResultsInTranscriptStateSync(params: {
+  state: TranscriptState;
+  contextWindowTokens: number;
+  maxCharsOverride?: number;
+  agentId: string;
+  path?: string;
+  sessionId: string;
+  sessionKey?: string;
+  config?: unknown;
+}): ToolResultTruncationResult {
+  const { state, contextWindowTokens } = params;
+  const maxChars = Math.max(
+    1,
+    params.maxCharsOverride ?? calculateMaxToolResultChars(contextWindowTokens),
+  );
+  const aggregateBudgetChars = calculateRecoveryAggregateToolResultChars(
+    contextWindowTokens,
+    maxChars,
+  );
+  const branch = state.getBranch() as ToolResultBranchEntry[];
+
+  if (branch.length === 0) {
+    return { truncated: false, truncatedCount: 0, reason: "empty session" };
+  }
+
+  const plan = buildToolResultReplacementPlan({
+    branch,
+    maxChars,
+    aggregateBudgetChars,
+    minKeepChars: RECOVERY_MIN_KEEP_CHARS,
+  });
+  if (plan.replacements.length === 0) {
+    return {
+      truncated: false,
+      truncatedCount: 0,
+      reason: "no oversized or aggregate tool results",
+    };
+  }
+  const rewriteResult = rewriteTranscriptEntriesInState({
+    state,
+    replacements: plan.replacements,
+  });
+  if (rewriteResult.changed) {
+    persistTranscriptStateMutationForSessionSync({
+      agentId: params.agentId,
+      path: params.path,
+      sessionId: params.sessionId,
+      state,
+      appendedEntries: rewriteResult.appendedEntries,
+    });
+    emitSessionTranscriptUpdate({
+      agentId: params.agentId,
+      sessionId: params.sessionId,
+      sessionKey: params.sessionKey,
+    });
+  }
+
+  log.info(
+    `[tool-result-truncation] Truncated ${rewriteResult.rewrittenEntries} tool result(s) in session ` +
+      `(contextWindow=${contextWindowTokens} maxChars=${maxChars} aggregateBudgetChars=${aggregateBudgetChars} ` +
+      `oversized=${plan.oversizedReplacementCount} aggregate=${plan.aggregateReplacementCount}) ` +
+      `sessionKey=${params.sessionKey ?? params.sessionId ?? "unknown"}`,
+  );
+
+  return {
+    truncated: rewriteResult.changed,
+    truncatedCount: rewriteResult.rewrittenEntries,
+    reason: rewriteResult.reason,
+    messages: state.buildSessionContext().messages,
+  };
+}
+
 export async function truncateOversizedToolResultsInSession(params: {
   contextWindowTokens: number;
   maxCharsOverride?: number;
@@ -726,6 +800,38 @@ export async function truncateOversizedToolResultsInSession(params: {
       sessionId: params.sessionId,
     });
     return await truncateOversizedToolResultsInTranscriptState({
+      state,
+      contextWindowTokens,
+      maxCharsOverride: params.maxCharsOverride,
+      agentId: params.agentId,
+      path: params.path,
+      sessionId: params.sessionId,
+      sessionKey: params.sessionKey,
+    });
+  } catch (err) {
+    const errMsg = formatErrorMessage(err);
+    log.warn(`[tool-result-truncation] Failed to truncate: ${errMsg}`);
+    return { truncated: false, truncatedCount: 0, reason: errMsg };
+  }
+}
+
+export function truncateOversizedToolResultsInSessionSync(params: {
+  contextWindowTokens: number;
+  maxCharsOverride?: number;
+  agentId: string;
+  path?: string;
+  sessionId: string;
+  sessionKey?: string;
+  config?: unknown;
+}): ToolResultTruncationResult {
+  const { contextWindowTokens } = params;
+  try {
+    const state = readTranscriptStateForSessionSync({
+      agentId: params.agentId,
+      path: params.path,
+      sessionId: params.sessionId,
+    });
+    return truncateOversizedToolResultsInTranscriptStateSync({
       state,
       contextWindowTokens,
       maxCharsOverride: params.maxCharsOverride,

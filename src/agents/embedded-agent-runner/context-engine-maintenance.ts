@@ -9,7 +9,12 @@ import type {
 } from "../../context-engine/types.js";
 import { sleepWithAbort } from "../../infra/backoff.js";
 import { formatErrorMessage } from "../../infra/errors.js";
-import { enqueueCommandInLane, getQueueSize } from "../../process/command-queue.js";
+import {
+  enqueueCommandInLane,
+  GatewayDrainingError,
+  getQueueSize,
+  isGatewayDraining,
+} from "../../process/command-queue.js";
 import { resolveAgentIdFromSessionKey } from "../../routing/session-key.js";
 import { normalizeOptionalString } from "../../shared/string-coerce.js";
 import {
