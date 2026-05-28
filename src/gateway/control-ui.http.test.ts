@@ -4,7 +4,11 @@ import type { IncomingMessage } from "node:http";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { approveDevicePairing, requestDevicePairing } from "../infra/device-pairing.js";
+import {
+  approveDevicePairing,
+  ensureDeviceToken,
+  requestDevicePairing,
+} from "../infra/device-pairing.js";
 import { resolvePreferredOpenClawTmpDir } from "../infra/tmp-openclaw-dir.js";
 import { deleteMediaBuffer, saveMediaBuffer } from "../media/store.js";
 import type { ResolvedGatewayAuth } from "./auth.js";
