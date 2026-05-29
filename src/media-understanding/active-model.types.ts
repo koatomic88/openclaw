@@ -1,5 +1,5 @@
-// Shared types for media-understanding active model types behavior.
-/** Shared type for Active Media Model in src/media-understanding. */
+// Active model selection passed from chat/runtime into media-understanding.
+/** Provider/model pair currently active for media-understanding fallback. */
 export type ActiveMediaModel = {
   provider: string;
   model?: string;

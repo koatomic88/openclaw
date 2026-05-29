@@ -1,4 +1,4 @@
-// media-understanding output extract helpers and runtime behavior.
+// Output extraction helpers for CLI media providers that emit JSON envelopes.
 function extractLastJsonObject(raw: string): unknown {
   const trimmed = raw.trim();
   const start = trimmed.lastIndexOf("{");
@@ -13,7 +13,7 @@ function extractLastJsonObject(raw: string): unknown {
   }
 }
 
-/** Reused helper for extract Gemini Response behavior in src/media-understanding. */
+/** Extract Gemini CLI response text from the last JSON object in stdout. */
 export function extractGeminiResponse(raw: string): string | null {
   const payload = extractLastJsonObject(raw);
   if (!payload || typeof payload !== "object") {

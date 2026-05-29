@@ -1,7 +1,7 @@
-// media-understanding provider supports helpers and runtime behavior.
+// Provider capability checks for optional media-understanding methods.
 import type { MediaUnderstandingCapability, MediaUnderstandingProvider } from "./types.js";
 
-/** Reused helper for provider Supports Capability behavior in src/media-understanding. */
+/** Return true when a provider implements the requested media capability. */
 export function providerSupportsCapability(
   provider: MediaUnderstandingProvider | undefined,
   capability: MediaUnderstandingCapability,
