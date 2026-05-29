@@ -393,15 +393,14 @@ describe("resolveAnnounceOrigin threaded route targets", () => {
   it("preserves stored thread ids when requester origin omits one for the same chat", () => {
     expect(
       resolveAnnounceOrigin(
-        undefined,
         {
-          channel: "topicchat",
-          to: "topicchat:room-a",
+          lastChannel: "topicchat",
+          lastTo: "topicchat:room-a:topic:99",
+          lastThreadId: 99,
         },
         {
           channel: "topicchat",
-          to: "topicchat:room-a:topic:99",
-          threadId: 99,
+          to: "topicchat:room-a",
         },
       ),
     ).toEqual({
@@ -421,10 +420,6 @@ describe("resolveAnnounceOrigin threaded route targets", () => {
         },
         {
           channel: "topicchat",
-          to: "topicchat:room-typed",
-        },
-        {
-          channel: "topicchat",
           to: "topicchat:room-typed:topic:42",
           accountId: "workspace-1",
           threadId: 42,
@@ -432,7 +427,7 @@ describe("resolveAnnounceOrigin threaded route targets", () => {
       ),
     ).toEqual({
       channel: "topicchat",
-      to: "topicchat:room-typed",
+      to: "topicchat:room-typed:topic:42",
       accountId: "workspace-1",
       threadId: 42,
     });
@@ -441,15 +436,14 @@ describe("resolveAnnounceOrigin threaded route targets", () => {
   it("preserves stored thread ids for group-prefixed requester targets", () => {
     expect(
       resolveAnnounceOrigin(
-        undefined,
         {
-          channel: "topicchat",
-          to: "group:room-a",
+          lastChannel: "topicchat",
+          lastTo: "topicchat:room-a:topic:99",
+          lastThreadId: 99,
         },
         {
           channel: "topicchat",
-          to: "topicchat:room-a:topic:99",
-          threadId: 99,
+          to: "group:room-a",
         },
       ),
     ).toEqual({
@@ -462,15 +456,14 @@ describe("resolveAnnounceOrigin threaded route targets", () => {
   it("still strips stale thread ids when the stored route points at a different chat", () => {
     expect(
       resolveAnnounceOrigin(
-        undefined,
         {
-          channel: "topicchat",
-          to: "topicchat:room-a",
+          lastChannel: "topicchat",
+          lastTo: "topicchat:room-b:topic:99",
+          lastThreadId: 99,
         },
         {
           channel: "topicchat",
-          to: "topicchat:room-b:topic:99",
-          threadId: 99,
+          to: "topicchat:room-a",
         },
       ),
     ).toEqual({
