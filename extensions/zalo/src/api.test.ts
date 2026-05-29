@@ -1,3 +1,4 @@
+// Tests extensions/zalo/src api test behavior.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const resolvePinnedHostnameWithPolicyMock = vi.fn();

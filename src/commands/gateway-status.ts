@@ -1,3 +1,4 @@
+/** Probes and prints gateway status across local and discovery targets. */
 import { withProgress } from "../cli/progress.js";
 import { readBestEffortConfig, resolveGatewayPort } from "../config/config.js";
 import { resolveWideAreaDiscoveryDomain } from "../infra/widearea-dns.js";
@@ -35,6 +36,7 @@ function loadGatewayTlsModule() {
   return gatewayTlsModuleLoader.load();
 }
 
+/** Reused helper for gateway Status Command behavior in src/commands. */
 export async function gatewayStatusCommand(
   opts: {
     url?: string;

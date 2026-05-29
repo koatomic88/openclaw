@@ -1,3 +1,4 @@
+// extensions/nvidia provider catalog helpers and runtime behavior.
 import { lookup as dnsLookup } from "node:dns/promises";
 import { buildManifestModelProviderConfig } from "openclaw/plugin-sdk/provider-catalog-shared";
 import type {

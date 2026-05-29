@@ -1,3 +1,4 @@
+/** Tool allow/deny policy resolution for agents, subagents, groups, and providers. */
 import { getLoadedChannelPlugin } from "../channels/plugins/index.js";
 import { resolveSessionConversation } from "../channels/plugins/session-conversation.js";
 import { DEFAULT_SUBAGENT_MAX_SPAWN_DEPTH } from "../config/agent-limits.js";
@@ -97,6 +98,7 @@ function mergeConfiguredSubagentAllow(
   return allow && alsoAllow ? uniqueStrings([...allow, ...alsoAllow]) : allow;
 }
 
+/** Resolve base tool policy for a subagent at a spawn depth. */
 export function resolveSubagentToolPolicy(cfg?: OpenClawConfig, depth?: number): SandboxToolPolicy {
   const configured = cfg?.tools?.subagents?.tools;
   const maxSpawnDepth =
@@ -116,6 +118,7 @@ export function resolveSubagentToolPolicy(cfg?: OpenClawConfig, depth?: number):
   return { allow: mergedAllow, deny };
 }
 
+/** Resolve subagent tool policy using persisted session capabilities. */
 export function resolveSubagentToolPolicyForSession(
   cfg: OpenClawConfig | undefined,
   sessionKey: string,
@@ -147,6 +150,7 @@ export function resolveSubagentToolPolicyForSession(
   return { allow: mergedAllow, deny };
 }
 
+/** Resolve inherited allow/deny tool policy for a spawned session. */
 export function resolveInheritedToolPolicyForSession(
   cfg: OpenClawConfig | undefined,
   sessionKey: string | undefined | null,
@@ -171,6 +175,7 @@ export function resolveInheritedToolPolicyForSession(
   };
 }
 
+/** Filter tools by a sandbox-style allow/deny policy. */
 export function filterToolsByPolicy(tools: AnyAgentTool[], policy?: SandboxToolPolicy) {
   if (!policy) {
     return tools;
@@ -339,6 +344,7 @@ function resolveTrustedGroupIdFromContexts(params: {
   return { groupId: null, dropped: true };
 }
 
+/** Resolve a caller-supplied group id only when session context can vouch for it. */
 export function resolveTrustedGroupId(params: {
   groupId?: string | null;
   sessionKey?: string | null;
@@ -354,6 +360,7 @@ export function resolveTrustedGroupId(params: {
   });
 }
 
+/** Resolve provider/model-specific tool policy from config maps. */
 export function resolveProviderToolPolicy(params: {
   byProvider?: Record<string, ToolPolicyConfig>;
   modelProvider?: string;
@@ -435,6 +442,7 @@ function formatToolListForWarning(toolNames: string[]): string {
   return toolNames.map((toolName) => `"${toolName}"`).join(", ");
 }
 
+/** Resolve all tool policy layers that apply to a run. */
 export function resolveEffectiveToolPolicy(params: {
   config?: OpenClawConfig;
   sessionKey?: string;
@@ -523,6 +531,7 @@ export function resolveEffectiveToolPolicy(params: {
   };
 }
 
+/** Resolve group-scoped tool policy for a trusted channel/group context. */
 export function resolveGroupToolPolicy(params: {
   config?: OpenClawConfig;
   sessionKey?: string;
@@ -600,4 +609,5 @@ export function resolveGroupToolPolicy(params: {
   return pickSandboxToolPolicy(configTools);
 }
 
+/** Re-exported API for src/agents, starting with is Tool Allowed By Policies. */
 export { isToolAllowedByPolicies, isToolAllowedByPolicyName } from "./tool-policy-match.js";

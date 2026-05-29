@@ -1,3 +1,5 @@
+// extensions/openai api helpers and runtime behavior.
+/** Re-exported openai plugin public API. */
 export {
   applyOpenAIConfig,
   applyOpenAIProviderConfig,
@@ -9,10 +11,17 @@ export {
   OPENAI_DEFAULT_TTS_MODEL,
   OPENAI_DEFAULT_TTS_VOICE,
 } from "./default-models.js";
+/** Re-exported openai plugin public API, starting with build Open AICodex Provider. */
 export { buildOpenAICodexProvider } from "./openai-codex-catalog.js";
+/** Re-exported openai plugin public API, starting with login Open AICodex OAuth. */
 export { loginOpenAICodexOAuth } from "./openai-codex-oauth.runtime.js";
+/** Re-exported openai plugin public API, starting with refresh Open AICodex Token. */
 export { refreshOpenAICodexToken } from "./openai-codex-provider.runtime.js";
+/** Re-exported openai plugin public API, starting with build Open AICodex Provider Plugin. */
 export { buildOpenAICodexProviderPlugin } from "./openai-codex-provider.js";
+/** Re-exported openai plugin public API, starting with build Open AIProvider. */
 export { buildOpenAIProvider } from "./openai-provider.js";
+/** Re-exported openai plugin public API, starting with build Open AIRealtime Transcription Provider. */
 export { buildOpenAIRealtimeTranscriptionProvider } from "./realtime-transcription-provider.js";
+/** Re-exported openai plugin public API, starting with build Open AIRealtime Voice Provider. */
 export { buildOpenAIRealtimeVoiceProvider } from "./realtime-voice-provider.js";

@@ -1,3 +1,4 @@
+/** Builds workspace status summaries for doctor output. */
 import { resolveAgentWorkspaceDir, resolveDefaultAgentId } from "../agents/agent-scope.js";
 import { formatCliCommand } from "../cli/command-format.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
@@ -52,6 +53,7 @@ function noteFlowRecoveryHints() {
   );
 }
 
+/** Reused helper for note Workspace Status behavior in src/commands. */
 export function noteWorkspaceStatus(cfg: OpenClawConfig) {
   const workspaceDir = resolveAgentWorkspaceDir(cfg, resolveDefaultAgentId(cfg));
   const legacyWorkspace = detectLegacyWorkspaceDirs({ workspaceDir });

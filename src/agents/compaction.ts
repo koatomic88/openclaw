@@ -1,3 +1,4 @@
+/** Conversation compaction, chunking, fallback summarization, and handoff helpers. */
 import type { AgentCompactionIdentifierPolicy } from "../config/types.agent-defaults.js";
 import { formatErrorMessage } from "../infra/errors.js";
 import { retryAsync } from "../infra/retry.js";
@@ -16,8 +17,11 @@ import { extractToolCallsFromAssistant, extractToolResultId } from "./tool-call-
 
 const log = createSubsystemLogger("compaction");
 
+/** Default fraction of context used for each compaction chunk. */
 export const BASE_CHUNK_RATIO = 0.4;
+/** Lower bound for adaptive compaction chunk size. */
 export const MIN_CHUNK_RATIO = 0.15;
+/** Safety buffer for token-estimation undercounts. */
 export const SAFETY_MARGIN = 1.2; // 20% buffer for estimateTokens() inaccuracy
 const DEFAULT_SUMMARY_FALLBACK = "No prior history.";
 const DEFAULT_PARTS = 2;
@@ -55,6 +59,7 @@ const HANDOFF_INSTRUCTIONS = [
   "- Pending items and next intended steps.",
 ].join("\n");
 
+/** Extra instruction controls for compaction summarization. */
 export type CompactionSummarizationInstructions = {
   identifierPolicy?: AgentCompactionIdentifierPolicy;
   identifierInstructions?: string;
@@ -98,6 +103,7 @@ function resolveIdentifierPreservationInstructions(
   return IDENTIFIER_PRESERVATION_INSTRUCTIONS;
 }
 
+/** Merge custom compaction instructions with identifier-preservation policy. */
 export function buildCompactionSummarizationInstructions(
   customInstructions?: string,
   instructions?: CompactionSummarizationInstructions,
@@ -116,6 +122,7 @@ export function buildCompactionSummarizationInstructions(
   return `${identifierPreservation}\n\nAdditional focus:\n${custom}`;
 }
 
+/** Estimate token cost for transcript messages after stripping unsafe details. */
 export function estimateMessagesTokens(messages: AgentMessage[]): number {
   // SECURITY: toolResult.details and runtime-context transcript entries must never enter LLM-facing compaction.
   const safe = stripToolResultDetails(stripRuntimeContextCustomMessages(messages));
@@ -133,6 +140,7 @@ function normalizeParts(parts: number, messageCount: number): number {
   return Math.min(Math.max(1, Math.floor(parts)), Math.max(1, messageCount));
 }
 
+/** Split messages into token-balanced chunks without breaking tool result pairs. */
 export function splitMessagesByTokenShare(
   messages: AgentMessage[],
   parts = DEFAULT_PARTS,
@@ -232,8 +240,10 @@ export function splitMessagesByTokenShare(
 // Overhead reserved for summarization prompt, system prompt, previous summary,
 // and serialization wrappers (<conversation> tags, instructions, etc.).
 // generateSummary uses reasoning: "high" which also consumes context budget.
+/** Reused constant for SUMMARIZATION OVERHEAD TOKENS behavior in src/agents. */
 export const SUMMARIZATION_OVERHEAD_TOKENS = 4096;
 
+/** Chunk messages to fit under a max token budget with safety margin. */
 export function chunkMessagesByMaxTokens(
   messages: AgentMessage[],
   maxTokens: number,
@@ -503,6 +513,7 @@ export async function summarizeWithFallback(params: {
   );
 }
 
+/** Summarize history in multiple stages, then merge partial summaries. */
 export async function summarizeInStages(params: {
   messages: AgentMessage[];
   model: NonNullable<ExtensionContext["model"]>;
@@ -569,6 +580,7 @@ export async function summarizeInStages(params: {
   });
 }
 
+/** Drop oldest history chunks until transcript fits the requested context share. */
 export function pruneHistoryForContextShare(params: {
   messages: AgentMessage[];
   maxContextTokens: number;
@@ -666,6 +678,7 @@ export async function summarizeForHandoff(params: {
   });
 }
 
+/** Resolve a positive context-window token count for a model. */
 export function resolveContextWindowTokens(model?: ExtensionContext["model"]): number {
   const effective =
     (model as { contextTokens?: number } | undefined)?.contextTokens ?? model?.contextWindow;

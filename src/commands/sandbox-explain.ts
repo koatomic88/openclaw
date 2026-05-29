@@ -1,3 +1,4 @@
+/** Explains effective sandbox policy for agents and channel contexts. */
 import { resolveAgentConfig } from "../agents/agent-scope.js";
 import { resolveSandboxConfigForAgent } from "../agents/sandbox.js";
 import { resolveSandboxToolPolicyForAgent } from "../agents/sandbox/tool-policy.js";
@@ -133,6 +134,7 @@ function resolveActiveChannel(params: {
   });
 }
 
+/** Reused helper for sandbox Explain Command behavior in src/commands. */
 export async function sandboxExplainCommand(
   opts: SandboxExplainOptions,
   runtime: RuntimeEnv,

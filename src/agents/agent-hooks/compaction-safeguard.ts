@@ -1,3 +1,4 @@
+/** Hooks compaction requests to preserve task context and reject unsafe summaries. */
 import fs from "node:fs";
 import path from "node:path";
 import { extractSections } from "../../auto-reply/reply/post-compaction-context.js";
@@ -1307,6 +1308,7 @@ export default function compactionSafeguardExtension(api: ExtensionAPI): void {
   });
 }
 
+/** Test-only override hook for compaction safeguard runtime dependencies. */
 export const testing = {
   setSummarizeInStagesForTest(next?: typeof summarizeInStages) {
     compactionSafeguardDeps.summarizeInStages = next ?? summarizeInStages;
@@ -1340,4 +1342,5 @@ export const testing = {
   MAX_FILE_OPS_LIST_CHARS,
   SUMMARY_TRUNCATED_MARKER,
 } as const;
+/** Re-exported API for src/agents/agent-hooks, starting with testing. */
 export { testing as __testing };

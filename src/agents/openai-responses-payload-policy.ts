@@ -1,3 +1,4 @@
+/** Applies provider compatibility policy to OpenAI Responses payloads. */
 import { parseStrictPositiveInteger } from "../infra/parse-finite-number.js";
 import { readStringValue } from "../shared/string-coerce.js";
 import { asBoolean } from "../utils/boolean.js";
@@ -318,6 +319,7 @@ function stripDisabledOpenAIReasoningPayload(payloadObj: Record<string, unknown>
   }
 }
 
+/** Resolve payload mutation policy for an OpenAI Responses-style request. */
 export function resolveOpenAIResponsesPayloadPolicy(
   model: OpenAIResponsesPayloadModel,
   options: OpenAIResponsesPayloadPolicyOptions = {},
@@ -362,6 +364,7 @@ export function resolveOpenAIResponsesPayloadPolicy(
   };
 }
 
+/** Mutate a Responses payload object according to resolved provider policy. */
 export function applyOpenAIResponsesPayloadPolicy(
   payloadObj: Record<string, unknown>,
   policy: OpenAIResponsesPayloadPolicy,

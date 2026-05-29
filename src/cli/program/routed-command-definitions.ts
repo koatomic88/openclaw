@@ -1,3 +1,4 @@
+/** Implements lightweight routed command handlers for fast CLI paths. */
 import { defaultRuntime } from "../../runtime.js";
 import { createLazyImportLoader } from "../../shared/lazy-promise.js";
 import {
@@ -25,11 +26,13 @@ type ConfigCliModule = typeof import("../config-cli.js");
 type ModelsListCommandModule = typeof import("../../commands/models/list.list-command.js");
 type ModelsStatusCommandModule = typeof import("../../commands/models/list.status-command.js");
 
+/** Shared type for Routed Command Definition in src/cli/program. */
 export type RoutedCommandDefinition<TParse extends RouteArgParser<unknown>> = {
   parseArgs: TParse;
   runParsedArgs: (args: ParsedRouteArgs<TParse>) => Promise<void>;
 };
 
+/** Shared type for Any Routed Command Definition in src/cli/program. */
 export type AnyRoutedCommandDefinition = {
   parseArgs: RouteArgParser<unknown>;
   runParsedArgs: (args: never) => Promise<void>;
@@ -68,6 +71,7 @@ function loadModelsStatusCommand(): Promise<ModelsStatusCommandModule> {
   return modelsStatusCommandLoader.load();
 }
 
+/** Reused constant for routed Command Definitions behavior in src/cli/program. */
 export const routedCommandDefinitions = {
   health: defineRoutedCommand({
     parseArgs: parseHealthRouteArgs,

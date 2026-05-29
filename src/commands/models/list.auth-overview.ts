@@ -1,3 +1,4 @@
+// Formats auth overview rows for `models list --status` output.
 import { formatRemainingShort } from "../../agents/auth-health.js";
 import { resolveAuthProfileDisplayLabel } from "../../agents/auth-profiles/display.js";
 import { resolveAuthStorePathForDisplay } from "../../agents/auth-profiles/paths.js";
@@ -62,6 +63,7 @@ function resolveProfileSourceAgentDir(params: {
     : params.agentDir;
 }
 
+/** Reused helper for resolve Provider Auth Overview behavior in src/commands/models. */
 export function resolveProviderAuthOverview(params: {
   provider: string;
   cfg: OpenClawConfig;

@@ -1,3 +1,4 @@
+/** Configure wizard section for channel enablement and defaults. */
 import { listChatChannels } from "../channels/chat-meta.js";
 import { formatCliCommand } from "../cli/command-format.js";
 import { CONFIG_PATH } from "../config/config.js";
@@ -66,6 +67,7 @@ function compareChannelRemovalChoices(
   );
 }
 
+/** Reused helper for remove Channel Config Wizard behavior in src/commands. */
 export async function removeChannelConfigWizard(
   cfg: OpenClawConfig,
   runtime: RuntimeEnv,

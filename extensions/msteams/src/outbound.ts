@@ -1,3 +1,4 @@
+// extensions/msteams/src outbound helpers and runtime behavior.
 import { resolveOutboundSendDep } from "openclaw/plugin-sdk/channel-outbound";
 import {
   attachChannelToResult,

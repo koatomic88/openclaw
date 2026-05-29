@@ -1,3 +1,4 @@
+/** Core activation and payload helpers for Codex native web search. */
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { isRecord } from "../utils.js";
 import { externalCliDiscoveryForProviderAuth } from "./auth-profiles/external-cli-discovery.js";
@@ -26,6 +27,7 @@ type CodexNativeSearchPayloadPatchResult = {
   status: "payload_not_object" | "native_tool_already_present" | "injected";
 };
 
+/** Return whether the selected model can receive Codex native web_search tools. */
 export function isCodexNativeSearchEligibleModel(params: {
   modelProvider?: string;
   modelApi?: string;
@@ -42,6 +44,7 @@ function hasCodexNativeWebSearchTool(tools: unknown): boolean {
   );
 }
 
+/** Detect whether OpenClaw has usable Codex auth for native search. */
 export function hasAvailableCodexAuth(params: {
   config?: OpenClawConfig;
   agentDir?: string;
@@ -76,6 +79,7 @@ export function hasAvailableCodexAuth(params: {
   return false;
 }
 
+/** Resolve whether native or managed web search should be active. */
 export function resolveCodexNativeSearchActivation(params: {
   config?: OpenClawConfig;
   modelProvider?: string;
@@ -145,6 +149,7 @@ export function resolveCodexNativeSearchActivation(params: {
   };
 }
 
+/** Build the OpenAI Codex native web_search tool payload. */
 export function buildCodexNativeWebSearchTool(
   config: OpenClawConfig | undefined,
 ): Record<string, unknown> {
@@ -174,6 +179,7 @@ export function buildCodexNativeWebSearchTool(
   return tool;
 }
 
+/** Inject Codex native web search into a mutable provider payload. */
 export function patchCodexNativeWebSearchPayload(params: {
   payload: unknown;
   config?: OpenClawConfig;
@@ -193,6 +199,7 @@ export function patchCodexNativeWebSearchPayload(params: {
   return { status: "injected" };
 }
 
+/** Return whether the managed web-search tool should be hidden for this run. */
 export function shouldSuppressManagedWebSearchTool(params: {
   config?: OpenClawConfig;
   modelProvider?: string;

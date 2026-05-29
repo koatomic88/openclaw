@@ -1,3 +1,4 @@
+/** Public facade for effective tool inventory generation. */
 import type { OpenClawConfig } from "../config/config.js";
 import { extractModelCompat } from "../plugins/provider-model-compat.js";
 import type { ProviderRuntimeModel } from "../plugins/provider-runtime-model.types.js";
@@ -25,6 +26,7 @@ import type {
   ResolveEffectiveToolInventoryParams,
 } from "./tools-effective-inventory.types.js";
 
+/** Re-exported API for src/agents. */
 export {
   buildEffectiveToolInventoryEntries,
   buildEffectiveToolInventoryGroups,
@@ -166,6 +168,7 @@ function resolveDynamicRuntimeModelContext(params: {
   };
 }
 
+/** Reused helper for resolve Effective Tool Inventory Runtime Model Context behavior in src/agents. */
 export function resolveEffectiveToolInventoryRuntimeModelContext(params: {
   cfg: OpenClawConfig;
   agentId?: string;
@@ -280,6 +283,7 @@ function resolveEffectiveModelCompat(params: {
   return extractModelCompat(match);
 }
 
+/** Reused helper for resolve Effective Tool Inventory behavior in src/agents. */
 export function resolveEffectiveToolInventory(
   params: ResolveEffectiveToolInventoryParams,
 ): EffectiveToolInventoryResult {

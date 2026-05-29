@@ -1,3 +1,4 @@
+/** Resolves provider API keys and auth evidence from environment/config. */
 import fs from "node:fs";
 import os from "node:os";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
@@ -10,11 +11,13 @@ import { resolveProviderEnvAuthLookupMaps } from "./model-auth-env-vars.js";
 import { GCP_VERTEX_CREDENTIALS_MARKER } from "./model-auth-markers.js";
 import { normalizeProviderIdForAuth } from "./provider-id.js";
 
+/** Resolved env-backed API key plus source label. */
 export type EnvApiKeyResult = {
   apiKey: string;
   source: string;
 };
 
+/** Options for env API key lookup. */
 export type EnvApiKeyLookupOptions = {
   config?: OpenClawConfig;
   workspaceDir?: string;
@@ -86,6 +89,7 @@ function resolveAuthEvidence(
   return null;
 }
 
+/** Resolve a usable API key for a provider from env/config evidence. */
 export function resolveEnvApiKey(
   provider: string,
   env: NodeJS.ProcessEnv = process.env,

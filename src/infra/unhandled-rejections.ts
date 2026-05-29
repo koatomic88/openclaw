@@ -1,3 +1,4 @@
+// infra unhandled rejections helpers and runtime behavior.
 import process from "node:process";
 import { normalizeLowercaseStringOrEmpty } from "../shared/string-coerce.js";
 import { restoreTerminalState } from "../terminal/restore.js";
@@ -311,6 +312,7 @@ export function isTransientNetworkError(err: unknown): boolean {
   return false;
 }
 
+/** Reused helper for is Transient Sqlite Error behavior in src/infra. */
 export function isTransientSqliteError(err: unknown): boolean {
   if (!err) {
     return false;
@@ -421,6 +423,7 @@ export function isTransientFileWatchError(err: unknown): boolean {
   return false;
 }
 
+/** Reused helper for is Transient Unhandled Rejection Error behavior in src/infra. */
 export function isTransientUnhandledRejectionError(err: unknown): boolean {
   return (
     isTransientNetworkError(err) || isTransientSqliteError(err) || isTransientFileWatchError(err)
@@ -444,6 +447,7 @@ function isBenignUncaughtNetworkException(err: unknown): boolean {
   return false;
 }
 
+/** Reused helper for is Benign Uncaught Exception Error behavior in src/infra. */
 export function isBenignUncaughtExceptionError(err: unknown): boolean {
   if (isBenignUncaughtNetworkException(err)) {
     return true;
@@ -457,6 +461,7 @@ export function isBenignUncaughtExceptionError(err: unknown): boolean {
   return false;
 }
 
+/** Reused helper for register Unhandled Rejection Handler behavior in src/infra. */
 export function registerUnhandledRejectionHandler(handler: UnhandledRejectionHandler): () => void {
   handlers.add(handler);
   return () => {
@@ -464,6 +469,7 @@ export function registerUnhandledRejectionHandler(handler: UnhandledRejectionHan
   };
 }
 
+/** Reused helper for is Unhandled Rejection Handled behavior in src/infra. */
 export function isUnhandledRejectionHandled(reason: unknown): boolean {
   for (const handler of handlers) {
     try {
@@ -480,6 +486,7 @@ export function isUnhandledRejectionHandled(reason: unknown): boolean {
   return false;
 }
 
+/** Reused helper for register Uncaught Exception Handler behavior in src/infra. */
 export function registerUncaughtExceptionHandler(handler: UncaughtExceptionHandler): () => void {
   exceptionHandlers.add(handler);
   return () => {
@@ -487,6 +494,7 @@ export function registerUncaughtExceptionHandler(handler: UncaughtExceptionHandl
   };
 }
 
+/** Reused helper for is Uncaught Exception Handled behavior in src/infra. */
 export function isUncaughtExceptionHandled(error: unknown): boolean {
   for (const handler of exceptionHandlers) {
     try {
@@ -503,6 +511,7 @@ export function isUncaughtExceptionHandled(error: unknown): boolean {
   return false;
 }
 
+/** Reused helper for install Unhandled Rejection Handler behavior in src/infra. */
 export function installUnhandledRejectionHandler(): void {
   const exitWithTerminalRestore = (reason: string, error?: unknown, hookReason = reason) => {
     for (const message of runFatalErrorHooks({ reason: hookReason, error })) {

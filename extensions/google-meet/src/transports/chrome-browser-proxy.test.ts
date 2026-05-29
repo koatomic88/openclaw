@@ -1,3 +1,4 @@
+// Tests extensions/google-meet/src/transports chrome browser proxy test behavior.
 import type { PluginRuntime } from "openclaw/plugin-sdk/plugin-runtime";
 import { describe, expect, it, vi } from "vitest";
 import { callBrowserProxyOnNode } from "./chrome-browser-proxy.js";

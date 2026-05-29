@@ -1,3 +1,4 @@
+// extensions/matrix/src/matrix/monitor inbound dedupe helpers and runtime behavior.
 import { readJsonFileWithFallback, writeJsonFileAtomically } from "openclaw/plugin-sdk/json-store";
 import { createAsyncLock } from "../async-lock.js";
 import { resolveMatrixStateFilePath } from "../client/storage.js";

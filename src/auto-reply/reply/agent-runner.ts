@@ -1,3 +1,4 @@
+// Main reply agent orchestration entrypoint.
 import fs from "node:fs/promises";
 import {
   hasSessionAutoModelFallbackProvenance,
@@ -1018,6 +1019,7 @@ function refreshSessionEntryFromStore(params: {
   }
 }
 
+/** Reused helper for run Reply Agent behavior in src/auto-reply/reply. */
 export async function runReplyAgent(params: {
   commandBody: string;
   transcriptCommandBody?: string;

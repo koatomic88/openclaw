@@ -1,3 +1,4 @@
+// Tests test/scripts package acceptance workflow test behavior.
 import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { parse } from "yaml";
@@ -200,7 +201,7 @@ describe("package acceptance workflow", () => {
     expect(hydrateWindowsFetch.run).not.toContain("StandardError.ReadToEnd()");
     expect(hydrateWindowsFetch.run).toContain("git fetch failed with exit code $($fetch.ExitCode)");
     expect(hydrateWindowsFetch.run).toContain(
-      '--no-tags --no-progress --prune --no-recurse-submodules --depth=50',
+      "--no-tags --no-progress --prune --no-recurse-submodules --depth=50",
     );
     expect(hydrateWindowsFetch.run).toContain('"+refs/heads/main:refs/remotes/origin/main"');
     expect(workflowStep(hydrateWindowsDaemon, "Mark Crabbox ready").shell).toBe("powershell");

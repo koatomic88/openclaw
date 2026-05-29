@@ -1,3 +1,4 @@
+/** Manages provider-owned local service processes for model requests. */
 import { spawn, type ChildProcess } from "node:child_process";
 import path from "node:path";
 import type { ModelProviderLocalServiceConfig } from "../config/types.models.js";
@@ -32,10 +33,12 @@ type LocalServiceExit = {
   signal: NodeJS.Signals | null;
 };
 
+/** Lease that keeps a managed local provider service alive for one request. */
 export type ProviderLocalServiceLease = {
   release: () => void;
 };
 
+/** Attach local service startup config to a model object. */
 export function attachModelProviderLocalService<TModel extends object>(
   model: TModel,
   service: ModelProviderLocalServiceConfig | undefined,
@@ -48,12 +51,14 @@ export function attachModelProviderLocalService<TModel extends object>(
   return next;
 }
 
+/** Read local service startup config attached to a model object. */
 export function getModelProviderLocalService(
   model: object,
 ): ModelProviderLocalServiceConfig | undefined {
   return (model as ModelWithProviderLocalService)[MODEL_PROVIDER_LOCAL_SERVICE_SYMBOL];
 }
 
+/** Start or reuse a provider local service and return a request lease. */
 export async function ensureModelProviderLocalService(
   model: Model,
   probeHeaders?: HeadersInit,
@@ -131,6 +136,7 @@ export async function ensureModelProviderLocalService(
   }
 }
 
+/** Stop all managed local services for tests. */
 export function stopManagedProviderLocalServicesForTest(): void {
   for (const [key, managed] of services) {
     stopManagedService(key, managed, "test");
@@ -492,6 +498,7 @@ function waitForChildExit(
   });
 }
 
+/** Return whether a child process has already exited or signaled. */
 export function hasLocalServiceProcessExited(
   child: Pick<ChildProcess, "exitCode" | "signalCode">,
 ): boolean {

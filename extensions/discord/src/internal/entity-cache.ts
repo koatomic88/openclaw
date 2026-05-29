@@ -1,3 +1,4 @@
+// extensions/discord/src/internal entity cache helpers and runtime behavior.
 import { GatewayDispatchEvents } from "discord-api-types/v10";
 import { getChannel, getGuild, getGuildMember, getUser } from "./api.js";
 import type { RequestClient } from "./rest.js";

@@ -1,3 +1,4 @@
+/** Registers ACP client and gateway commands for the OpenClaw CLI. */
 import type { Command } from "commander";
 import { runAcpClientInteractive } from "../acp/client.js";
 import { serveAcpGateway } from "../acp/server.js";
@@ -9,6 +10,7 @@ import { theme } from "../terminal/theme.js";
 import { inheritOptionFromParent } from "./command-options.js";
 import { resolveGatewayAuthOptions } from "./gateway-secret-options.js";
 
+/** Reused helper for register Acp Cli behavior in src/cli. */
 export function registerAcpCli(program: Command) {
   const acp = program.command("acp").description("Run an ACP bridge backed by the Gateway");
 

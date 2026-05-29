@@ -1,3 +1,4 @@
+// Tests extensions/msteams/src token test behavior.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { readAccessToken } from "./token-response.js";
 import { hasConfiguredMSTeamsCredentials, resolveMSTeamsCredentials } from "./token.js";

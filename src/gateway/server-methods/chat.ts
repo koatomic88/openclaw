@@ -1,3 +1,4 @@
+// gateway/server-methods chat helpers and runtime behavior.
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
@@ -268,12 +269,14 @@ async function buildWebchatAssistantMediaMessage(
   });
 }
 
+/** Re-exported API for src/gateway/server-methods. */
 export {
   DEFAULT_CHAT_HISTORY_TEXT_MAX_CHARS,
   resolveEffectiveChatHistoryMaxChars,
   sanitizeChatHistoryMessages,
 } from "../chat-display-projection.js";
 
+/** Reused constant for CHAT HISTORY MAX SINGLE MESSAGE BYTES behavior in src/gateway/server-methods. */
 export const CHAT_HISTORY_MAX_SINGLE_MESSAGE_BYTES = 128 * 1024;
 const CHAT_HISTORY_OVERSIZED_PLACEHOLDER = "[chat.history omitted: message too large]";
 const MANAGED_OUTGOING_IMAGE_PATH_PREFIX = "/api/chat/media/outgoing/";
@@ -813,6 +816,7 @@ function stripDisallowedChatControlChars(message: string): string {
   return output;
 }
 
+/** Reused helper for sanitize Chat Send Message Input behavior in src/gateway/server-methods. */
 export function sanitizeChatSendMessageInput(
   message: string,
 ): { ok: true; message: string } | { ok: false; error: string } {
@@ -1203,6 +1207,7 @@ function messageContainsToolHistoryContent(message: unknown): boolean {
   });
 }
 
+/** Reused helper for augment Chat History With Canvas Blocks behavior in src/gateway/server-methods. */
 export function augmentChatHistoryWithCanvasBlocks(messages: unknown[]): unknown[] {
   if (messages.length === 0) {
     return messages;
@@ -1280,6 +1285,7 @@ export function augmentChatHistoryWithCanvasBlocks(messages: unknown[]): unknown
   return changed ? next : messages;
 }
 
+/** Reused helper for build Oversized History Placeholder behavior in src/gateway/server-methods. */
 export function buildOversizedHistoryPlaceholder(message?: unknown): Record<string, unknown> {
   const role =
     message &&
@@ -1301,6 +1307,7 @@ export function buildOversizedHistoryPlaceholder(message?: unknown): Record<stri
   };
 }
 
+/** Reused helper for replace Oversized Chat History Messages behavior in src/gateway/server-methods. */
 export function replaceOversizedChatHistoryMessages(params: {
   messages: unknown[];
   maxSingleMessageBytes: number;
@@ -1320,6 +1327,7 @@ export function replaceOversizedChatHistoryMessages(params: {
   return { messages: replacedCount > 0 ? next : messages, replacedCount };
 }
 
+/** Reused helper for enforce Chat History Final Budget behavior in src/gateway/server-methods. */
 export function enforceChatHistoryFinalBudget(params: { messages: unknown[]; maxBytes: number }): {
   messages: unknown[];
   placeholderCount: number;
@@ -2051,6 +2059,7 @@ function isChatHistoryAssistantMessage(message: unknown): boolean {
   return asOptionalRecord(message)?.role === "assistant";
 }
 
+/** Reused helper for drop Pre Session Start Announce Pairs behavior in src/gateway/server-methods. */
 export function dropPreSessionStartAnnouncePairs(
   messages: unknown[],
   sessionStartedAt: number | undefined,
@@ -2099,6 +2108,7 @@ function dropLocalHistoryOverreadContextMessage(
   return [...messages.slice(0, index), ...messages.slice(index + 1)];
 }
 
+/** Reused constant for chat Handlers behavior in src/gateway/server-methods. */
 export const chatHandlers: GatewayRequestHandlers = {
   "chat.history": async ({ params, respond, context }) => {
     if (!validateChatHistoryParams(params)) {

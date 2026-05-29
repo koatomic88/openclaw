@@ -1,3 +1,4 @@
+// gateway server runtime state helpers and runtime behavior.
 import type { IncomingMessage, Server as HttpServer, ServerResponse } from "node:http";
 import type { Duplex } from "node:stream";
 import { WebSocketServer } from "ws";
@@ -64,6 +65,7 @@ type GatewayPluginUpgradeHandler = (
   },
 ) => Promise<boolean>;
 
+/** Reused helper for create Gateway Runtime State behavior in src/gateway. */
 export async function createGatewayRuntimeState(params: {
   cfg: import("../config/config.js").OpenClawConfig;
   bindHost: string;

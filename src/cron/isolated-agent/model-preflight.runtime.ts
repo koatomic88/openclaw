@@ -1,3 +1,4 @@
+// Runtime boundary for cron/isolated-agent model preflight runtime behavior.
 import { normalizeProviderId } from "../../agents/provider-id.js";
 import type { ModelProviderConfig } from "../../config/types.models.js";
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
@@ -10,6 +11,7 @@ const PREFLIGHT_TIMEOUT_MS = 2_500;
 
 type PreflightApi = "ollama" | "openai-completions";
 
+/** Shared type for Cron Model Provider Preflight Result in src/cron/isolated-agent. */
 export type CronModelProviderPreflightResult =
   | { status: "available" }
   | {
@@ -174,6 +176,7 @@ async function probeLocalProviderEndpoint(params: {
   }
 }
 
+/** Reused helper for preflight Cron Model Provider behavior in src/cron/isolated-agent. */
 export async function preflightCronModelProvider(params: {
   cfg: OpenClawConfig;
   provider: string;
@@ -224,6 +227,7 @@ export async function preflightCronModelProvider(params: {
   });
 }
 
+/** Reused helper for reset Cron Model Provider Preflight Cache For Test behavior in src/cron/isolated-agent. */
 export function resetCronModelProviderPreflightCacheForTest(): void {
   preflightCache.clear();
 }

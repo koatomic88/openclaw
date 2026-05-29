@@ -1,3 +1,4 @@
+// ui/src/ui presenter helpers and runtime behavior.
 import { t } from "../i18n/index.ts";
 import { resolveCronJobLastRunStatus } from "./cron-status.ts";
 import {
@@ -8,6 +9,7 @@ import {
 } from "./format.ts";
 import type { CronJob, GatewaySessionRow, PresenceEntry } from "./types.ts";
 
+/** Reused helper for format Presence Summary behavior in ui/src/ui. */
 export function formatPresenceSummary(entry: PresenceEntry): string {
   const host = entry.host ?? "unknown";
   const ip = entry.ip ? `(${entry.ip})` : "";
@@ -16,11 +18,13 @@ export function formatPresenceSummary(entry: PresenceEntry): string {
   return `${host} ${ip} ${mode} ${version}`.trim();
 }
 
+/** Reused helper for format Presence Age behavior in ui/src/ui. */
 export function formatPresenceAge(entry: PresenceEntry): string {
   const ts = entry.ts ?? null;
   return ts ? formatRelativeTimestamp(ts) : t("common.na");
 }
 
+/** Reused helper for format Next Run behavior in ui/src/ui. */
 export function formatNextRun(ms?: number | null) {
   if (!ms) {
     return t("common.na");
@@ -29,6 +33,7 @@ export function formatNextRun(ms?: number | null) {
   return `${weekday}, ${formatMs(ms)} (${formatRelativeTimestamp(ms)})`;
 }
 
+/** Reused helper for format Session Tokens behavior in ui/src/ui. */
 export function formatSessionTokens(row: GatewaySessionRow) {
   if (row.totalTokens == null) {
     return t("common.na");
@@ -38,6 +43,7 @@ export function formatSessionTokens(row: GatewaySessionRow) {
   return ctx ? `${total} / ${ctx}` : String(total);
 }
 
+/** Reused helper for format Event Payload behavior in ui/src/ui. */
 export function formatEventPayload(payload: unknown): string {
   if (payload == null) {
     return "";
@@ -49,6 +55,7 @@ export function formatEventPayload(payload: unknown): string {
   }
 }
 
+/** Reused helper for format Cron State behavior in ui/src/ui. */
 export function formatCronState(job: CronJob) {
   const state = job.state ?? {};
   const next = state.nextRunAtMs ? formatMs(state.nextRunAtMs) : t("common.na");
@@ -57,6 +64,7 @@ export function formatCronState(job: CronJob) {
   return `${status} · next ${next} · last ${last}`;
 }
 
+/** Reused helper for format Cron Schedule behavior in ui/src/ui. */
 export function formatCronSchedule(job: CronJob) {
   const s = job.schedule;
   if (s.kind === "at") {
@@ -69,6 +77,7 @@ export function formatCronSchedule(job: CronJob) {
   return `Cron ${s.expr}${s.tz ? ` (${s.tz})` : ""}`;
 }
 
+/** Reused helper for format Cron Payload behavior in ui/src/ui. */
 export function formatCronPayload(job: CronJob) {
   const p = job.payload;
   if (p.kind === "systemEvent") {

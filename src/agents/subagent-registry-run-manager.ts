@@ -1,3 +1,4 @@
+/** Constructs and updates subagent run records at spawn and yield boundaries. */
 import { getRuntimeConfig } from "../config/config.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { callGateway } from "../gateway/call.js";
@@ -112,6 +113,7 @@ function resolveWaitTimeoutMsForRun(
   return Math.max(1, Math.min(normalizedWaitTimeoutMs, deadlineMs - now));
 }
 
+/** Reused helper for mark Subagent Run Paused After Yield behavior in src/agents. */
 export function markSubagentRunPausedAfterYield(params: {
   entry: SubagentRunRecord;
   startedAt?: number;
@@ -157,6 +159,7 @@ export function markSubagentRunPausedAfterYield(params: {
   return mutated;
 }
 
+/** Shared type for Register Subagent Run Params in src/agents. */
 export type RegisterSubagentRunParams = {
   runId: string;
   childSessionKey: string;
@@ -179,6 +182,7 @@ export type RegisterSubagentRunParams = {
   retainAttachmentsOnKeep?: boolean;
 };
 
+/** Reused helper for create Subagent Run Manager behavior in src/agents. */
 export function createSubagentRunManager(params: {
   runs: Map<string, SubagentRunRecord>;
   resumedRuns: Set<string>;

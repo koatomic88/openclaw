@@ -1,3 +1,4 @@
+// gateway session reset service helpers and runtime behavior.
 import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
@@ -107,6 +108,7 @@ function stripRuntimeModelState(entry?: SessionEntry): SessionEntry | undefined 
   };
 }
 
+/** Reused helper for archive Session Transcripts For Session behavior in src/gateway. */
 export function archiveSessionTranscriptsForSession(params: {
   sessionId: string | undefined;
   storePath: string;
@@ -118,6 +120,7 @@ export function archiveSessionTranscriptsForSession(params: {
   return archiveSessionTranscriptsForSessionDetailed(params).map((entry) => entry.archivedPath);
 }
 
+/** Reused helper for archive Session Transcripts For Session Detailed behavior in src/gateway. */
 export function archiveSessionTranscriptsForSessionDetailed(params: {
   sessionId: string | undefined;
   storePath: string;
@@ -139,6 +142,7 @@ export function archiveSessionTranscriptsForSessionDetailed(params: {
   });
 }
 
+/** Reused helper for emit Gateway Session End Plugin Hook behavior in src/gateway. */
 export function emitGatewaySessionEndPluginHook(params: {
   cfg: OpenClawConfig;
   sessionKey: string;
@@ -193,6 +197,7 @@ export function emitGatewaySessionEndPluginHook(params: {
   });
 }
 
+/** Reused helper for emit Gateway Session Start Plugin Hook behavior in src/gateway. */
 export function emitGatewaySessionStartPluginHook(params: {
   cfg: OpenClawConfig;
   sessionKey: string;
@@ -238,6 +243,7 @@ export function emitGatewaySessionStartPluginHook(params: {
 
 const SHUTDOWN_DRAIN_DEFAULT_TOTAL_TIMEOUT_MS = 2_000;
 
+/** Shared type for Drain Active Sessions For Shutdown Result in src/gateway. */
 export type DrainActiveSessionsForShutdownResult = {
   emittedSessionIds: string[];
   timedOut: boolean;
@@ -324,6 +330,7 @@ export async function drainActiveSessionsForShutdown(params: {
   }
 }
 
+/** Reused helper for emit Session Unbound Lifecycle Event behavior in src/gateway. */
 export async function emitSessionUnboundLifecycleEvent(params: {
   targetSessionKey: string;
   reason: "session-reset" | "session-delete";
@@ -606,6 +613,7 @@ async function closeChildAcpRuntimesForParent(params: {
   );
 }
 
+/** Reused helper for cleanup Session Before Mutation behavior in src/gateway. */
 export async function cleanupSessionBeforeMutation(params: {
   cfg: OpenClawConfig;
   key: string;
@@ -649,6 +657,7 @@ export async function cleanupSessionBeforeMutation(params: {
   return parentAcpError;
 }
 
+/** Reused helper for emit Gateway Before Reset Plugin Hook behavior in src/gateway. */
 export async function emitGatewayBeforeResetPluginHook(params: {
   cfg: OpenClawConfig;
   key: string;
@@ -700,6 +709,7 @@ export async function emitGatewayBeforeResetPluginHook(params: {
     });
 }
 
+/** Reused helper for perform Gateway Session Reset behavior in src/gateway. */
 export async function performGatewaySessionReset(params: {
   key: string;
   reason: "new" | "reset";

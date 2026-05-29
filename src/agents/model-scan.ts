@@ -1,3 +1,4 @@
+/** Scans provider catalogs for available model ids. */
 import { Type } from "typebox";
 import { formatErrorMessage } from "../infra/errors.js";
 import { getEnvApiKey } from "../llm/env-api-keys.js";
@@ -55,6 +56,7 @@ type ProbeResult = {
   skipped?: boolean;
 };
 
+/** Result from scanning a provider model catalog. */
 export type ModelScanResult = {
   id: string;
   name: string;
@@ -401,6 +403,7 @@ async function mapWithConcurrency<T, R>(
   return results;
 }
 
+/** Scan OpenRouter model catalog and normalize useful model metadata. */
 export async function scanOpenRouterModels(
   options: OpenRouterScanOptions = {},
 ): Promise<ModelScanResult[]> {

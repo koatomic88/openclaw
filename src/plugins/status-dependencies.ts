@@ -1,8 +1,11 @@
+// plugins status dependencies helpers and runtime behavior.
 import fs from "node:fs";
 import path from "node:path";
 
+/** Shared type for Plugin Dependency Spec Map in src/plugins. */
 export type PluginDependencySpecMap = Record<string, string>;
 
+/** Shared type for Plugin Dependency Entry in src/plugins. */
 export type PluginDependencyEntry = {
   name: string;
   spec: string;
@@ -11,6 +14,7 @@ export type PluginDependencyEntry = {
   resolvedPath?: string;
 };
 
+/** Shared type for Plugin Dependency Status in src/plugins. */
 export type PluginDependencyStatus = {
   hasDependencies: boolean;
   installed: boolean;
@@ -37,6 +41,7 @@ function normalizeDependencyMap(raw: unknown): PluginDependencySpecMap {
   return normalized;
 }
 
+/** Reused helper for normalize Plugin Dependency Specs behavior in src/plugins. */
 export function normalizePluginDependencySpecs(params: {
   dependencies?: unknown;
   optionalDependencies?: unknown;
@@ -104,6 +109,7 @@ function buildDependencyEntries(params: {
     });
 }
 
+/** Reused helper for build Plugin Dependency Status behavior in src/plugins. */
 export function buildPluginDependencyStatus(params: {
   rootDir?: string;
   dependencies?: PluginDependencySpecMap;

@@ -1,3 +1,4 @@
+/** Public SDK helpers for optional channel setup wizard composition. */
 import type { ChannelSetupWizard } from "../channels/plugins/setup-wizard-types.js";
 import type { ChannelSetupAdapter } from "../channels/plugins/types.adapters.js";
 import { DEFAULT_ACCOUNT_ID } from "../routing/session-key.js";
@@ -19,6 +20,7 @@ function buildOptionalChannelSetupMessage(params: OptionalChannelSetupParams): s
   return message.join(" ");
 }
 
+/** Reused helper for create Optional Channel Setup Adapter behavior in src/plugin-sdk. */
 export function createOptionalChannelSetupAdapter(
   params: OptionalChannelSetupParams,
 ): ChannelSetupAdapter {
@@ -32,6 +34,7 @@ export function createOptionalChannelSetupAdapter(
   };
 }
 
+/** Reused helper for create Optional Channel Setup Wizard behavior in src/plugin-sdk. */
 export function createOptionalChannelSetupWizard(
   params: OptionalChannelSetupParams,
 ): ChannelSetupWizard {

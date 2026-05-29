@@ -1,3 +1,4 @@
+// plugins providers helpers and runtime behavior.
 import { splitTrailingAuthProfile } from "../agents/model-ref-profile.js";
 import { normalizeProviderId } from "../agents/provider-id.js";
 import { compileSafeRegex } from "../security/safe-regex.js";
@@ -149,6 +150,7 @@ function toManifestOwnerRecord(plugin: PluginRegistryRecord) {
   };
 }
 
+/** Reused helper for with Bundled Provider Vitest Compat behavior in src/plugins. */
 export function withBundledProviderVitestCompat(params: {
   config: PluginLoadOptions["config"];
   pluginIds: readonly string[];
@@ -157,6 +159,7 @@ export function withBundledProviderVitestCompat(params: {
   return withBundledPluginVitestCompat(params);
 }
 
+/** Reused helper for resolve Bundled Provider Compat Plugin Ids behavior in src/plugins. */
 export function resolveBundledProviderCompatPluginIds(params: {
   config?: PluginLoadOptions["config"];
   workspaceDir?: string;
@@ -187,6 +190,7 @@ export function resolveBundledProviderCompatPluginIds(params: {
   );
 }
 
+/** Reused helper for resolve Enabled Provider Plugin Ids behavior in src/plugins. */
 export function resolveEnabledProviderPluginIds(params: ProviderRegistryLoadParams): string[] {
   const { registry, onlyPluginIdSet } = loadScopedProviderRegistry(params);
   const providerSurfacePluginIds = resolveProviderSurfacePluginIdSet({ ...params, registry });
@@ -206,6 +210,7 @@ export function resolveEnabledProviderPluginIds(params: ProviderRegistryLoadPara
   );
 }
 
+/** Reused helper for resolve External Auth Profile Provider Plugin Ids behavior in src/plugins. */
 export function resolveExternalAuthProfileProviderPluginIds(params: {
   config?: PluginLoadOptions["config"];
   workspaceDir?: string;
@@ -249,6 +254,7 @@ function resolveRegistryManifestContractPluginIds(params: {
     .toSorted((left, right) => left.localeCompare(right));
 }
 
+/** Reused helper for resolve External Auth Profile Compat Fallback Plugin Ids behavior in src/plugins. */
 export function resolveExternalAuthProfileCompatFallbackPluginIds(params: {
   config?: PluginLoadOptions["config"];
   workspaceDir?: string;
@@ -277,6 +283,7 @@ export function resolveExternalAuthProfileCompatFallbackPluginIds(params: {
   );
 }
 
+/** Reused helper for resolve Discovered Provider Plugin Ids behavior in src/plugins. */
 export function resolveDiscoveredProviderPluginIds(params: {
   config?: PluginLoadOptions["config"];
   workspaceDir?: string;
@@ -339,6 +346,7 @@ function isProviderPluginEligibleForSetupDiscovery(params: {
   });
 }
 
+/** Reused helper for resolve Discoverable Provider Owner Plugin Ids behavior in src/plugins. */
 export function resolveDiscoverableProviderOwnerPluginIds(params: {
   pluginIds: readonly string[];
   config?: PluginLoadOptions["config"];
@@ -384,6 +392,7 @@ function isProviderPluginEligibleForRuntimeOwnerActivation(params: {
   });
 }
 
+/** Reused helper for resolve Activatable Provider Owner Plugin Ids behavior in src/plugins. */
 export function resolveActivatableProviderOwnerPluginIds(params: {
   pluginIds: readonly string[];
   config?: PluginLoadOptions["config"];
@@ -404,6 +413,7 @@ export function resolveActivatableProviderOwnerPluginIds(params: {
   });
 }
 
+/** Reused constant for testing behavior in src/plugins. */
 export const testing = {
   resolveActivatableProviderOwnerPluginIds,
   resolveEnabledProviderPluginIds,
@@ -511,6 +521,7 @@ function resolvePreferredManifestPluginIds(
   return undefined;
 }
 
+/** Reused helper for resolve Owning Plugin Ids For Provider behavior in src/plugins. */
 export function resolveOwningPluginIdsForProvider(params: {
   provider: string;
   config?: PluginLoadOptions["config"];
@@ -574,6 +585,7 @@ function resolveOwningPluginIdsForCliBackend(params: {
   return deduped.length > 0 ? deduped : undefined;
 }
 
+/** Reused helper for resolve Owning Plugin Ids For Provider Ref behavior in src/plugins. */
 export function resolveOwningPluginIdsForProviderRef(params: {
   provider: string;
   config?: PluginLoadOptions["config"];
@@ -593,6 +605,7 @@ export function resolveOwningPluginIdsForProviderRef(params: {
   );
 }
 
+/** Reused helper for resolve Owning Plugin Ids For Model Ref behavior in src/plugins. */
 export function resolveOwningPluginIdsForModelRef(params: {
   model: string;
   config?: PluginLoadOptions["config"];
@@ -647,6 +660,7 @@ export function resolveOwningPluginIdsForModelRef(params: {
   return resolvePreferredManifestPluginIds(manifestRegistry, matchedByPrefix);
 }
 
+/** Reused helper for resolve Owning Plugin Ids For Model Refs behavior in src/plugins. */
 export function resolveOwningPluginIdsForModelRefs(params: {
   models: readonly string[];
   config?: PluginLoadOptions["config"];
@@ -671,6 +685,7 @@ export function resolveOwningPluginIdsForModelRefs(params: {
   );
 }
 
+/** Reused helper for resolve Non Bundled Provider Plugin Ids behavior in src/plugins. */
 export function resolveNonBundledProviderPluginIds(params: {
   config?: PluginLoadOptions["config"];
   workspaceDir?: string;
@@ -692,6 +707,7 @@ export function resolveNonBundledProviderPluginIds(params: {
   );
 }
 
+/** Reused helper for resolve Catalog Hook Provider Plugin Ids behavior in src/plugins. */
 export function resolveCatalogHookProviderPluginIds(params: {
   config?: PluginLoadOptions["config"];
   workspaceDir?: string;
@@ -729,4 +745,5 @@ export function resolveCatalogHookProviderPluginIds(params: {
   }).filter((pluginId) => runtimeAugmentPluginIds.has(pluginId));
   return dedupeSortedPluginIds([...enabledProviderPluginIds, ...bundledCompatPluginIds]);
 }
+/** Re-exported API for src/plugins, starting with testing. */
 export { testing as __testing };

@@ -1,3 +1,4 @@
+// Tests ui/src/ui/views usage render details test behavior.
 import { describe, it, expect } from "vitest";
 import {
   computeFilteredUsage,

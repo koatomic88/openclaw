@@ -1,3 +1,4 @@
+/** Doctor checks for command owner configuration and channel sender labels. */
 import { formatCliCommand } from "../cli/command-format.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import type { PairingChannel } from "../pairing/pairing-store.types.js";
@@ -13,10 +14,12 @@ function resolveConfiguredCommandOwners(cfg: OpenClawConfig): string[] {
   return normalizeStringEntries(owners.map((entry) => String(entry ?? "")));
 }
 
+/** Reused helper for has Configured Command Owners behavior in src/commands. */
 export function hasConfiguredCommandOwners(cfg: OpenClawConfig): boolean {
   return resolveConfiguredCommandOwners(cfg).length > 0;
 }
 
+/** Reused helper for format Command Owner From Channel Sender behavior in src/commands. */
 export function formatCommandOwnerFromChannelSender(params: {
   channel: PairingChannel;
   id: string;
@@ -35,6 +38,7 @@ export function formatCommandOwnerFromChannelSender(params: {
   return `${params.channel}:${id}`;
 }
 
+/** Reused helper for note Command Owner Health behavior in src/commands. */
 export function noteCommandOwnerHealth(cfg: OpenClawConfig): void {
   if (hasConfiguredCommandOwners(cfg)) {
     return;

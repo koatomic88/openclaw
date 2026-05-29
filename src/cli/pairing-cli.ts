@@ -1,3 +1,4 @@
+/** Registers CLI commands for channel pairing approval workflows. */
 import type { Command } from "commander";
 import { normalizeChannelId } from "../channels/plugins/index.js";
 import { listPairingChannels, notifyPairingApproved } from "../channels/plugins/pairing.js";
@@ -84,6 +85,7 @@ async function maybeBootstrapCommandOwnerFromPairing(params: {
   return { ownerEntry, bootstrapped: true };
 }
 
+/** Reused helper for register Pairing Cli behavior in src/cli. */
 export function registerPairingCli(program: Command) {
   const channels = listPairingChannels();
   const pairing = program

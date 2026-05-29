@@ -1,3 +1,4 @@
+// Tests extensions/voice-call/src cli test behavior.
 import { describe, expect, it } from "vitest";
 import { testing } from "./cli.js";
 

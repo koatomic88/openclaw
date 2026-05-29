@@ -22,6 +22,7 @@ const require = createRequire(import.meta.url);
 const fs = require("node:fs") as typeof import("fs");
 
 // Re-export types from the main package
+/** Re-exported API for src/agents/utils, starting with Photon Image. */
 export type { PhotonImage as PhotonImageType } from "@silvia-odwyer/photon-node";
 
 type ReadFileSync = typeof fs.readFileSync;

@@ -1,3 +1,4 @@
+/** Resolves profile eligibility and selection order for provider auth. */
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
 import { resolveProviderIdForAuth } from "../provider-auth-aliases.js";
 import { findNormalizedProviderValue, normalizeProviderId } from "../provider-id.js";
@@ -13,12 +14,14 @@ import {
   resolveProfileUnusableUntil,
 } from "./usage-state.js";
 
+/** Shared type for Auth Profile Eligibility Reason Code in src/agents/auth-profiles. */
 export type AuthProfileEligibilityReasonCode =
   | AuthCredentialReasonCode
   | "profile_missing"
   | "provider_mismatch"
   | "mode_mismatch";
 
+/** Shared type for Auth Profile Eligibility in src/agents/auth-profiles. */
 export type AuthProfileEligibility = {
   eligible: boolean;
   reasonCode: AuthProfileEligibilityReasonCode;
@@ -63,6 +66,7 @@ function isCredentialProviderCompatibleWithAuthProvider(params: {
   );
 }
 
+/** Reused helper for is Stored Credential Compatible With Auth Provider behavior in src/agents/auth-profiles. */
 export function isStoredCredentialCompatibleWithAuthProvider(params: {
   cfg?: OpenClawConfig;
   provider: string;
@@ -133,6 +137,7 @@ function providerAllowsAwsSdkAuth(cfg: OpenClawConfig | undefined, provider: str
   return authMode === "aws-sdk";
 }
 
+/** Reused helper for is Configured Aws Sdk Auth Profile For Provider behavior in src/agents/auth-profiles. */
 export function isConfiguredAwsSdkAuthProfileForProvider(params: {
   cfg?: OpenClawConfig;
   provider: string;
@@ -151,6 +156,7 @@ export function isConfiguredAwsSdkAuthProfileForProvider(params: {
   return providerAllowsAwsSdkAuth(params.cfg, params.provider);
 }
 
+/** Reused helper for resolve Auth Profile Eligibility behavior in src/agents/auth-profiles. */
 export function resolveAuthProfileEligibility(params: {
   cfg?: OpenClawConfig;
   store: AuthProfileStore;
@@ -211,6 +217,7 @@ export function resolveAuthProfileEligibility(params: {
   };
 }
 
+/** Reused helper for resolve Auth Profile Order behavior in src/agents/auth-profiles. */
 export function resolveAuthProfileOrder(params: {
   cfg?: OpenClawConfig;
   store: AuthProfileStore;

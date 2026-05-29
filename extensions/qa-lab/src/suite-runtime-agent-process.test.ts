@@ -1,3 +1,4 @@
+// Tests extensions/qa-lab/src suite runtime agent process test behavior.
 import { EventEmitter } from "node:events";
 import path from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";

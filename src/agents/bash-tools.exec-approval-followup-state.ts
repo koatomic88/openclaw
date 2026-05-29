@@ -1,3 +1,4 @@
+/** Runtime handoff state for exec approval follow-up runs. */
 import { randomUUID } from "node:crypto";
 import { normalizeOptionalString } from "../shared/string-coerce.js";
 import type { ExecElevatedDefaults } from "./bash-tools.exec-types.js";
@@ -6,6 +7,7 @@ const EXEC_APPROVAL_FOLLOWUP_IDEMPOTENCY_PREFIX = "exec-approval-followup:";
 const EXEC_APPROVAL_FOLLOWUP_IDEMPOTENCY_NONCE_MARKER = ":nonce:";
 const EXEC_APPROVAL_FOLLOWUP_RUNTIME_HANDOFF_TTL_MS = 5 * 60 * 1000;
 
+/** Shared type for Exec Approval Followup Runtime Handoff in src/agents. */
 export type ExecApprovalFollowupRuntimeHandoff = {
   kind: "exec-approval-followup";
   approvalId: string;
@@ -14,6 +16,7 @@ export type ExecApprovalFollowupRuntimeHandoff = {
   bashElevated: ExecElevatedDefaults;
 };
 
+/** Shared type for Exec Approval Followup Runtime Handoff Registration in src/agents. */
 export type ExecApprovalFollowupRuntimeHandoffRegistration = {
   handoffId: string;
   idempotencyKey: string;
@@ -62,6 +65,7 @@ function pruneExpiredExecApprovalFollowupRuntimeHandoffs(nowMs: number): void {
   }
 }
 
+/** Build an idempotency key for an exec approval follow-up. */
 export function buildExecApprovalFollowupIdempotencyKey(params: {
   approvalId: string;
   nonce?: string;
@@ -71,6 +75,7 @@ export function buildExecApprovalFollowupIdempotencyKey(params: {
   return nonce ? `${base}${EXEC_APPROVAL_FOLLOWUP_IDEMPOTENCY_NONCE_MARKER}${nonce}` : base;
 }
 
+/** Parse the approval id from a follow-up idempotency key. */
 export function parseExecApprovalFollowupApprovalId(idempotencyKey: string): string | undefined {
   const normalized = normalizeOptionalString(idempotencyKey);
   if (!normalized?.startsWith(EXEC_APPROVAL_FOLLOWUP_IDEMPOTENCY_PREFIX)) {
@@ -81,6 +86,7 @@ export function parseExecApprovalFollowupApprovalId(idempotencyKey: string): str
   return normalizeOptionalString(nonceMarker >= 0 ? body.slice(0, nonceMarker) : body);
 }
 
+/** Register a short-lived runtime handoff for an approval follow-up. */
 export function registerExecApprovalFollowupRuntimeHandoff(params: {
   approvalId: string;
   sessionKey: string;
@@ -110,6 +116,7 @@ export function registerExecApprovalFollowupRuntimeHandoff(params: {
   return { handoffId, idempotencyKey };
 }
 
+/** Consume a registered exec approval follow-up handoff exactly once. */
 export function consumeExecApprovalFollowupRuntimeHandoff(params: {
   handoffId?: string;
   approvalId?: string;
@@ -145,6 +152,7 @@ export function consumeExecApprovalFollowupRuntimeHandoff(params: {
   return cloneExecApprovalFollowupRuntimeHandoff(entry);
 }
 
+/** Reset exec approval follow-up handoff state between tests. */
 export function resetExecApprovalFollowupRuntimeHandoffsForTests(): void {
   execApprovalFollowupRuntimeHandoffs.clear();
 }

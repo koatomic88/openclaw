@@ -1,7 +1,9 @@
+// infra/net http connect tunnel helpers and runtime behavior.
 import * as net from "node:net";
 import * as tls from "node:tls";
 import type { ManagedProxyTlsOptions } from "./proxy/proxy-tls.js";
 
+/** Shared type for Http Connect Tunnel Params in src/infra/net. */
 export type HttpConnectTunnelParams = {
   proxyUrl: URL;
   proxyTls?: ManagedProxyTlsOptions;
@@ -305,6 +307,7 @@ class HttpConnectTunnelAttempt {
   };
 }
 
+/** Reused helper for open Http Connect Tunnel behavior in src/infra/net. */
 export async function openHttpConnectTunnel(
   params: HttpConnectTunnelParams,
 ): Promise<tls.TLSSocket> {

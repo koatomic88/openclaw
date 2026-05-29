@@ -1,3 +1,4 @@
+// Tests extensions/mattermost/src/mattermost monitor resources test behavior.
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const fetchMattermostChannel = vi.hoisted(() => vi.fn());

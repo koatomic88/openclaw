@@ -1,3 +1,4 @@
+// Tests extensions/signal/src client adapter test behavior.
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import {
   signalRpcRequest as signalRpcRequestImpl,

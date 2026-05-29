@@ -1,3 +1,4 @@
+/** Registers security and gateway auth inspection CLI commands. */
 import type { Command } from "commander";
 import { getRuntimeConfig } from "../config/config.js";
 import type { GatewayAuthMode } from "../config/types.gateway.js";
@@ -71,6 +72,7 @@ function formatSummary(summary: { critical: number; warn: number; info: number }
   return parts.join(" · ");
 }
 
+/** Reused helper for register Security Cli behavior in src/cli. */
 export function registerSecurityCli(program: Command) {
   const security = program
     .command("security")

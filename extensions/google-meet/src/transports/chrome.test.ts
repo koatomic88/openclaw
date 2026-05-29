@@ -1,3 +1,4 @@
+// Tests extensions/google-meet/src/transports chrome test behavior.
 import { describe, expect, it } from "vitest";
 import { testing } from "./chrome.js";
 

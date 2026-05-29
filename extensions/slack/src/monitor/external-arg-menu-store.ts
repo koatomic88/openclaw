@@ -1,3 +1,4 @@
+// extensions/slack/src/monitor external arg menu store helpers and runtime behavior.
 import { generateSecureToken } from "openclaw/plugin-sdk/secure-random-runtime";
 
 const SLACK_EXTERNAL_ARG_MENU_TOKEN_BYTES = 18;

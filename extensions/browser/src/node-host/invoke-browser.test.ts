@@ -1,3 +1,4 @@
+// Tests extensions/browser/src/node-host invoke browser test behavior.
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const controlServiceMocks = vi.hoisted(() => ({

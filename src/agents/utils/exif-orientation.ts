@@ -1,3 +1,4 @@
+// EXIF orientation parser and Photon transforms for normalizing image pixels.
 import type { PhotonImageType } from "./photon.js";
 
 type Photon = typeof import("@silvia-odwyer/photon-node");
@@ -178,7 +179,12 @@ function rotate90(photon: Photon, image: PhotonImageType, dstIndex: DstIndexFn):
   return new photon.PhotonImage(dst, h, w);
 }
 
-// Flip orientations mutate in-place. Rotations return a new image (caller must free the old one if different).
+/**
+ * Apply EXIF orientation to a Photon image.
+ *
+ * Flip orientations mutate in-place. Rotations return a new image, so callers
+ * must free the original image when the returned object differs.
+ */
 export function applyExifOrientation(
   photon: Photon,
   image: PhotonImageType,

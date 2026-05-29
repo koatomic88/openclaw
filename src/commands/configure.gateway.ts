@@ -1,3 +1,4 @@
+/** Configure wizard section for gateway host, port, and bind settings. */
 import { validateIPv4AddressInput } from "@openclaw/net-policy/ipv4";
 import { formatPortRangeHint } from "../cli/error-format.js";
 import { parsePort } from "../cli/shared/parse-port.js";
@@ -35,6 +36,7 @@ function validateGatewayPortInput(value: unknown): string | undefined {
   return undefined;
 }
 
+/** Reused helper for prompt Gateway Config behavior in src/commands. */
 export async function promptGatewayConfig(
   cfg: OpenClawConfig,
   runtime: RuntimeEnv,

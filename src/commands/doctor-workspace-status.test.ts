@@ -1,3 +1,4 @@
+/** Tests workspace status doctor summaries. */
 import { describe, expect, it, vi } from "vitest";
 import {
   createPluginLoadResult,

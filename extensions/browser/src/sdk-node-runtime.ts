@@ -1,3 +1,4 @@
+// extensions/browser/src sdk node runtime helpers and runtime behavior.
 export {
   addGatewayClientOptions,
   callGatewayFromCli,
@@ -38,7 +39,10 @@ function createTimeoutAbortSignal(timeoutMs: number, label: string | undefined) 
   return { controller, error, timer };
 }
 
-function waitForAbort(signal: AbortSignal, fallback: Error): {
+function waitForAbort(
+  signal: AbortSignal,
+  fallback: Error,
+): {
   promise: Promise<never>;
   cleanup: () => void;
 } {

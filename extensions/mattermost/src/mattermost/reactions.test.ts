@@ -1,3 +1,4 @@
+// Tests extensions/mattermost/src/mattermost reactions test behavior.
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   addMattermostReaction,

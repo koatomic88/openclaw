@@ -1,3 +1,4 @@
+// infra/outbound current conversation bindings helpers and runtime behavior.
 import fs from "node:fs";
 import path from "node:path";
 import { normalizeConversationText } from "../../acp/conversation-id.js";
@@ -134,6 +135,7 @@ function resolveChannelSupportsCurrentConversationBinding(channel: string): bool
   return false;
 }
 
+/** Reused helper for get Generic Current Conversation Binding Capabilities behavior in src/infra/outbound. */
 export function getGenericCurrentConversationBindingCapabilities(params: {
   channel: string;
   accountId: string;
@@ -150,6 +152,7 @@ export function getGenericCurrentConversationBindingCapabilities(params: {
   };
 }
 
+/** Reused helper for bind Generic Current Conversation behavior in src/infra/outbound. */
 export async function bindGenericCurrentConversation(
   input: SessionBindingBindInput,
 ): Promise<SessionBindingRecord | null> {
@@ -185,12 +188,14 @@ export async function bindGenericCurrentConversation(
   return record;
 }
 
+/** Reused helper for resolve Generic Current Conversation Binding behavior in src/infra/outbound. */
 export function resolveGenericCurrentConversationBinding(
   ref: ConversationRef,
 ): SessionBindingRecord | null {
   return pruneExpiredBinding(buildConversationKey(ref));
 }
 
+/** Reused helper for list Generic Current Conversation Bindings By Session behavior in src/infra/outbound. */
 export function listGenericCurrentConversationBindingsBySession(
   targetSessionKey: string,
 ): SessionBindingRecord[] {
@@ -206,6 +211,7 @@ export function listGenericCurrentConversationBindingsBySession(
   return results;
 }
 
+/** Reused helper for touch Generic Current Conversation Binding behavior in src/infra/outbound. */
 export function touchGenericCurrentConversationBinding(bindingId: string, at = Date.now()): void {
   loadBindingsIntoMemory();
   if (!bindingId.startsWith(CURRENT_BINDINGS_ID_PREFIX)) {
@@ -226,6 +232,7 @@ export function touchGenericCurrentConversationBinding(bindingId: string, at = D
   persistBindingsToDisk();
 }
 
+/** Reused helper for unbind Generic Current Conversation Bindings behavior in src/infra/outbound. */
 export async function unbindGenericCurrentConversationBindings(
   input: SessionBindingUnbindInput,
 ): Promise<SessionBindingRecord[]> {
@@ -260,6 +267,7 @@ export async function unbindGenericCurrentConversationBindings(
   return removed;
 }
 
+/** Reused constant for testing behavior in src/infra/outbound. */
 export const testing = {
   resetCurrentConversationBindingsForTests(params?: {
     deletePersistedFile?: boolean;
@@ -278,4 +286,5 @@ export const testing = {
   },
   resolveBindingsFilePath,
 };
+/** Re-exported API for src/infra/outbound, starting with testing. */
 export { testing as __testing };

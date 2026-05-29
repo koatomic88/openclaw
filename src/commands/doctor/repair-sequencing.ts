@@ -1,3 +1,4 @@
+/** Runs doctor repairs in dependency-aware sequence. */
 import { applyPluginAutoEnable } from "../../config/plugin-auto-enable.js";
 import { sanitizeForLog } from "../../terminal/ansi.js";
 import { maybeRepairLegacyOAuthSidecarProfiles } from "../doctor-auth-oauth-sidecar.js";
@@ -31,6 +32,7 @@ import { maybeRepairStalePluginConfig } from "./shared/stale-plugin-config.js";
 import { maybeRepairStaleSubagentAllowlists } from "./shared/stale-subagent-allowlist.js";
 import { isUpdatePackageSwapInProgress } from "./shared/update-phase.js";
 
+/** Reused helper for run Doctor Repair Sequence behavior in src/commands/doctor. */
 export async function runDoctorRepairSequence(params: {
   state: DoctorConfigMutationState;
   doctorFixCommand: string;

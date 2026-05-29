@@ -1,3 +1,4 @@
+// Tests extensions/qa-lab/src manual lane runtime test behavior.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { startQaLabServer, startQaGatewayChild, startQaProviderServer } = vi.hoisted(() => ({

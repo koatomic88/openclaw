@@ -1,3 +1,4 @@
+// flows channel setup prompts helpers and runtime behavior.
 import { resolveChannelDefaultAccountId } from "../channels/plugins/helpers.js";
 import { getChannelSetupPlugin } from "../channels/plugins/setup-registry.js";
 import type { ChannelSetupPlugin } from "../channels/plugins/setup-wizard-types.js";
@@ -16,10 +17,12 @@ import type { WizardPrompter, WizardSelectOption } from "../wizard/prompts.js";
 
 type ConfiguredChannelAction = "update" | "disable" | "delete" | "skip";
 
+/** Reused helper for format Account Label behavior in src/flows. */
 export function formatAccountLabel(accountId: string): string {
   return accountId === DEFAULT_ACCOUNT_ID ? "default (primary)" : accountId;
 }
 
+/** Reused helper for prompt Configured Action behavior in src/flows. */
 export async function promptConfiguredAction(params: {
   prompter: WizardPrompter;
   label: string;
@@ -60,6 +63,7 @@ export async function promptConfiguredAction(params: {
   });
 }
 
+/** Reused helper for prompt Removal Account Id behavior in src/flows. */
 export async function promptRemovalAccountId(params: {
   cfg: OpenClawConfig;
   prompter: WizardPrompter;
@@ -88,6 +92,7 @@ export async function promptRemovalAccountId(params: {
   return normalizeAccountId(selected) ?? defaultAccountId;
 }
 
+/** Reused helper for maybe Configure Dm Policies behavior in src/flows. */
 export async function maybeConfigureDmPolicies(params: {
   cfg: OpenClawConfig;
   selection: ChannelChoice[];

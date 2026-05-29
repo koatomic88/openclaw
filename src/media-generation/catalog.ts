@@ -1,3 +1,4 @@
+// media-generation catalog helpers and runtime behavior.
 import type {
   UnifiedModelCatalogEntry,
   UnifiedModelCatalogKind,
@@ -5,21 +6,25 @@ import type {
 } from "../model-catalog/types.js";
 import { normalizeUniqueSingleOrTrimmedStringList } from "../shared/string-normalization.js";
 
+/** Shared type for Media Generation Catalog Kind in src/media-generation. */
 export type MediaGenerationCatalogKind = Extract<
   UnifiedModelCatalogKind,
   "image_generation" | "video_generation" | "music_generation"
 >;
 
+/** Shared type for Media Generation Catalog Source in src/media-generation. */
 export type MediaGenerationCatalogSource = Extract<
   UnifiedModelCatalogSource,
   "static" | "live" | "cache" | "configured"
 >;
 
+/** Shared type for Media Generation Catalog Entry in src/media-generation. */
 export type MediaGenerationCatalogEntry<TCapabilities> = UnifiedModelCatalogEntry<TCapabilities> & {
   kind: MediaGenerationCatalogKind;
   source: MediaGenerationCatalogSource;
 };
 
+/** Shared type for Media Generation Catalog Provider in src/media-generation. */
 export type MediaGenerationCatalogProvider<TCapabilities = unknown> = {
   id: string;
   aliases?: readonly string[];
@@ -36,6 +41,7 @@ function uniqueModels(provider: { defaultModel?: string; models?: readonly strin
   ]);
 }
 
+/** Reused helper for synthesize Media Generation Catalog Entries behavior in src/media-generation. */
 export function synthesizeMediaGenerationCatalogEntries<TCapabilities>(params: {
   kind: MediaGenerationCatalogKind;
   provider: MediaGenerationCatalogProvider<TCapabilities>;
@@ -63,6 +69,7 @@ export function synthesizeMediaGenerationCatalogEntries<TCapabilities>(params: {
   });
 }
 
+/** Reused helper for list Media Generation Provider Models behavior in src/media-generation. */
 export function listMediaGenerationProviderModels(provider: {
   defaultModel?: string;
   models?: readonly string[];

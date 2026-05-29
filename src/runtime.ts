@@ -1,12 +1,15 @@
+// OpenClaw runtime helpers and runtime behavior.
 import { clearActiveProgressLine } from "./terminal/progress-line.js";
 import { restoreTerminalState } from "./terminal/restore.js";
 
+/** Shared type for Runtime Env in src. */
 export type RuntimeEnv = {
   log: (...args: unknown[]) => void;
   error: (...args: unknown[]) => void;
   exit: (code: number) => void;
 };
 
+/** Shared type for Output Runtime Env in src. */
 export type OutputRuntimeEnv = RuntimeEnv & {
   writeStdout: (value: string) => void;
   writeJson: (value: unknown, space?: number) => void;
@@ -85,6 +88,7 @@ function createRuntimeIo(): Pick<OutputRuntimeEnv, "log" | "error" | "writeStdou
   };
 }
 
+/** Reused constant for default Runtime behavior in src. */
 export const defaultRuntime: OutputRuntimeEnv = {
   ...createRuntimeIo(),
   exit: (code) => {
@@ -94,6 +98,7 @@ export const defaultRuntime: OutputRuntimeEnv = {
   },
 };
 
+/** Reused helper for create Non Exiting Runtime behavior in src. */
 export function createNonExitingRuntime(): OutputRuntimeEnv {
   return {
     ...createRuntimeIo(),
@@ -103,6 +108,7 @@ export function createNonExitingRuntime(): OutputRuntimeEnv {
   };
 }
 
+/** Reused helper for write Runtime Json behavior in src. */
 export function writeRuntimeJson(
   runtime: RuntimeEnv | OutputRuntimeEnv,
   value: unknown,

@@ -1,4 +1,5 @@
 #!/usr/bin/env -S pnpm tsx
+// scripts/e2e/parallels windows smoke helpers and runtime behavior.
 import { readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { windowsAgentWorkspaceScript } from "./agent-workspace.ts";

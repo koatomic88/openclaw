@@ -1,3 +1,5 @@
+// Shared types for ui/src/ui types behavior.
+/** Shared type for Update Available in ui/src/ui. */
 export type UpdateAvailable = import("../../../src/infra/update-startup.js").UpdateAvailable;
 import type { CronJobBase } from "../../../src/cron/types-shared.js";
 import type { ConfigUiHints } from "../../../src/shared/config-ui-hints-types.js";
@@ -7,8 +9,10 @@ import type {
   SessionsListResultBase,
   SessionsPatchResultBase,
 } from "../../../src/shared/session-types.js";
+/** Re-exported API for ui/src/ui, starting with Config Ui Hint. */
 export type { ConfigUiHint, ConfigUiHints } from "../../../src/shared/config-ui-hints-types.js";
 
+/** Shared type for Channels Status Snapshot in ui/src/ui. */
 export type ChannelsStatusSnapshot = {
   ts: number;
   channelOrder: string[];
@@ -23,6 +27,7 @@ export type ChannelsStatusSnapshot = {
   warnings?: string[];
 };
 
+/** Shared type for Channel Ui Meta Entry in ui/src/ui. */
 export type ChannelUiMetaEntry = {
   id: string;
   label: string;
@@ -30,8 +35,10 @@ export type ChannelUiMetaEntry = {
   systemImage?: string;
 };
 
+/** Reused constant for CRON CHANNEL LAST behavior in ui/src/ui. */
 export const CRON_CHANNEL_LAST = "last";
 
+/** Shared type for Channel Account Snapshot in ui/src/ui. */
 export type ChannelAccountSnapshot = {
   accountId: string;
   name?: string | null;
@@ -69,11 +76,13 @@ export type ChannelAccountSnapshot = {
   application?: unknown;
 };
 
+/** Shared type for Whats App Self in ui/src/ui. */
 export type WhatsAppSelf = {
   e164?: string | null;
   jid?: string | null;
 };
 
+/** Shared type for Whats App Disconnect in ui/src/ui. */
 export type WhatsAppDisconnect = {
   at: number;
   status?: number | null;
@@ -81,6 +90,7 @@ export type WhatsAppDisconnect = {
   loggedOut?: boolean | null;
 };
 
+/** Shared type for Whats App Status in ui/src/ui. */
 export type WhatsAppStatus = {
   configured: boolean;
   linked: boolean;
@@ -96,16 +106,19 @@ export type WhatsAppStatus = {
   lastError?: string | null;
 };
 
+/** Shared type for Telegram Bot in ui/src/ui. */
 export type TelegramBot = {
   id?: number | null;
   username?: string | null;
 };
 
+/** Shared type for Telegram Webhook in ui/src/ui. */
 export type TelegramWebhook = {
   url?: string | null;
   hasCustomCert?: boolean | null;
 };
 
+/** Shared type for Telegram Probe in ui/src/ui. */
 export type TelegramProbe = {
   ok: boolean;
   status?: number | null;
@@ -115,6 +128,7 @@ export type TelegramProbe = {
   webhook?: TelegramWebhook | null;
 };
 
+/** Shared type for Telegram Status in ui/src/ui. */
 export type TelegramStatus = {
   configured: boolean;
   tokenSource?: string | null;
@@ -127,11 +141,13 @@ export type TelegramStatus = {
   lastProbeAt?: number | null;
 };
 
+/** Shared type for Discord Bot in ui/src/ui. */
 export type DiscordBot = {
   id?: string | null;
   username?: string | null;
 };
 
+/** Shared type for Discord Probe in ui/src/ui. */
 export type DiscordProbe = {
   ok: boolean;
   status?: number | null;
@@ -140,6 +156,7 @@ export type DiscordProbe = {
   bot?: DiscordBot | null;
 };
 
+/** Shared type for Discord Status in ui/src/ui. */
 export type DiscordStatus = {
   configured: boolean;
   tokenSource?: string | null;
@@ -151,6 +168,7 @@ export type DiscordStatus = {
   lastProbeAt?: number | null;
 };
 
+/** Shared type for Google Chat Probe in ui/src/ui. */
 export type GoogleChatProbe = {
   ok: boolean;
   status?: number | null;
@@ -158,6 +176,7 @@ export type GoogleChatProbe = {
   elapsedMs?: number | null;
 };
 
+/** Shared type for Google Chat Status in ui/src/ui. */
 export type GoogleChatStatus = {
   configured: boolean;
   credentialSource?: string | null;
@@ -173,16 +192,19 @@ export type GoogleChatStatus = {
   lastProbeAt?: number | null;
 };
 
+/** Shared type for Slack Bot in ui/src/ui. */
 export type SlackBot = {
   id?: string | null;
   name?: string | null;
 };
 
+/** Shared type for Slack Team in ui/src/ui. */
 export type SlackTeam = {
   id?: string | null;
   name?: string | null;
 };
 
+/** Shared type for Slack Probe in ui/src/ui. */
 export type SlackProbe = {
   ok: boolean;
   status?: number | null;
@@ -192,6 +214,7 @@ export type SlackProbe = {
   team?: SlackTeam | null;
 };
 
+/** Shared type for Slack Status in ui/src/ui. */
 export type SlackStatus = {
   configured: boolean;
   botTokenSource?: string | null;
@@ -204,6 +227,7 @@ export type SlackStatus = {
   lastProbeAt?: number | null;
 };
 
+/** Shared type for Signal Probe in ui/src/ui. */
 export type SignalProbe = {
   ok: boolean;
   status?: number | null;
@@ -212,6 +236,7 @@ export type SignalProbe = {
   version?: string | null;
 };
 
+/** Shared type for Signal Status in ui/src/ui. */
 export type SignalStatus = {
   configured: boolean;
   baseUrl: string;
@@ -223,11 +248,13 @@ export type SignalStatus = {
   lastProbeAt?: number | null;
 };
 
+/** Shared type for IMessage Probe in ui/src/ui. */
 export type IMessageProbe = {
   ok: boolean;
   error?: string | null;
 };
 
+/** Shared type for IMessage Status in ui/src/ui. */
 export type IMessageStatus = {
   configured: boolean;
   running: boolean;
@@ -240,6 +267,7 @@ export type IMessageStatus = {
   lastProbeAt?: number | null;
 };
 
+/** Shared type for Nostr Profile in ui/src/ui. */
 export type NostrProfile = {
   name?: string | null;
   displayName?: string | null;
@@ -251,6 +279,7 @@ export type NostrProfile = {
   lud16?: string | null;
 };
 
+/** Shared type for Nostr Status in ui/src/ui. */
 export type NostrStatus = {
   configured: boolean;
   publicKey?: string | null;
@@ -261,12 +290,14 @@ export type NostrStatus = {
   profile?: NostrProfile | null;
 };
 
+/** Shared type for MSTeams Probe in ui/src/ui. */
 export type MSTeamsProbe = {
   ok: boolean;
   error?: string | null;
   appId?: string | null;
 };
 
+/** Shared type for MSTeams Status in ui/src/ui. */
 export type MSTeamsStatus = {
   configured: boolean;
   running: boolean;
@@ -278,11 +309,13 @@ export type MSTeamsStatus = {
   lastProbeAt?: number | null;
 };
 
+/** Shared type for Config Snapshot Issue in ui/src/ui. */
 export type ConfigSnapshotIssue = {
   path: string;
   message: string;
 };
 
+/** Shared type for Config Snapshot in ui/src/ui. */
 export type ConfigSnapshot = {
   path?: string | null;
   exists?: boolean | null;
@@ -297,6 +330,7 @@ export type ConfigSnapshot = {
   issues?: ConfigSnapshotIssue[] | null;
 };
 
+/** Shared type for Config Schema Response in ui/src/ui. */
 export type ConfigSchemaResponse = {
   schema: unknown;
   uiHints: ConfigUiHints;
@@ -304,6 +338,7 @@ export type ConfigSchemaResponse = {
   generatedAt: string;
 };
 
+/** Shared type for Presence Entry in ui/src/ui. */
 export type PresenceEntry = {
   instanceId?: string | null;
   host?: string | null;
@@ -321,6 +356,7 @@ export type PresenceEntry = {
   ts?: number | null;
 };
 
+/** Shared type for Gateway Sessions Defaults in ui/src/ui. */
 export type GatewaySessionsDefaults = {
   modelProvider: string | null;
   model: string | null;
@@ -330,15 +366,19 @@ export type GatewaySessionsDefaults = {
   thinkingDefault?: string;
 };
 
+/** Shared type for Gateway Thinking Level Option in ui/src/ui. */
 export type GatewayThinkingLevelOption = {
   id: string;
   label: string;
 };
 
+/** Shared type for Chat Model Override in ui/src/ui. */
 export type ChatModelOverride = import("./chat-model-ref.types.ts").ChatModelOverride;
 
+/** Shared type for Gateway Agent Row in ui/src/ui. */
 export type GatewayAgentRow = SharedGatewayAgentRow;
 
+/** Shared type for Agents List Result in ui/src/ui. */
 export type AgentsListResult = {
   defaultId: string;
   mainKey: string;
@@ -346,6 +386,7 @@ export type AgentsListResult = {
   agents: GatewayAgentRow[];
 };
 
+/** Shared type for Agent Identity Result in ui/src/ui. */
 export type AgentIdentityResult = {
   agentId: string;
   name: string;
@@ -356,6 +397,7 @@ export type AgentIdentityResult = {
   emoji?: string;
 };
 
+/** Shared type for Agent File Entry in ui/src/ui. */
 export type AgentFileEntry = {
   name: string;
   path: string;
@@ -365,18 +407,21 @@ export type AgentFileEntry = {
   content?: string;
 };
 
+/** Shared type for Agents Files List Result in ui/src/ui. */
 export type AgentsFilesListResult = {
   agentId: string;
   workspace: string;
   files: AgentFileEntry[];
 };
 
+/** Shared type for Agents Files Get Result in ui/src/ui. */
 export type AgentsFilesGetResult = {
   agentId: string;
   workspace: string;
   file: AgentFileEntry;
 };
 
+/** Shared type for Agents Files Set Result in ui/src/ui. */
 export type AgentsFilesSetResult = {
   ok: true;
   agentId: string;
@@ -384,15 +429,19 @@ export type AgentsFilesSetResult = {
   file: AgentFileEntry;
 };
 
+/** Shared type for Session Run Status in ui/src/ui. */
 export type SessionRunStatus = "running" | "done" | "failed" | "killed" | "timeout";
+/** Shared type for Subagent Run State in ui/src/ui. */
 export type SubagentRunState = "active" | "interrupted" | "historical";
 
+/** Shared type for Session Compaction Checkpoint Reason in ui/src/ui. */
 export type SessionCompactionCheckpointReason =
   | "manual"
   | "auto-threshold"
   | "overflow-retry"
   | "timeout-retry";
 
+/** Shared type for Session Compaction Transcript Reference in ui/src/ui. */
 export type SessionCompactionTranscriptReference = {
   sessionId: string;
   sessionFile?: string;
@@ -400,6 +449,7 @@ export type SessionCompactionTranscriptReference = {
   entryId?: string;
 };
 
+/** Shared type for Session Compaction Checkpoint in ui/src/ui. */
 export type SessionCompactionCheckpoint = {
   checkpointId: string;
   sessionKey: string;
@@ -414,11 +464,13 @@ export type SessionCompactionCheckpoint = {
   postCompaction: SessionCompactionTranscriptReference;
 };
 
+/** Shared type for Session Compaction Checkpoint Preview in ui/src/ui. */
 export type SessionCompactionCheckpointPreview = Pick<
   SessionCompactionCheckpoint,
   "checkpointId" | "createdAt" | "reason"
 >;
 
+/** Shared type for Gateway Session Row in ui/src/ui. */
 export type GatewaySessionRow = {
   key: string;
   spawnedBy?: string;
@@ -462,20 +514,24 @@ export type GatewaySessionRow = {
   latestCompactionCheckpoint?: SessionCompactionCheckpointPreview;
 };
 
+/** Shared type for Sessions List Result in ui/src/ui. */
 export type SessionsListResult = SessionsListResultBase<GatewaySessionsDefaults, GatewaySessionRow>;
 
+/** Shared type for Sessions Compaction List Result in ui/src/ui. */
 export type SessionsCompactionListResult = {
   ok: true;
   key: string;
   checkpoints: SessionCompactionCheckpoint[];
 };
 
+/** Shared type for Sessions Compaction Get Result in ui/src/ui. */
 export type SessionsCompactionGetResult = {
   ok: true;
   key: string;
   checkpoint: SessionCompactionCheckpoint;
 };
 
+/** Shared type for Sessions Compaction Branch Result in ui/src/ui. */
 export type SessionsCompactionBranchResult = {
   ok: true;
   sourceKey: string;
@@ -488,6 +544,7 @@ export type SessionsCompactionBranchResult = {
   } & Record<string, unknown>;
 };
 
+/** Shared type for Sessions Compaction Restore Result in ui/src/ui. */
 export type SessionsCompactionRestoreResult = {
   ok: true;
   key: string;
@@ -499,6 +556,7 @@ export type SessionsCompactionRestoreResult = {
   } & Record<string, unknown>;
 };
 
+/** Shared type for Sessions Patch Result in ui/src/ui. */
 export type SessionsPatchResult = SessionsPatchResultBase<{
   sessionId: string;
   updatedAt?: number;
@@ -515,6 +573,7 @@ export type SessionsPatchResult = SessionsPatchResultBase<{
   };
 };
 
+/** Re-exported API for ui/src/ui. */
 export type {
   CostUsageDailyEntry,
   CostUsageSummary,
@@ -525,23 +584,35 @@ export type {
   SessionUsageTimeSeries,
 } from "./usage-types.ts";
 
+/** Shared type for Cron Run Status in ui/src/ui. */
 export type CronRunStatus = "ok" | "error" | "skipped";
+/** Shared type for Cron Delivery Status in ui/src/ui. */
 export type CronDeliveryStatus = "delivered" | "not-delivered" | "unknown" | "not-requested";
+/** Shared type for Cron Jobs Enabled Filter in ui/src/ui. */
 export type CronJobsEnabledFilter = "all" | "enabled" | "disabled";
+/** Shared type for Cron Jobs Sort By in ui/src/ui. */
 export type CronJobsSortBy = "nextRunAtMs" | "updatedAtMs" | "name";
+/** Shared type for Cron Run Scope in ui/src/ui. */
 export type CronRunScope = "job" | "all";
+/** Shared type for Cron Runs Status Value in ui/src/ui. */
 export type CronRunsStatusValue = CronRunStatus;
+/** Shared type for Cron Runs Status Filter in ui/src/ui. */
 export type CronRunsStatusFilter = "all" | CronRunStatus;
+/** Shared type for Cron Sort Dir in ui/src/ui. */
 export type CronSortDir = "asc" | "desc";
 
+/** Shared type for Cron Schedule in ui/src/ui. */
 export type CronSchedule =
   | { kind: "at"; at: string }
   | { kind: "every"; everyMs: number; anchorMs?: number }
   | { kind: "cron"; expr: string; tz?: string; staggerMs?: number };
 
+/** Shared type for Cron Session Target in ui/src/ui. */
 export type CronSessionTarget = "main" | "isolated" | "current" | `session:${string}`;
+/** Shared type for Cron Wake Mode in ui/src/ui. */
 export type CronWakeMode = "next-heartbeat" | "now";
 
+/** Shared type for Cron Payload in ui/src/ui. */
 export type CronPayload =
   | { kind: "systemEvent"; text: string }
   | {
@@ -559,6 +630,7 @@ export type CronPayload =
       bestEffortDeliver?: boolean;
     };
 
+/** Shared type for Cron Delivery in ui/src/ui. */
 export type CronDelivery = {
   mode: "none" | "announce" | "webhook";
   channel?: string;
@@ -568,6 +640,7 @@ export type CronDelivery = {
   failureDestination?: CronFailureDestination;
 };
 
+/** Shared type for Cron Failure Destination in ui/src/ui. */
 export type CronFailureDestination = {
   channel?: string;
   to?: string;
@@ -575,6 +648,7 @@ export type CronFailureDestination = {
   accountId?: string;
 };
 
+/** Shared type for Cron Failure Alert in ui/src/ui. */
 export type CronFailureAlert = {
   after?: number;
   channel?: string;
@@ -584,6 +658,7 @@ export type CronFailureAlert = {
   accountId?: string;
 };
 
+/** Shared type for Cron Job State in ui/src/ui. */
 export type CronJobState = {
   nextRunAtMs?: number;
   runningAtMs?: number;
@@ -603,6 +678,7 @@ export type CronJobState = {
   lastFailureAlertAtMs?: number;
 };
 
+/** Shared type for Cron Job in ui/src/ui. */
 export type CronJob = CronJobBase<
   CronSchedule,
   CronSessionTarget,
@@ -614,12 +690,14 @@ export type CronJob = CronJobBase<
   state?: CronJobState;
 };
 
+/** Shared type for Cron Status in ui/src/ui. */
 export type CronStatus = {
   enabled: boolean;
   jobs: number;
   nextWakeAtMs?: number | null;
 };
 
+/** Shared type for Cron Run Log Entry in ui/src/ui. */
 export type CronRunLogEntry = {
   ts: number;
   jobId: string;
@@ -647,6 +725,7 @@ export type CronRunLogEntry = {
   jobName?: string;
 };
 
+/** Shared type for Cron Jobs List Result in ui/src/ui. */
 export type CronJobsListResult = {
   jobs: CronJob[];
   total?: number;
@@ -656,6 +735,7 @@ export type CronJobsListResult = {
   hasMore?: boolean;
 };
 
+/** Shared type for Cron Runs Result in ui/src/ui. */
 export type CronRunsResult = {
   entries: CronRunLogEntry[];
   total?: number;
@@ -665,11 +745,13 @@ export type CronRunsResult = {
   hasMore?: boolean;
 };
 
+/** Shared type for Skills Status Config Check in ui/src/ui. */
 export type SkillsStatusConfigCheck = {
   path: string;
   satisfied: boolean;
 };
 
+/** Shared type for Skill Install Option in ui/src/ui. */
 export type SkillInstallOption = {
   id: string;
   kind: "brew" | "node" | "go" | "uv" | "download";
@@ -677,6 +759,7 @@ export type SkillInstallOption = {
   bins: string[];
 };
 
+/** Shared type for Skill Claw Hub Link in ui/src/ui. */
 export type SkillClawHubLink =
   | {
       status: "linked";
@@ -700,12 +783,14 @@ export type SkillClawHubLink =
       lockPath?: string;
     };
 
+/** Shared type for Skill Card Status in ui/src/ui. */
 export type SkillCardStatus = {
   present: true;
   path: string;
   sizeBytes: number;
 };
 
+/** Shared type for Skill Status Entry in ui/src/ui. */
 export type SkillStatusEntry = {
   name: string;
   description: string;
@@ -744,6 +829,7 @@ export type SkillStatusEntry = {
   skillCard?: SkillCardStatus;
 };
 
+/** Shared type for Skill Status Report in ui/src/ui. */
 export type SkillStatusReport = {
   workspaceDir: string;
   managedSkillsDir: string;
@@ -752,8 +838,10 @@ export type SkillStatusReport = {
   skills: SkillStatusEntry[];
 };
 
+/** Shared type for Status Summary in ui/src/ui. */
 export type StatusSummary = Record<string, unknown>;
 
+/** Shared type for Health Snapshot in ui/src/ui. */
 export type HealthSnapshot = Record<string, unknown>;
 
 /** Strongly-typed health response from the gateway (richer than HealthSnapshot). */
@@ -786,32 +874,45 @@ export type ModelCatalogEntry = {
   input?: Array<"text" | "image" | "document">;
 };
 
+/** Shared type for Tool Catalog Profile in ui/src/ui. */
 export type ToolCatalogProfile =
   import("../../../packages/gateway-protocol/src/schema.js").ToolCatalogProfile;
+/** Shared type for Tool Catalog Entry in ui/src/ui. */
 export type ToolCatalogEntry =
   import("../../../packages/gateway-protocol/src/schema.js").ToolCatalogEntry;
+/** Shared type for Tool Catalog Group in ui/src/ui. */
 export type ToolCatalogGroup =
   import("../../../packages/gateway-protocol/src/schema.js").ToolCatalogGroup;
+/** Shared type for Tools Catalog Result in ui/src/ui. */
 export type ToolsCatalogResult =
   import("../../../packages/gateway-protocol/src/schema.js").ToolsCatalogResult;
+/** Shared type for Tools Effective Entry in ui/src/ui. */
 export type ToolsEffectiveEntry =
   import("../../../packages/gateway-protocol/src/schema.js").ToolsEffectiveEntry;
+/** Shared type for Tools Effective Group in ui/src/ui. */
 export type ToolsEffectiveGroup =
   import("../../../packages/gateway-protocol/src/schema.js").ToolsEffectiveGroup;
+/** Shared type for Tools Effective Result in ui/src/ui. */
 export type ToolsEffectiveResult =
   import("../../../packages/gateway-protocol/src/schema.js").ToolsEffectiveResult;
 
+/** Shared type for Model Auth Expiry in ui/src/ui. */
 export type ModelAuthExpiry =
   import("../../../src/gateway/server-methods/models-auth-status.js").ModelAuthExpiry;
+/** Shared type for Model Auth Status Profile in ui/src/ui. */
 export type ModelAuthStatusProfile =
   import("../../../src/gateway/server-methods/models-auth-status.js").ModelAuthStatusProfile;
+/** Shared type for Model Auth Status Provider in ui/src/ui. */
 export type ModelAuthStatusProvider =
   import("../../../src/gateway/server-methods/models-auth-status.js").ModelAuthStatusProvider;
+/** Shared type for Model Auth Status Result in ui/src/ui. */
 export type ModelAuthStatusResult =
   import("../../../src/gateway/server-methods/models-auth-status.js").ModelAuthStatusResult;
 
+/** Shared type for Log Level in ui/src/ui. */
 export type LogLevel = "trace" | "debug" | "info" | "warn" | "error" | "fatal";
 
+/** Shared type for Log Entry in ui/src/ui. */
 export type LogEntry = {
   raw: string;
   time?: string | null;
@@ -823,8 +924,10 @@ export type LogEntry = {
 
 // ── Attention ───────────────────────────────────────
 
+/** Shared type for Attention Severity in ui/src/ui. */
 export type AttentionSeverity = "error" | "warning" | "info";
 
+/** Shared type for Attention Item in ui/src/ui. */
 export type AttentionItem = {
   severity: AttentionSeverity;
   icon: string;

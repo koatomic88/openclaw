@@ -1,3 +1,4 @@
+// Command handler for exporting session trajectories.
 import { resolveSessionAgentId } from "../../agents/agent-scope.js";
 import { createExecTool } from "../../agents/bash-tools.js";
 import type { ExecToolDetails } from "../../agents/bash-tools.js";
@@ -56,6 +57,7 @@ const defaultExportTrajectoryCommandDeps: ExportTrajectoryCommandDeps = {
   deliverPrivateTrajectoryReply: deliverPrivateTrajectoryReply,
 };
 
+/** Reused helper for build Export Trajectory Command Reply behavior in src/auto-reply/reply. */
 export async function buildExportTrajectoryCommandReply(
   params: HandleCommandsParams,
   deps: Partial<ExportTrajectoryCommandDeps> = {},
@@ -121,6 +123,7 @@ async function buildExportTrajectoryApprovalReply(
   };
 }
 
+/** Reused helper for build Export Trajectory Reply behavior in src/auto-reply/reply. */
 export async function buildExportTrajectoryReply(
   params: HandleCommandsParams,
 ): Promise<ReplyPayload> {

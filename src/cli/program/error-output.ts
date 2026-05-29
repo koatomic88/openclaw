@@ -1,3 +1,4 @@
+/** Formats CLI parse errors with command hints and docs links. */
 import { formatDocsLink } from "../../terminal/links.js";
 import { theme } from "../../terminal/theme.js";
 import { getCommandPathWithRootOptions } from "../argv.js";
@@ -41,6 +42,7 @@ function formatDocsHint(): string {
   return `${theme.muted("Docs:")} ${formatDocsLink("/cli", "docs.openclaw.ai/cli")}`;
 }
 
+/** Reused helper for format Cli Parse Error Output behavior in src/cli/program. */
 export function formatCliParseErrorOutput(
   raw: string,
   options: FormatCliParseErrorOptions = {},

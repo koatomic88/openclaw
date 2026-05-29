@@ -1,3 +1,4 @@
+// plugins manifest model id normalization helpers and runtime behavior.
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { normalizeLowercaseStringOrEmpty } from "../shared/string-coerce.js";
 import { getCurrentPluginMetadataSnapshot } from "./current-plugin-metadata-snapshot.js";
@@ -102,6 +103,7 @@ function formatPrefixedModelId(prefix: string, modelId: string): string {
   return `${prefix.replace(/\/+$/u, "")}/${modelId.replace(/^\/+/u, "")}`;
 }
 
+/** Reused helper for normalize Provider Model Id With Manifest behavior in src/plugins. */
 export function normalizeProviderModelIdWithManifest(params: {
   provider: string;
   config?: OpenClawConfig;

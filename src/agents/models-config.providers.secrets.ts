@@ -1,3 +1,4 @@
+/** Public provider auth resolver facade for generated models.json config. */
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { resolveSecretInputRef } from "../config/types.secrets.js";
 import { resolveProviderSyntheticAuthWithPlugin } from "../plugins/provider-runtime.js";
@@ -22,6 +23,7 @@ import {
 import { resolveProviderIdForAuth } from "./provider-auth-aliases.js";
 import { normalizeProviderId } from "./provider-id.js";
 
+/** Re-exported API for src/agents. */
 export type {
   ProfileApiKeyResolution,
   ProviderApiKeyResolver,
@@ -30,6 +32,7 @@ export type {
   SecretDefaults,
 } from "./models-config.providers.secret-helpers.js";
 
+/** Re-exported API for src/agents. */
 export {
   listAuthProfilesForProvider,
   normalizeApiKeyConfig,
@@ -84,6 +87,7 @@ function resolveProviderIdForAuthFromCaches(
   return caches.aliasMap[normalized] ?? normalized;
 }
 
+/** Create a provider apiKey resolver backed by env, source config, and profiles. */
 export function createProviderApiKeyResolver(
   env: NodeJS.ProcessEnv,
   authStoreInput: AuthProfileStoreInput,
@@ -130,6 +134,7 @@ export function createProviderApiKeyResolver(
   };
 }
 
+/** Create a provider auth resolver that reports auth mode/source provenance. */
 export function createProviderAuthResolver(
   env: NodeJS.ProcessEnv,
   authStoreInput: AuthProfileStoreInput,

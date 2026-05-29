@@ -1,3 +1,4 @@
+// Tests security audit sandbox browser test behavior.
 import { describe, expect, it } from "vitest";
 import type { OpenClawConfig } from "../config/config.js";
 import { collectSandboxBrowserHashLabelFindings } from "./audit-extra.async.js";

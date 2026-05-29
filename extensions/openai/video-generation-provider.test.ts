@@ -1,3 +1,4 @@
+// Tests extensions/openai video generation provider test behavior.
 import {
   getProviderHttpMocks,
   installProviderHttpMockCleanup,

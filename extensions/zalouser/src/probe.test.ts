@@ -1,3 +1,4 @@
+// Tests extensions/zalouser/src probe test behavior.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { probeZalouser } from "./probe.js";
 import { getZaloUserInfo } from "./zalo-js.js";

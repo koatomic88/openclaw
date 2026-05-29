@@ -1,9 +1,11 @@
+/** Collects warnings for legacy tools-by-sender config entries. */
 import type { OpenClawConfig } from "../../../config/types.openclaw.js";
 import { parseToolsBySenderTypedKey } from "../../../config/types.tools.js";
 import { sanitizeForLog } from "../../../terminal/ansi.js";
 import { formatConfigPath, resolveConfigPathTarget } from "../../doctor-config-analysis.js";
 import { asObjectRecord } from "./object.js";
 
+/** Shared type for Legacy Tools By Sender Key Hit in src/commands/doctor. */
 export type LegacyToolsBySenderKeyHit = {
   toolsBySenderPath: Array<string | number>;
   pathLabel: string;
@@ -53,12 +55,14 @@ function collectLegacyToolsBySenderKeyHits(
   }
 }
 
+/** Reused helper for scan Legacy Tools By Sender Keys behavior in src/commands/doctor. */
 export function scanLegacyToolsBySenderKeys(cfg: OpenClawConfig): LegacyToolsBySenderKeyHit[] {
   const hits: LegacyToolsBySenderKeyHit[] = [];
   collectLegacyToolsBySenderKeyHits(cfg, [], hits);
   return hits;
 }
 
+/** Reused helper for collect Legacy Tools By Sender Warnings behavior in src/commands/doctor. */
 export function collectLegacyToolsBySenderWarnings(params: {
   hits: LegacyToolsBySenderKeyHit[];
   doctorFixCommand: string;
@@ -77,6 +81,7 @@ export function collectLegacyToolsBySenderWarnings(params: {
   ];
 }
 
+/** Reused helper for maybe Repair Legacy Tools By Sender Keys behavior in src/commands/doctor. */
 export function maybeRepairLegacyToolsBySenderKeys(cfg: OpenClawConfig): {
   config: OpenClawConfig;
   changes: string[];

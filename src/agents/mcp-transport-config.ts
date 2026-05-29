@@ -1,3 +1,4 @@
+/** Resolves MCP transport config from bundle server definitions. */
 import { resolveOpenClawMcpTransportAlias } from "../config/mcp-config-normalize.js";
 import { logWarn } from "../logger.js";
 import { normalizeLowercaseStringOrEmpty } from "../shared/string-coerce.js";
@@ -102,6 +103,7 @@ function resolveHttpTransportConfig(
   };
 }
 
+/** Resolve MCP transport config, preferring HTTP when URLs are present. */
 export function resolveMcpTransportConfig(
   serverName: string,
   rawServer: unknown,

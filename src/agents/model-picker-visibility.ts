@@ -1,3 +1,4 @@
+/** Visibility predicates for model picker providers and model refs. */
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { listCliRuntimeProviderIds } from "./cli-backends.js";
 import { isCliRuntimeProvider } from "./model-runtime-aliases.js";
@@ -5,6 +6,7 @@ import { normalizeProviderId } from "./provider-id.js";
 
 const RETIRED_MODEL_PICKER_PROVIDERS = new Set(["codex", "codex-cli"]);
 
+/** Create a predicate for providers visible in the model picker. */
 export function createModelPickerVisibleProviderPredicate(
   params: { config?: OpenClawConfig; env?: NodeJS.ProcessEnv; includeSetupRegistry?: boolean } = {},
 ): (provider: string) => boolean {
@@ -21,6 +23,7 @@ export function createModelPickerVisibleProviderPredicate(
   };
 }
 
+/** Return whether a provider should appear in the model picker. */
 export function isModelPickerVisibleProvider(provider: string): boolean {
   const normalized = normalizeProviderId(provider);
   return (
@@ -29,6 +32,7 @@ export function isModelPickerVisibleProvider(provider: string): boolean {
   );
 }
 
+/** Return whether a model ref should appear in the model picker. */
 export function isModelPickerVisibleModelRef(ref: string): boolean {
   const separatorIndex = ref.indexOf("/");
   if (separatorIndex <= 0) {

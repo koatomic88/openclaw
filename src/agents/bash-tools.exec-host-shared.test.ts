@@ -1,3 +1,4 @@
+/** Tests shared exec approval helpers. */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   consumeExecApprovalFollowupRuntimeHandoff,

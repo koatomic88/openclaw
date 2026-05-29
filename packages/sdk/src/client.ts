@@ -1,3 +1,4 @@
+// packages/sdk/src client helpers and runtime behavior.
 import { randomUUID } from "node:crypto";
 import { EventHub } from "./event-hub.js";
 import { normalizeGatewayEvent } from "./normalize.js";
@@ -32,6 +33,7 @@ const MAX_REPLAY_RUNS = 100;
 const MAX_REPLAY_EVENTS_PER_RUN = 500;
 const MAX_NORMALIZED_REPLAY_EVENTS = 2000;
 
+/** Public type describing Open Claw Options for packages/sdk. */
 export type OpenClawOptions = {
   gateway?: "auto" | (string & {});
   url?: string;
@@ -288,6 +290,7 @@ function normalizeChatProjectionEvent(
   };
 }
 
+/** Public class implementing Open Claw behavior for packages/sdk. */
 export class OpenClaw {
   readonly agents: AgentsNamespace;
   readonly sessions: SessionsNamespace;
@@ -529,6 +532,7 @@ export class OpenClaw {
   }
 }
 
+/** Public class implementing Agent behavior for packages/sdk. */
 export class Agent {
   constructor(
     private readonly client: OpenClaw,
@@ -549,6 +553,7 @@ export class Agent {
   }
 }
 
+/** Public class implementing Run behavior for packages/sdk. */
 export class Run {
   constructor(
     private readonly client: OpenClaw,
@@ -595,6 +600,7 @@ export class Run {
   }
 }
 
+/** Public class implementing Session behavior for packages/sdk. */
 export class Session {
   constructor(
     private readonly client: OpenClaw,
@@ -630,6 +636,7 @@ export class Session {
   }
 }
 
+/** Public class implementing Agents Namespace behavior for packages/sdk. */
 export class AgentsNamespace {
   constructor(private readonly client: OpenClaw) {}
 
@@ -654,6 +661,7 @@ export class AgentsNamespace {
   }
 }
 
+/** Public class implementing Sessions Namespace behavior for packages/sdk. */
 export class SessionsNamespace {
   constructor(private readonly client: OpenClaw) {}
 
@@ -686,6 +694,7 @@ export class SessionsNamespace {
   }
 }
 
+/** Public class implementing Runs Namespace behavior for packages/sdk. */
 export class RunsNamespace {
   constructor(private readonly client: OpenClaw) {}
 
@@ -734,6 +743,7 @@ class RpcNamespace {
   }
 }
 
+/** Public class implementing Tasks Namespace behavior for packages/sdk. */
 export class TasksNamespace extends RpcNamespace {
   constructor(client: OpenClaw) {
     super(client, "tasks");
@@ -755,6 +765,7 @@ export class TasksNamespace extends RpcNamespace {
   }
 }
 
+/** Public class implementing Models Namespace behavior for packages/sdk. */
 export class ModelsNamespace extends RpcNamespace {
   constructor(client: OpenClaw) {
     super(client, "models");
@@ -769,6 +780,7 @@ export class ModelsNamespace extends RpcNamespace {
   }
 }
 
+/** Public class implementing Tools Namespace behavior for packages/sdk. */
 export class ToolsNamespace extends RpcNamespace {
   constructor(client: OpenClaw) {
     super(client, "tools");
@@ -794,6 +806,7 @@ export class ToolsNamespace extends RpcNamespace {
   }
 }
 
+/** Public class implementing Artifacts Namespace behavior for packages/sdk. */
 export class ArtifactsNamespace extends RpcNamespace {
   constructor(client: OpenClaw) {
     super(client, "artifacts");
@@ -818,6 +831,7 @@ export class ArtifactsNamespace extends RpcNamespace {
   }
 }
 
+/** Public class implementing Approvals Namespace behavior for packages/sdk. */
 export class ApprovalsNamespace {
   constructor(private readonly client: OpenClaw) {}
 
@@ -830,6 +844,7 @@ export class ApprovalsNamespace {
   }
 }
 
+/** Public class implementing Environments Namespace behavior for packages/sdk. */
 export class EnvironmentsNamespace extends RpcNamespace {
   constructor(client: OpenClaw) {
     super(client, "environments");

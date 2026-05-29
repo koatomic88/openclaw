@@ -1,3 +1,4 @@
+/** Agent runtime settings helpers for compaction and provider-specific guards. */
 import type { AgentCompactionMode } from "../config/types.agent-defaults.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import type { ContextEngineInfo } from "../context-engine/types.js";
@@ -5,6 +6,7 @@ import { MIN_PROMPT_BUDGET_RATIO, MIN_PROMPT_BUDGET_TOKENS } from "./agent-compa
 import { resolveProviderEndpoint } from "./provider-attribution.js";
 import { normalizeProviderId } from "./provider-id.js";
 
+/** Reused constant for DEFAULT AGENT COMPACTION RESERVE TOKENS FLOOR behavior in src/agents. */
 export const DEFAULT_AGENT_COMPACTION_RESERVE_TOKENS_FLOOR = 20_000;
 
 type AgentSettingsManagerLike = {
@@ -43,6 +45,7 @@ export function ensureAgentCompactionReserveTokens(params: {
   return { didOverride: true, reserveTokens: minReserveTokens };
 }
 
+/** Resolve the configured compaction reserve-token floor. */
 export function resolveCompactionReserveTokensFloor(cfg?: OpenClawConfig): number {
   const raw = cfg?.agents?.defaults?.compaction?.reserveTokensFloor;
   if (typeof raw === "number" && Number.isFinite(raw) && raw >= 0) {
@@ -65,6 +68,7 @@ function toPositiveInt(value: unknown): number | undefined {
   return Math.floor(value);
 }
 
+/** Apply configured compaction reserve/recent-token overrides to a settings manager. */
 export function applyAgentCompactionSettingsFromConfig(params: {
   settingsManager: AgentSettingsManagerLike;
   cfg?: OpenClawConfig;

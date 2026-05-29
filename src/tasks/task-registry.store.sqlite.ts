@@ -1,3 +1,4 @@
+// tasks task registry store sqlite helpers and runtime behavior.
 import type { DatabaseSync, StatementSync } from "node:sqlite";
 import { requireNodeSqlite } from "../infra/node-sqlite.js";
 import { configureSqliteWalMaintenance, type SqliteWalMaintenance } from "../infra/sqlite-wal.js";
@@ -467,6 +468,7 @@ function withWriteTransaction(write: (statements: TaskRegistryStatements) => voi
   }
 }
 
+/** Reused helper for load Task Registry State From Sqlite behavior in src/tasks. */
 export function loadTaskRegistryStateFromSqlite(): TaskRegistryStoreSnapshot {
   const { statements } = openTaskRegistryDatabase();
   const taskRows = statements.selectAll.all() as TaskRegistryRow[];
@@ -477,6 +479,7 @@ export function loadTaskRegistryStateFromSqlite(): TaskRegistryStoreSnapshot {
   };
 }
 
+/** Reused helper for list Task Registry Records By Owner Key From Sqlite behavior in src/tasks. */
 export function listTaskRegistryRecordsByOwnerKeyFromSqlite(ownerKey: string): TaskRecord[] {
   const key = ownerKey.trim();
   if (!key) {
@@ -487,6 +490,7 @@ export function listTaskRegistryRecordsByOwnerKeyFromSqlite(ownerKey: string): T
   return rows.map(rowToTaskRecord);
 }
 
+/** Reused helper for save Task Registry State To Sqlite behavior in src/tasks. */
 export function saveTaskRegistryStateToSqlite(snapshot: TaskRegistryStoreSnapshot) {
   withWriteTransaction((statements) => {
     statements.clearDeliveryStates.run();
@@ -500,11 +504,13 @@ export function saveTaskRegistryStateToSqlite(snapshot: TaskRegistryStoreSnapsho
   });
 }
 
+/** Reused helper for upsert Task Registry Record To Sqlite behavior in src/tasks. */
 export function upsertTaskRegistryRecordToSqlite(task: TaskRecord) {
   const store = openTaskRegistryDatabase();
   store.statements.upsertRow.run(bindTaskRecordBase(task));
 }
 
+/** Reused helper for upsert Task With Delivery State To Sqlite behavior in src/tasks. */
 export function upsertTaskWithDeliveryStateToSqlite(params: {
   task: TaskRecord;
   deliveryState?: TaskDeliveryState;
@@ -519,12 +525,14 @@ export function upsertTaskWithDeliveryStateToSqlite(params: {
   });
 }
 
+/** Reused helper for delete Task Registry Record From Sqlite behavior in src/tasks. */
 export function deleteTaskRegistryRecordFromSqlite(taskId: string) {
   const store = openTaskRegistryDatabase();
   store.statements.deleteRow.run(taskId);
   store.statements.deleteDeliveryState.run(taskId);
 }
 
+/** Reused helper for delete Task And Delivery State From Sqlite behavior in src/tasks. */
 export function deleteTaskAndDeliveryStateFromSqlite(taskId: string) {
   withWriteTransaction((statements) => {
     statements.deleteRow.run(taskId);
@@ -532,16 +540,19 @@ export function deleteTaskAndDeliveryStateFromSqlite(taskId: string) {
   });
 }
 
+/** Reused helper for upsert Task Delivery State To Sqlite behavior in src/tasks. */
 export function upsertTaskDeliveryStateToSqlite(state: TaskDeliveryState) {
   const store = openTaskRegistryDatabase();
   store.statements.replaceDeliveryState.run(bindTaskDeliveryState(state));
 }
 
+/** Reused helper for delete Task Delivery State From Sqlite behavior in src/tasks. */
 export function deleteTaskDeliveryStateFromSqlite(taskId: string) {
   const store = openTaskRegistryDatabase();
   store.statements.deleteDeliveryState.run(taskId);
 }
 
+/** Reused helper for close Task Registry Sqlite Store behavior in src/tasks. */
 export function closeTaskRegistrySqliteStore() {
   if (!cachedDatabase) {
     return;

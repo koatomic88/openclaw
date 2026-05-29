@@ -1,3 +1,4 @@
+/** Adds prioritized provider-dynamic models to live test candidate lists. */
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import type { Model } from "../llm/types.js";
 import type {
@@ -38,6 +39,7 @@ function liveModelKey(provider: string, id: string): string | null {
   return normalizedProvider && normalizedId ? `${normalizedProvider}/${normalizedId}` : null;
 }
 
+/** Resolve and append prioritized dynamic live models that are not already listed. */
 export async function appendPrioritizedDynamicLiveModels(params: {
   models: Model[];
   config?: OpenClawConfig;

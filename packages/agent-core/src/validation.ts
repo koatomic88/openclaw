@@ -1,3 +1,4 @@
+// packages/agent-core/src validation helpers and runtime behavior.
 import { Compile } from "typebox/compile";
 import type { TLocalizedValidationError } from "typebox/error";
 import { Value } from "typebox/value";
@@ -281,6 +282,7 @@ function formatValidationPath(error: TLocalizedValidationError): string {
   return path || "root";
 }
 
+/** Public helper for validate Tool Call behavior in packages/agent-core. */
 export function validateToolCall(tools: Tool[], toolCall: ToolCall): unknown {
   const tool = tools.find((t) => t.name === toolCall.name);
   if (!tool) {
@@ -289,6 +291,7 @@ export function validateToolCall(tools: Tool[], toolCall: ToolCall): unknown {
   return validateToolArguments(tool, toolCall);
 }
 
+/** Public helper for validate Tool Arguments behavior in packages/agent-core. */
 export function validateToolArguments(tool: Tool, toolCall: ToolCall): unknown {
   const args = structuredClone(toolCall.arguments);
   Value.Convert(tool.parameters, args);

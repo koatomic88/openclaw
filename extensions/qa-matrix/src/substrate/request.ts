@@ -1,3 +1,4 @@
+// extensions/qa-matrix/src/substrate request helpers and runtime behavior.
 export type MatrixQaFetchLike = typeof fetch;
 
 type MatrixQaRequestResult<T> = {

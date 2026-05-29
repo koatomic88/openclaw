@@ -1,3 +1,4 @@
+/** Regression coverage for subagent announcement delivery routing and retry behavior. */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   testing as sessionBindingServiceTesting,

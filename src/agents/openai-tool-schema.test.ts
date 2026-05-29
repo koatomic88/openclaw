@@ -1,3 +1,4 @@
+/** Tests OpenAI strict tool schema normalization. */
 import { describe, expect, it } from "vitest";
 import {
   isStrictOpenAIJsonSchemaCompatible,

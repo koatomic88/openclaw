@@ -1,3 +1,4 @@
+/** Checks whether live-test providers share the same owning plugin. */
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { resolveOwningPluginIdsForProviderRef } from "../plugins/providers.js";
 import { normalizeProviderId } from "./provider-id.js";
@@ -29,6 +30,7 @@ function resolveCachedOwningPluginIdsForProvider(
   return owners;
 }
 
+/** Return whether two provider ids are owned by the same plugin. */
 export function liveProvidersShareOwningPlugin(
   left: string,
   right: string,

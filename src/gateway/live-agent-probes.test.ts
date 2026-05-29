@@ -1,3 +1,4 @@
+// Tests gateway live agent probes test behavior.
 import { describe, expect, it } from "vitest";
 import {
   assertCronJobMatches,

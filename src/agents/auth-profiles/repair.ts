@@ -1,3 +1,4 @@
+/** Repairs mismatched OAuth profile ids in config/auth stores. */
 import type { AuthProfileConfig } from "../../config/types.js";
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
 import { findNormalizedProviderKey, normalizeProviderId } from "../provider-id.js";
@@ -21,6 +22,7 @@ function isEmailLike(value: string): boolean {
   return trimmed.includes("@") && trimmed.includes(".");
 }
 
+/** Reused helper for suggest OAuth Profile Id For Legacy Default behavior in src/agents/auth-profiles. */
 export function suggestOAuthProfileIdForLegacyDefault(params: {
   cfg?: OpenClawConfig;
   store: AuthProfileStore;
@@ -82,6 +84,7 @@ export function suggestOAuthProfileIdForLegacyDefault(params: {
   return null;
 }
 
+/** Reused helper for repair OAuth Profile Id Mismatch behavior in src/agents/auth-profiles. */
 export function repairOAuthProfileIdMismatch(params: {
   cfg: OpenClawConfig;
   store: AuthProfileStore;

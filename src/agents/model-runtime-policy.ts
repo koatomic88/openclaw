@@ -1,3 +1,4 @@
+/** Resolves per-model/provider agent runtime policy. */
 import type { AgentModelEntryConfig } from "../config/types.agent-defaults.js";
 import type { AgentRuntimePolicyConfig } from "../config/types.agents-shared.js";
 import type { ModelDefinitionConfig, ModelProviderConfig } from "../config/types.models.js";
@@ -6,8 +7,10 @@ import { normalizeAgentId } from "../routing/session-key.js";
 import { listAgentEntries, resolveSessionAgentIds } from "./agent-scope.js";
 import { normalizeProviderId } from "./provider-id.js";
 
+/** Config source that supplied model runtime policy. */
 export type ModelRuntimePolicySource = "model" | "provider";
 
+/** Resolved model runtime policy with source attribution. */
 export type ResolvedModelRuntimePolicy = {
   policy?: AgentRuntimePolicyConfig;
   source?: ModelRuntimePolicySource;
@@ -219,6 +222,7 @@ function resolveModelConfig(params: {
   );
 }
 
+/** Resolve model runtime policy from model/provider config. */
 export function resolveModelRuntimePolicy(params: {
   config?: OpenClawConfig;
   provider?: string;

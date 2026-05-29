@@ -1,3 +1,4 @@
+/** CLI backend resolution from plugins, setup registry, and config. */
 import type { CliBackendConfig } from "../config/types.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import type { ContextEngineHostCapability } from "../context-engine/types.js";
@@ -34,6 +35,7 @@ const defaultCliBackendsDeps: CliBackendsDeps = {
 
 let cliBackendsDeps: CliBackendsDeps = defaultCliBackendsDeps;
 
+/** Shared type for Resolved Cli Backend in src/agents. */
 export type ResolvedCliBackend = {
   id: string;
   modelProvider?: string;
@@ -59,6 +61,7 @@ type ResolvedCliBackendLiveTest = {
   dockerBinaryName?: string;
 };
 
+/** Shared type for Cli Runtime Model Backend Binding in src/agents. */
 export type CliRuntimeModelBackendBinding = {
   provider: string;
   runtime: string;
@@ -181,6 +184,7 @@ function addCliRuntimeModelBinding(
   });
 }
 
+/** List provider-to-runtime bindings advertised by CLI backend plugins. */
 export function listCliRuntimeModelBackendBindings(
   params: {
     config?: OpenClawConfig;
@@ -213,6 +217,7 @@ export function listCliRuntimeModelBackendBindings(
   );
 }
 
+/** List provider ids backed by CLI runtimes. */
 export function listCliRuntimeProviderIds(
   params: {
     config?: OpenClawConfig;
@@ -232,6 +237,7 @@ export function listCliRuntimeProviderIds(
   ].toSorted();
 }
 
+/** Resolve the CLI runtime binding for a provider/model pair. */
 export function resolveCliRuntimeModelBackendBinding(params: {
   provider: string | undefined;
   runtime: string | undefined;
@@ -260,6 +266,7 @@ export function resolveCliRuntimeModelBackendBinding(params: {
   }).find((binding) => binding.provider === provider && binding.runtime === runtime);
 }
 
+/** Return whether a provider/model is handled by a CLI runtime backend. */
 export function isCliRuntimeModelBackendForProvider(params: {
   provider: string | undefined;
   runtime: string | undefined;
@@ -312,6 +319,7 @@ function mergeBackendConfig(base: CliBackendConfig, override?: CliBackendConfig)
   };
 }
 
+/** Resolve live-test defaults for a CLI backend. */
 export function resolveCliBackendLiveTest(provider: string): ResolvedCliBackendLiveTest | null {
   const normalized = normalizeBackendKey(provider);
   const entry =
@@ -332,6 +340,7 @@ export function resolveCliBackendLiveTest(provider: string): ResolvedCliBackendL
   };
 }
 
+/** Resolve effective CLI backend config and plugin hooks. */
 export function resolveCliBackendConfig(
   provider: string,
   cfg?: OpenClawConfig,
@@ -440,6 +449,7 @@ export function resolveCliBackendConfig(
   };
 }
 
+/** Reused constant for testing behavior in src/agents. */
 export const testing = {
   resetDepsForTest(): void {
     cliBackendsDeps = defaultCliBackendsDeps;
@@ -451,4 +461,5 @@ export const testing = {
     };
   },
 } as const;
+/** Re-exported API for src/agents, starting with testing. */
 export { testing as __testing };

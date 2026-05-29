@@ -1,3 +1,4 @@
+/** Runtime helpers for resolving model metadata in status summaries. */
 import { resolveModelAgentRuntimeMetadata } from "../agents/agent-runtime-metadata.js";
 import { resolveConfiguredProviderFallback } from "../agents/configured-provider-fallback.js";
 import { DEFAULT_CONTEXT_TOKENS, DEFAULT_MODEL, DEFAULT_PROVIDER } from "../agents/defaults.js";
@@ -202,6 +203,7 @@ function resolveContextTokensForModel(params: {
   return params.fallbackContextTokens ?? DEFAULT_CONTEXT_TOKENS;
 }
 
+/** Reused constant for status Summary Runtime behavior in src/commands. */
 export const statusSummaryRuntime = {
   resolveContextTokensForModel,
   classifySessionKey: classifySessionKind,

@@ -1,8 +1,10 @@
+// Model selection parsing from inline directives.
 import { splitTrailingAuthProfile } from "../../agents/model-ref-profile.js";
 import { isModelKeyAllowedBySet } from "../../agents/model-selection-shared.js";
 import { normalizeProviderId } from "../../agents/provider-id.js";
 import { normalizeLowercaseStringOrEmpty } from "../../shared/string-coerce.js";
 
+/** Shared type for Model Alias Index in src/auto-reply/reply. */
 export type ModelAliasIndex = {
   byAlias: Map<
     string,
@@ -14,6 +16,7 @@ export type ModelAliasIndex = {
   byKey: Map<string, string[]>;
 };
 
+/** Shared type for Model Directive Selection in src/auto-reply/reply. */
 export type ModelDirectiveSelection = {
   provider: string;
   model: string;
@@ -56,6 +59,7 @@ const FUZZY_VARIANT_TOKENS = [
   "nano",
 ];
 
+/** Reused helper for model Key behavior in src/auto-reply/reply. */
 export function modelKey(provider: string, model: string): string {
   const providerId = provider.trim();
   const modelId = model.trim();
@@ -72,6 +76,7 @@ export function modelKey(provider: string, model: string): string {
     : `${providerId}/${modelId}`;
 }
 
+/** Reused helper for resolve Model Ref From Directive String behavior in src/auto-reply/reply. */
 export function resolveModelRefFromDirectiveString(params: {
   raw: string;
   defaultProvider: string;
@@ -260,6 +265,7 @@ function scoreFuzzyMatch(params: {
   };
 }
 
+/** Reused helper for resolve Model Directive Selection behavior in src/auto-reply/reply. */
 export function resolveModelDirectiveSelection(params: {
   raw: string;
   defaultProvider: string;

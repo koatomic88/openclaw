@@ -1,3 +1,4 @@
+// extensions/codex/src/app-server attempt timeouts helpers and runtime behavior.
 import { parseFiniteNumber } from "openclaw/plugin-sdk/number-runtime";
 
 export const CODEX_APP_SERVER_STARTUP_TIMEOUT_FLOOR_MS = 100;

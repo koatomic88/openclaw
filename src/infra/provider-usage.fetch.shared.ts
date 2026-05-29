@@ -1,7 +1,9 @@
+// infra provider usage fetch shared helpers and runtime behavior.
 import { parseFiniteNumber as parseFiniteNumberish } from "./parse-finite-number.js";
 import { PROVIDER_LABELS } from "./provider-usage.shared.js";
 import type { ProviderUsageSnapshot, UsageProviderId } from "./provider-usage.types.js";
 
+/** Reused helper for fetch Json behavior in src/infra. */
 export async function fetchJson(
   url: string,
   init: RequestInit,
@@ -17,6 +19,7 @@ export async function fetchJson(
   }
 }
 
+/** Reused helper for parse Finite Number behavior in src/infra. */
 export function parseFiniteNumber(value: unknown): number | undefined {
   return parseFiniteNumberish(value);
 }
@@ -28,6 +31,7 @@ type BuildUsageHttpErrorSnapshotOptions = {
   tokenExpiredStatuses?: readonly number[];
 };
 
+/** Reused helper for build Usage Error Snapshot behavior in src/infra. */
 export function buildUsageErrorSnapshot(
   provider: UsageProviderId,
   error: string,
@@ -40,6 +44,7 @@ export function buildUsageErrorSnapshot(
   };
 }
 
+/** Reused helper for build Usage Http Error Snapshot behavior in src/infra. */
 export function buildUsageHttpErrorSnapshot(
   options: BuildUsageHttpErrorSnapshotOptions,
 ): ProviderUsageSnapshot {
@@ -51,6 +56,7 @@ export function buildUsageHttpErrorSnapshot(
   return buildUsageErrorSnapshot(options.provider, `HTTP ${options.status}${suffix}`);
 }
 
+/** Reused helper for read Usage Json behavior in src/infra. */
 export async function readUsageJson(
   provider: UsageProviderId,
   response: Response,

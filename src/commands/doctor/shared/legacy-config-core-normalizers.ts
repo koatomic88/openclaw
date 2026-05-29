@@ -1,3 +1,4 @@
+/** Core normalizers for legacy config values. */
 import { normalizeProviderId } from "../../../agents/provider-id.js";
 import { resolveSingleAccountKeysToMove } from "../../../channels/plugins/setup-promotion-helpers.js";
 import { resolveNormalizedProviderModelMaxTokens } from "../../../config/defaults.js";
@@ -16,8 +17,10 @@ import {
   listLegacyRuntimeModelProviderAliases,
   migrateLegacyRuntimeModelRef,
 } from "./legacy-runtime-model-providers.js";
+/** Re-exported API for src/commands/doctor, starting with normalize Legacy Talk Config. */
 export { normalizeLegacyTalkConfig } from "./legacy-talk-config-normalizer.js";
 
+/** Reused helper for normalize Legacy Commands Config behavior in src/commands/doctor. */
 export function normalizeLegacyCommandsConfig(
   cfg: OpenClawConfig,
   changes: string[],
@@ -37,6 +40,7 @@ export function normalizeLegacyCommandsConfig(
   };
 }
 
+/** Reused helper for normalize Legacy Browser Config behavior in src/commands/doctor. */
 export function normalizeLegacyBrowserConfig(
   cfg: OpenClawConfig,
   changes: string[],
@@ -122,6 +126,7 @@ export function normalizeLegacyBrowserConfig(
   };
 }
 
+/** Reused helper for seed Missing Default Accounts From Single Account Base behavior in src/commands/doctor. */
 export function seedMissingDefaultAccountsFromSingleAccountBase(
   cfg: OpenClawConfig,
   changes: string[],
@@ -647,6 +652,7 @@ function normalizeLegacyCodexCliProviderRuntimePins(
     : { config: cfg, changed: false };
 }
 
+/** Reused helper for normalize Legacy Runtime Model Refs behavior in src/commands/doctor. */
 export function normalizeLegacyRuntimeModelRefs(
   cfg: OpenClawConfig,
   changes: string[],
@@ -700,6 +706,7 @@ export function normalizeLegacyRuntimeModelRefs(
   return nextCfg;
 }
 
+/** Reused helper for normalize Legacy Open AICodex Models Add Metadata behavior in src/commands/doctor. */
 export function normalizeLegacyOpenAICodexModelsAddMetadata(
   cfg: OpenClawConfig,
   changes: string[],
@@ -766,6 +773,7 @@ export function normalizeLegacyOpenAICodexModelsAddMetadata(
   };
 }
 
+/** Reused helper for normalize Legacy Open AIModel Provider Api behavior in src/commands/doctor. */
 export function normalizeLegacyOpenAIModelProviderApi(
   cfg: OpenClawConfig,
   changes: string[],
@@ -837,6 +845,7 @@ export function normalizeLegacyOpenAIModelProviderApi(
   };
 }
 
+/** Reused helper for normalize Legacy Nano Banana Skill behavior in src/commands/doctor. */
 export function normalizeLegacyNanoBananaSkill(
   cfg: OpenClawConfig,
   changes: string[],
@@ -973,6 +982,7 @@ export function normalizeLegacyNanoBananaSkill(
   };
 }
 
+/** Reused helper for normalize Legacy Cross Context Message Config behavior in src/commands/doctor. */
 export function normalizeLegacyCrossContextMessageConfig(
   cfg: OpenClawConfig,
   changes: string[],
@@ -1067,6 +1077,7 @@ function migrateLegacyDeepgramCompat(params: {
   return true;
 }
 
+/** Reused helper for normalize Legacy Media Provider Options behavior in src/commands/doctor. */
 export function normalizeLegacyMediaProviderOptions(
   cfg: OpenClawConfig,
   changes: string[],
@@ -1254,6 +1265,7 @@ function applyLegacyOllamaProviderNumCtxParams(params: {
   };
 }
 
+/** Reused helper for normalize Legacy Ollama Native Num Ctx Params behavior in src/commands/doctor. */
 export function normalizeLegacyOllamaNativeNumCtxParams(
   cfg: OpenClawConfig,
   changes: string[],
@@ -1356,6 +1368,7 @@ export function normalizeLegacyOllamaNativeNumCtxParams(
   };
 }
 
+/** Reused helper for normalize Legacy Mistral Model Max Tokens behavior in src/commands/doctor. */
 export function normalizeLegacyMistralModelMaxTokens(
   cfg: OpenClawConfig,
   changes: string[],

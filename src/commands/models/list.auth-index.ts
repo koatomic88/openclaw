@@ -1,3 +1,4 @@
+// Builds model-list auth availability indexes from profiles, env, and provider config.
 import type { AuthProfileStore } from "../../agents/auth-profiles/types.js";
 import {
   listProviderEnvAuthLookupKeys,
@@ -19,11 +20,13 @@ import type { OpenClawConfig } from "../../config/types.openclaw.js";
 import type { PluginMetadataSnapshot } from "../../plugins/plugin-metadata-snapshot.types.js";
 import { loadPluginRegistrySnapshotWithMetadata } from "../../plugins/plugin-registry.js";
 
+/** Shared type for Model List Auth Index in src/commands/models. */
 export type ModelListAuthIndex = {
   hasProviderAuth(provider: string): boolean;
   allowsProviderAuthAvailabilityFallback(provider: string): boolean;
 };
 
+/** Shared type for Create Model List Auth Index Params in src/commands/models. */
 export type CreateModelListAuthIndexParams = {
   cfg: OpenClawConfig;
   authStore: AuthProfileStore;
@@ -64,6 +67,7 @@ function listValidatedSyntheticAuthProviderRefs(params: {
     .flatMap((plugin) => plugin.syntheticAuthRefs ?? []);
 }
 
+/** Reused helper for create Model List Auth Index behavior in src/commands/models. */
 export function createModelListAuthIndex(
   params: CreateModelListAuthIndexParams,
 ): ModelListAuthIndex {

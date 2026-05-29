@@ -1,3 +1,4 @@
+// extensions/codex/src/app-server rate limits helpers and runtime behavior.
 import { asFiniteNumber } from "openclaw/plugin-sdk/string-coerce-runtime";
 import { isJsonObject, type JsonObject, type JsonValue } from "./protocol.js";
 

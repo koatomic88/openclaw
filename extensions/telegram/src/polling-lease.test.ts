@@ -1,3 +1,4 @@
+// Tests extensions/telegram/src polling lease test behavior.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   acquireTelegramPollingLease,

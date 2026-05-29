@@ -1,3 +1,4 @@
+// extensions/discord/src/voice speaker context helpers and runtime behavior.
 import type { Client } from "../internal/discord.js";
 import { resolveDiscordOwnerAccess } from "../monitor/allow-list.js";
 import { formatDiscordUserTag } from "../monitor/format.js";

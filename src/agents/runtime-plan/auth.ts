@@ -1,3 +1,4 @@
+/** Builds provider auth plans for agent runtime execution. */
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
 import { normalizeOptionalAgentRuntimeId } from "../agent-runtime-id.js";
 import { shouldRouteOpenAIThroughCodexAuthProvider } from "../openai-codex-routing.js";
@@ -16,6 +17,7 @@ function resolveHarnessAuthProvider(params: {
   return harnessId === "codex" || runtime === "codex" ? CODEX_HARNESS_AUTH_PROVIDER : undefined;
 }
 
+/** Resolves the provider auth id/runtime route for a selected model. */
 export function buildAgentRuntimeAuthPlan(params: {
   provider: string;
   authProfileProvider?: string;

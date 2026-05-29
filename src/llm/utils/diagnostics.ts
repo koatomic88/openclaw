@@ -1,3 +1,5 @@
+// llm/utils diagnostics helpers and runtime behavior.
+/** Shared type for Diagnostic Error Info in src/llm/utils. */
 export interface DiagnosticErrorInfo {
   name?: string;
   message: string;
@@ -5,6 +7,7 @@ export interface DiagnosticErrorInfo {
   code?: string | number;
 }
 
+/** Shared type for Assistant Message Diagnostic in src/llm/utils. */
 export interface AssistantMessageDiagnostic {
   type: string;
   timestamp: number;
@@ -12,6 +15,7 @@ export interface AssistantMessageDiagnostic {
   details?: Record<string, unknown>;
 }
 
+/** Reused helper for format Thrown Value behavior in src/llm/utils. */
 export function formatThrownValue(value: unknown): string {
   if (value instanceof Error) {
     return value.message || value.name;
@@ -22,6 +26,7 @@ export function formatThrownValue(value: unknown): string {
   return String(value);
 }
 
+/** Reused helper for extract Diagnostic Error behavior in src/llm/utils. */
 export function extractDiagnosticError(error: unknown): DiagnosticErrorInfo {
   if (!(error instanceof Error)) {
     return { name: "ThrownValue", message: formatThrownValue(error) };
@@ -35,6 +40,7 @@ export function extractDiagnosticError(error: unknown): DiagnosticErrorInfo {
   };
 }
 
+/** Reused helper for create Assistant Message Diagnostic behavior in src/llm/utils. */
 export function createAssistantMessageDiagnostic(
   type: string,
   error: unknown,
@@ -43,6 +49,7 @@ export function createAssistantMessageDiagnostic(
   return { type, timestamp: Date.now(), error: extractDiagnosticError(error), details };
 }
 
+/** Reused helper for append Assistant Message Diagnostic behavior in src/llm/utils. */
 export function appendAssistantMessageDiagnostic(
   message: { diagnostics?: AssistantMessageDiagnostic[] },
   diagnostic: AssistantMessageDiagnostic,

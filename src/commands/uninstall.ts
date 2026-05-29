@@ -1,3 +1,4 @@
+/** Uninstalls OpenClaw files and services with confirmation. */
 import path from "node:path";
 import { cancel, confirm, isCancel, multiselect } from "@clack/prompts";
 import { formatCliCommand } from "../cli/command-format.js";
@@ -12,6 +13,7 @@ import { removePath, removeStateAndLinkedPaths, removeWorkspaceDirs } from "./cl
 
 type UninstallScope = "service" | "state" | "workspace" | "app";
 
+/** Shared type for Uninstall Options in src/commands. */
 export type UninstallOptions = {
   service?: boolean;
   state?: boolean;
@@ -106,6 +108,7 @@ function logBackupRecommendation(runtime: RuntimeEnv) {
   runtime.log(`Recommended first: ${formatCliCommand("openclaw backup create")}`);
 }
 
+/** Reused helper for uninstall Command behavior in src/commands. */
 export async function uninstallCommand(runtime: RuntimeEnv, opts: UninstallOptions) {
   const { scopes, hadExplicit } = buildScopeSelection(opts);
   const interactive = !opts.nonInteractive;

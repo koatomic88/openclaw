@@ -1,3 +1,4 @@
+/** Registers devices CLI commands with lazy runtime loading. */
 import type { Command } from "commander";
 import { applyParentDefaultHelpAction } from "./program/parent-default-help.js";
 
@@ -29,6 +30,7 @@ const devicesCallOpts = (cmd: Command, defaults?: { timeoutMs?: number }) =>
     )
     .option("--json", "Output JSON", false);
 
+/** Reused helper for register Devices Cli behavior in src/cli. */
 export function registerDevicesCli(program: Command) {
   const devices = program.command("devices").description("Device pairing and auth tokens");
 

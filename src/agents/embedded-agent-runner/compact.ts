@@ -1,3 +1,4 @@
+/** Performs embedded-agent session compaction and post-compaction repair. */
 import fs from "node:fs/promises";
 import os from "node:os";
 import { isAcpRuntimeSpawnAvailable } from "../../acp/runtime/availability.js";
@@ -166,6 +167,7 @@ import { readTranscriptFileState } from "./transcript-file-state.js";
 import type { EmbeddedAgentCompactResult } from "./types.js";
 import { mapThinkingLevel, normalizeContextTokenBudget } from "./utils.js";
 import { flushPendingToolResultsAfterIdle } from "./wait-for-idle-before-flush.js";
+/** Re-exported API for src/agents/embedded-agent-runner, starting with Compact Embedded Agent Session Params. */
 export type { CompactEmbeddedAgentSessionParams } from "./compact.types.js";
 
 function hasRealConversationContent(
@@ -1505,6 +1507,7 @@ async function compactEmbeddedAgentSessionDirectOnce(
   }
 }
 
+/** Reused constant for testing behavior in src/agents/embedded-agent-runner. */
 export const testing = {
   hasRealConversationContent,
   hasMeaningfulConversationContent,
@@ -1519,5 +1522,7 @@ export const testing = {
   runPostCompactionSideEffects,
 } as const;
 
+/** Re-exported API for src/agents/embedded-agent-runner, starting with run Post Compaction Side Effects. */
 export { runPostCompactionSideEffects } from "./compaction-hooks.js";
+/** Re-exported API for src/agents/embedded-agent-runner, starting with testing. */
 export { testing as __testing };

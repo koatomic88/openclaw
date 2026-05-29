@@ -1,5 +1,7 @@
+// ui/src/ui/chat side result helpers and runtime behavior.
 import { normalizeOptionalString } from "../string-coerce.ts";
 
+/** Shared type for Chat Side Result in ui/src/ui/chat. */
 export type ChatSideResult = {
   kind: "btw";
   runId: string;
@@ -10,6 +12,7 @@ export type ChatSideResult = {
   ts: number;
 };
 
+/** Reused helper for parse Chat Side Result behavior in ui/src/ui/chat. */
 export function parseChatSideResult(payload: unknown): ChatSideResult | null {
   if (!payload || typeof payload !== "object") {
     return null;

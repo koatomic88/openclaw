@@ -1,6 +1,8 @@
+// media-understanding openai compatible video helpers and runtime behavior.
 import { normalizeOptionalString } from "../shared/string-coerce.js";
 import { normalizeTrimmedStringList } from "../shared/string-normalization.js";
 
+/** Shared type for Open Ai Compatible Video Payload in src/media-understanding. */
 export type OpenAiCompatibleVideoPayload = {
   choices?: Array<{
     message?: {
@@ -10,6 +12,7 @@ export type OpenAiCompatibleVideoPayload = {
   }>;
 };
 
+/** Reused helper for resolve Media Understanding String behavior in src/media-understanding. */
 export function resolveMediaUnderstandingString(
   value: string | undefined,
   fallback: string,
@@ -18,6 +21,7 @@ export function resolveMediaUnderstandingString(
   return trimmed || fallback;
 }
 
+/** Reused helper for coerce Open Ai Compatible Video Text behavior in src/media-understanding. */
 export function coerceOpenAiCompatibleVideoText(
   payload: OpenAiCompatibleVideoPayload,
 ): string | null {
@@ -40,6 +44,7 @@ export function coerceOpenAiCompatibleVideoText(
   return null;
 }
 
+/** Reused helper for build Open Ai Compatible Video Request Body behavior in src/media-understanding. */
 export function buildOpenAiCompatibleVideoRequestBody(params: {
   model: string;
   prompt: string;

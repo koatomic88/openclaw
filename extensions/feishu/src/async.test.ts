@@ -1,3 +1,4 @@
+// Tests extensions/feishu/src async test behavior.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { waitForAbortableDelay } from "./async.js";
 

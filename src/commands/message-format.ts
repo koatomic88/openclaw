@@ -1,3 +1,4 @@
+/** Formats outbound message command delivery results. */
 import { getLoadedChannelPlugin } from "../channels/plugins/index.js";
 import type { ChannelId } from "../channels/plugins/types.public.js";
 import type { OutboundDeliveryResult } from "../infra/outbound/deliver.js";
@@ -237,6 +238,7 @@ function renderReactions(payload: unknown, opts: FormatOpts): string[] | null {
   ];
 }
 
+/** Reused helper for format Message Cli Text behavior in src/commands. */
 export function formatMessageCliText(result: MessageActionRunResult): string[] {
   const rich = isRich();
   const ok = (text: string) => (rich ? theme.success(text) : text);

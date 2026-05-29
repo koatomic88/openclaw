@@ -1,3 +1,4 @@
+/** Shared state and event types for embedded-agent subscription handlers. */
 import type { HeartbeatToolResponse } from "../auto-reply/heartbeat-tool-response.js";
 import type { ReplyDirectiveParseResult } from "../auto-reply/reply/reply-directives.js";
 import type { ReasoningLevel } from "../auto-reply/thinking.js";
@@ -34,6 +35,7 @@ type EmbeddedSubscribeLogger = {
   warn: (message: string, meta?: Record<string, unknown>) => void;
 };
 
+/** Stored summary of one tool call for reply and mutation tracking. */
 export type ToolCallSummary = {
   meta?: string;
   mutatingAction: boolean;
@@ -41,6 +43,7 @@ export type ToolCallSummary = {
   fileTarget?: import("./tool-mutation.js").FileTarget;
 };
 
+/** Mutable state accumulated while consuming one embedded-agent run stream. */
 export type EmbeddedAgentSubscribeState = {
   assistantTexts: string[];
   toolMetas: Array<{ toolName?: string; meta?: string; asyncStarted?: boolean }>;
@@ -144,6 +147,7 @@ export type EmbeddedAgentSubscribeState = {
   lastAssistant?: AgentMessage;
 };
 
+/** Handler context shared across embedded-agent subscription event handlers. */
 export type EmbeddedAgentSubscribeContext = {
   params: SubscribeEmbeddedAgentSessionParams;
   state: EmbeddedAgentSubscribeState;
@@ -266,6 +270,7 @@ type ToolHandlerState = Pick<
   | "toolExecutionSinceLastBlockReply"
 >;
 
+/** Narrow context passed into tool-execution handlers. */
 export type ToolHandlerContext = {
   params: ToolHandlerParams;
   state: ToolHandlerState;
@@ -281,6 +286,7 @@ export type ToolHandlerContext = {
   trimMessagingToolSent: () => void;
 };
 
+/** Session events consumed by the embedded-agent subscription dispatcher. */
 export type EmbeddedAgentSubscribeEvent =
   | AgentSessionEvent
   | { type: string; [k: string]: unknown }

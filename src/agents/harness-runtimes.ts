@@ -1,3 +1,4 @@
+/** Discovers configured agent harness runtimes from model/provider config. */
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { isRecord } from "../utils.js";
 import { OPENCLAW_AGENT_RUNTIME_ID, isDefaultAgentRuntimeId } from "./agent-runtime-id.js";
@@ -166,10 +167,12 @@ function pushConfiguredAgentModelRuntimeIds(
   }
 }
 
+/** Options controlling configured harness runtime collection. */
 export type ConfiguredAgentHarnessRuntimeOptions = {
   includeImplicitRuntimePreferences?: boolean;
 };
 
+/** Collect selectable plugin harness runtimes referenced by config. */
 export function collectConfiguredAgentHarnessRuntimes(
   config: OpenClawConfig,
   options: ConfiguredAgentHarnessRuntimeOptions = {},

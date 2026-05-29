@@ -1,3 +1,4 @@
+/** Doctor checks for gateway RPC health and plugin status payloads. */
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { buildGatewayConnectionDetails, callGateway } from "../gateway/call.js";
 import type { DoctorMemoryStatusPayload } from "../gateway/server-methods/doctor.js";
@@ -9,6 +10,7 @@ import { VERSION } from "../version.js";
 import { formatHealthCheckFailure } from "./health-format.js";
 import type { StatusSummary } from "./status.types.js";
 
+/** Shared type for Gateway Memory Probe in src/commands. */
 export type GatewayMemoryProbe = {
   checked: boolean;
   ready: boolean;
@@ -41,6 +43,7 @@ function noteCliGatewayVersionSkew(status: StatusSummary | undefined): void {
   );
 }
 
+/** Reused helper for check Gateway Health behavior in src/commands. */
 export async function checkGatewayHealth(params: {
   runtime: RuntimeEnv;
   cfg: OpenClawConfig;
@@ -99,6 +102,7 @@ export async function checkGatewayHealth(params: {
   return { healthOk, status };
 }
 
+/** Reused helper for probe Gateway Memory Status behavior in src/commands. */
 export async function probeGatewayMemoryStatus(params: {
   cfg: OpenClawConfig;
   timeoutMs?: number;

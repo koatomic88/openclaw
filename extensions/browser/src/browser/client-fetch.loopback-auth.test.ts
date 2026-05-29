@@ -1,3 +1,4 @@
+// Tests extensions/browser/src/browser client fetch loopback auth test behavior.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import "../test-support/browser-security.mock.js";
 import type { OpenClawConfig } from "../config/config.js";

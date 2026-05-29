@@ -1,3 +1,4 @@
+// Tests extensions/zai detect test behavior.
 import { describe, expect, it } from "vitest";
 import { detectZaiEndpoint } from "./detect.js";
 

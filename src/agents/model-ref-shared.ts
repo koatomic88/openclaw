@@ -1,3 +1,4 @@
+/** Shared provider/model ref normalization helpers. */
 import {
   normalizeGooglePreviewModelId,
   normalizeTogetherModelId,
@@ -12,11 +13,13 @@ type StaticModelRef = {
   model: string;
 };
 
+/** Options controlling provider model id normalization. */
 export type ProviderModelIdNormalizationOptions = {
   allowManifestNormalization?: boolean;
   manifestPlugins?: readonly Pick<PluginManifestRecord, "modelIdNormalization">[];
 };
 
+/** Build canonical provider/model key. */
 export function modelKey(provider: string, model: string): string {
   const providerId = provider.trim();
   const modelId = model.trim();
@@ -33,6 +36,7 @@ export function modelKey(provider: string, model: string): string {
     : `${providerId}/${modelId}`;
 }
 
+/** Normalize a provider model id using static and manifest rules. */
 export function normalizeStaticProviderModelId(
   provider: string,
   model: string,
@@ -79,6 +83,7 @@ function normalizeBuiltInProviderModelId(provider: string, model: string): strin
   return model;
 }
 
+/** Normalize a configured provider catalog model id. */
 export function normalizeConfiguredProviderCatalogModelId(
   provider: string,
   model: string,
@@ -122,6 +127,7 @@ function parseStaticModelRef(raw: string, defaultProvider: string): StaticModelR
   };
 }
 
+/** Resolve canonical allowlist key for a model ref. */
 export function resolveStaticAllowlistModelKey(
   raw: string,
   defaultProvider: string,
@@ -133,6 +139,7 @@ export function resolveStaticAllowlistModelKey(
   return modelKey(parsed.provider, parsed.model);
 }
 
+/** Format a model ref with a literal provider prefix. */
 export function formatLiteralProviderPrefixedModelRef(provider: string, modelRef: string): string {
   const providerId = normalizeProviderId(provider);
   const trimmedRef = modelRef.trim();

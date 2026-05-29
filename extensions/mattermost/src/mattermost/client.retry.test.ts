@@ -1,3 +1,4 @@
+// Tests extensions/mattermost/src/mattermost client retry test behavior.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createMattermostClient, createMattermostDirectChannelWithRetry } from "./client.js";
 

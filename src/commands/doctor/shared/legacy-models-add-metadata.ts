@@ -1,8 +1,10 @@
+/** Identifies legacy model add entries needing Codex metadata. */
 import { normalizeProviderId } from "../../../agents/provider-id.js";
 import type { ModelDefinitionConfig } from "../../../config/types.models.js";
 
 const LEGACY_MODELS_ADD_CODEX_MODEL_IDS = new Set(["gpt-5.5", "gpt-5.5-pro"]);
 
+/** Reused helper for is Legacy Models Add Codex Metadata Model behavior in src/commands/doctor. */
 export function isLegacyModelsAddCodexMetadataModel(params: {
   provider: string;
   model: Partial<ModelDefinitionConfig> | undefined;

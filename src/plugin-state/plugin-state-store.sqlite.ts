@@ -1,3 +1,4 @@
+// plugin-state plugin state store sqlite helpers and runtime behavior.
 import { chmodSync, existsSync, mkdirSync } from "node:fs";
 import type { DatabaseSync, StatementSync } from "node:sqlite";
 import { requireNodeSqlite } from "../infra/node-sqlite.js";
@@ -19,7 +20,9 @@ const PLUGIN_STATE_SIDECAR_SUFFIXES = ["", "-shm", "-wal"] as const;
 // Plugin-wide fuse only; namespace maxEntries still owns normal cache eviction.
 const MAX_ENTRIES_PER_PLUGIN = 50_000;
 
+/** Reused constant for MAX PLUGIN STATE VALUE BYTES behavior in src/plugin-state. */
 export const MAX_PLUGIN_STATE_VALUE_BYTES = 65_536;
+/** Reused constant for MAX PLUGIN STATE ENTRIES PER PLUGIN behavior in src/plugin-state. */
 export const MAX_PLUGIN_STATE_ENTRIES_PER_PLUGIN = MAX_ENTRIES_PER_PLUGIN;
 
 type PluginStateRow = {
@@ -454,6 +457,7 @@ function enforcePostRegisterLimits(params: {
   }
 }
 
+/** Reused helper for plugin State Register behavior in src/plugin-state. */
 export function pluginStateRegister(params: {
   pluginId: string;
   namespace: string;
@@ -500,6 +504,7 @@ export function pluginStateRegister(params: {
   }
 }
 
+/** Reused helper for plugin State Register If Absent behavior in src/plugin-state. */
 export function pluginStateRegisterIfAbsent(params: {
   pluginId: string;
   namespace: string;
@@ -550,6 +555,7 @@ export function pluginStateRegisterIfAbsent(params: {
   }
 }
 
+/** Reused helper for plugin State Lookup behavior in src/plugin-state. */
 export function pluginStateLookup(params: {
   pluginId: string;
   namespace: string;
@@ -576,6 +582,7 @@ export function pluginStateLookup(params: {
   }
 }
 
+/** Reused helper for plugin State Consume behavior in src/plugin-state. */
 export function pluginStateConsume(params: {
   pluginId: string;
   namespace: string;
@@ -611,6 +618,7 @@ export function pluginStateConsume(params: {
   }
 }
 
+/** Reused helper for plugin State Delete behavior in src/plugin-state. */
 export function pluginStateDelete(params: {
   pluginId: string;
   namespace: string;
@@ -632,6 +640,7 @@ export function pluginStateDelete(params: {
   }
 }
 
+/** Reused helper for plugin State Entries behavior in src/plugin-state. */
 export function pluginStateEntries(params: {
   pluginId: string;
   namespace: string;
@@ -656,6 +665,7 @@ export function pluginStateEntries(params: {
   }
 }
 
+/** Reused helper for count Plugin State Live Entries behavior in src/plugin-state. */
 export function countPluginStateLiveEntries(pluginId: string): number {
   try {
     const { statements } = openPluginStateDatabase("entries");
@@ -670,6 +680,7 @@ export function countPluginStateLiveEntries(pluginId: string): number {
   }
 }
 
+/** Reused helper for plugin State Clear behavior in src/plugin-state. */
 export function pluginStateClear(params: {
   pluginId: string;
   namespace: string;
@@ -689,6 +700,7 @@ export function pluginStateClear(params: {
   }
 }
 
+/** Reused helper for sweep Expired Plugin State Entries behavior in src/plugin-state. */
 export function sweepExpiredPluginStateEntries(): number {
   try {
     const { statements } = openPluginStateDatabase("sweep");
@@ -704,15 +716,18 @@ export function sweepExpiredPluginStateEntries(): number {
   }
 }
 
+/** Reused helper for is Plugin State Database Open behavior in src/plugin-state. */
 export function isPluginStateDatabaseOpen(): boolean {
   return cachedDatabase !== null;
 }
 
+/** Reused helper for clear Plugin State Sqlite Store For Tests behavior in src/plugin-state. */
 export function clearPluginStateSqliteStoreForTests(): void {
   const store = openPluginStateDatabase("clear");
   store.db.exec("DELETE FROM plugin_state_entries;");
 }
 
+/** Reused helper for seed Plugin State Sqlite Entries For Tests behavior in src/plugin-state. */
 export function seedPluginStateSqliteEntriesForTests(
   entries: readonly PluginStateSeedEntryForTests[],
 ): void {
@@ -736,6 +751,7 @@ export function seedPluginStateSqliteEntriesForTests(
   });
 }
 
+/** Reused helper for probe Plugin State Store behavior in src/plugin-state. */
 export function probePluginStateStore(): PluginStateStoreProbeResult {
   const dbPath = resolvePluginStateSqlitePath(process.env);
   const steps: PluginStateStoreProbeStep[] = [];
@@ -813,6 +829,7 @@ export function probePluginStateStore(): PluginStateStoreProbeResult {
   return { ok: steps.every((step) => step.ok), dbPath, steps };
 }
 
+/** Reused helper for close Plugin State Sqlite Store behavior in src/plugin-state. */
 export function closePluginStateSqliteStore(): void {
   if (!cachedDatabase) {
     return;

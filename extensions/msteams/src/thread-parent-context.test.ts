@@ -1,3 +1,4 @@
+// Tests extensions/msteams/src thread parent context test behavior.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { GraphThreadMessage } from "./graph-thread.js";
 import {

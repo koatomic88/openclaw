@@ -1,3 +1,4 @@
+// gateway server impl helpers and runtime behavior.
 import { monitorEventLoopDelay, performance } from "node:perf_hooks";
 import { getActiveEmbeddedRunCount } from "../agents/embedded-agent-runner/run-state.js";
 import { getTotalPendingReplies } from "../auto-reply/reply/dispatcher-registry.js";
@@ -111,6 +112,7 @@ import { loadGatewayTlsRuntime } from "./server/tls.js";
 import { resolveSharedGatewaySessionGeneration } from "./server/ws-shared-generation.js";
 import { maybeSeedControlUiAllowedOriginsAtStartup } from "./startup-control-ui-origins.js";
 
+/** Reused helper for reset Model Catalog Cache For Test behavior in src/gateway. */
 export async function resetModelCatalogCacheForTest(): Promise<void> {
   const { resetModelCatalogCacheForTest } = await import("./server-model-catalog.js");
   await resetModelCatalogCacheForTest();
@@ -457,16 +459,19 @@ function createGatewayAuthRateLimiters(rateLimitConfig: AuthRateLimitConfig | un
   return { rateLimiter, browserRateLimiter };
 }
 
+/** Shared type for Gateway Close Options in src/gateway. */
 export type GatewayCloseOptions = {
   reason?: string;
   restartExpectedMs?: number | null;
   drainTimeoutMs?: number | null;
 };
 
+/** Shared type for Gateway Server in src/gateway. */
 export type GatewayServer = {
   close: (opts?: GatewayCloseOptions) => Promise<void>;
 };
 
+/** Shared type for Gateway Server Options in src/gateway. */
 export type GatewayServerOptions = {
   /**
    * Bind address policy for the Gateway WebSocket/HTTP server.
@@ -535,6 +540,7 @@ const runDefaultSetupWizard: SetupWizardRunner = async (...args) => {
   return runSetupWizard(...args);
 };
 
+/** Reused helper for start Gateway Server behavior in src/gateway. */
 export async function startGatewayServer(
   port = 18789,
   opts: GatewayServerOptions = {},

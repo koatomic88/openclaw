@@ -1,3 +1,4 @@
+// gateway talk realtime relay helpers and runtime behavior.
 import { randomUUID } from "node:crypto";
 import type { OpenClawConfig } from "../config/types.js";
 import type { RealtimeVoiceProviderPlugin } from "../plugins/types.js";
@@ -302,6 +303,7 @@ function enforceRelaySessionLimits(connId: string): void {
   }
 }
 
+/** Reused helper for create Talk Realtime Relay Session behavior in src/gateway. */
 export function createTalkRealtimeRelaySession(
   params: CreateTalkRealtimeRelaySessionParams,
 ): TalkRealtimeRelaySessionResult {
@@ -697,6 +699,7 @@ function getRelaySession(relaySessionId: string, connId: string): RelaySession {
   return session;
 }
 
+/** Reused helper for send Talk Realtime Relay Audio behavior in src/gateway. */
 export function sendTalkRealtimeRelayAudio(params: {
   relaySessionId: string;
   connId: string;
@@ -725,6 +728,7 @@ export function sendTalkRealtimeRelayAudio(params: {
   }
 }
 
+/** Reused helper for submit Talk Realtime Relay Tool Result behavior in src/gateway. */
 export function submitTalkRealtimeRelayToolResult(params: {
   relaySessionId: string;
   connId: string;
@@ -802,6 +806,7 @@ export function submitTalkRealtimeRelayToolResult(params: {
   });
 }
 
+/** Reused helper for register Talk Realtime Relay Agent Run behavior in src/gateway. */
 export function registerTalkRealtimeRelayAgentRun(params: {
   relaySessionId: string;
   connId: string;
@@ -819,6 +824,7 @@ export function registerTalkRealtimeRelayAgentRun(params: {
   }
 }
 
+/** Reused helper for steer Talk Realtime Relay Agent Run behavior in src/gateway. */
 export async function steerTalkRealtimeRelayAgentRun(params: {
   relaySessionId: string;
   connId: string;
@@ -861,6 +867,7 @@ export async function steerTalkRealtimeRelayAgentRun(params: {
   return result;
 }
 
+/** Reused helper for cancel Talk Realtime Relay Turn behavior in src/gateway. */
 export function cancelTalkRealtimeRelayTurn(params: {
   relaySessionId: string;
   connId: string;
@@ -883,6 +890,7 @@ export function cancelTalkRealtimeRelayTurn(params: {
   });
 }
 
+/** Reused helper for stop Talk Realtime Relay Session behavior in src/gateway. */
 export function stopTalkRealtimeRelaySession(params: {
   relaySessionId: string;
   connId: string;
@@ -891,6 +899,7 @@ export function stopTalkRealtimeRelaySession(params: {
   closeRelaySession(session, "completed");
 }
 
+/** Reused helper for clear Talk Realtime Relay Sessions For Test behavior in src/gateway. */
 export function clearTalkRealtimeRelaySessionsForTest(): void {
   for (const session of relaySessions.values()) {
     session.forcedConsults.clear();

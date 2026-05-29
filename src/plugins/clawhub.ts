@@ -1,3 +1,4 @@
+// plugins clawhub helpers and runtime behavior.
 import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 import JSZip from "jszip";
@@ -38,6 +39,7 @@ import type { ClawHubPluginInstallRecordFields } from "./clawhub-install-records
 import type { InstallSafetyOverrides } from "./install-security-scan.js";
 import { installPluginFromArchive, type InstallPluginResult } from "./install.js";
 
+/** Reused constant for CLAWHUB INSTALL ERROR CODE behavior in src/plugins. */
 export const CLAWHUB_INSTALL_ERROR_CODE = {
   INVALID_SPEC: "invalid_spec",
   PACKAGE_NOT_FOUND: "package_not_found",
@@ -54,6 +56,7 @@ export const CLAWHUB_INSTALL_ERROR_CODE = {
   ARCHIVE_INTEGRITY_MISMATCH: "archive_integrity_mismatch",
 } as const;
 
+/** Shared type for Claw Hub Install Error Code in src/plugins. */
 export type ClawHubInstallErrorCode =
   (typeof CLAWHUB_INSTALL_ERROR_CODE)[keyof typeof CLAWHUB_INSTALL_ERROR_CODE];
 
@@ -312,6 +315,7 @@ function resolveTopLevelLegacyArchiveVerification(
   return integrity ? { kind: "archive-integrity", integrity } : null;
 }
 
+/** Reused helper for format Claw Hub Specifier behavior in src/plugins. */
 export function formatClawHubSpecifier(params: { name: string; version?: string }): string {
   return `clawhub:${params.name}${params.version ? `@${params.version}` : ""}`;
 }
@@ -1047,6 +1051,7 @@ function logClawHubPackageSummary(params: {
   }
 }
 
+/** Reused helper for install Plugin From Claw Hub behavior in src/plugins. */
 export async function installPluginFromClawHub(
   params: InstallSafetyOverrides & {
     spec: string;

@@ -1,3 +1,4 @@
+/** Resolves provider route attribution, endpoint class, and request capabilities. */
 import { listOpenClawPluginManifestMetadata } from "../plugins/manifest-metadata-scan.js";
 import { isRecord } from "../shared/record-coerce.js";
 import {
@@ -23,6 +24,7 @@ type ProviderAttributionHook =
   | "user-agent-extra"
   | "custom-user-agent";
 
+/** Attribution policy for a provider route and supported header hook. */
 export type ProviderAttributionPolicy = {
   provider: string;
   enabledByDefault: boolean;
@@ -37,9 +39,12 @@ export type ProviderAttributionPolicy = {
 
 type ProviderAttributionIdentity = Pick<ProviderAttributionPolicy, "product" | "version">;
 
+/** Transport shape used for provider request policy decisions. */
 export type ProviderRequestTransport = "stream" | "websocket" | "http" | "media-understanding";
+/** Capability family used for provider request policy decisions. */
 export type ProviderRequestCapability = "llm" | "audio" | "image" | "video" | "other";
 
+/** Known provider endpoint class derived from base URL/manifest metadata. */
 export type ProviderEndpointClass =
   | "default"
   | "anthropic-public"
@@ -66,12 +71,14 @@ export type ProviderEndpointClass =
   | "custom"
   | "invalid";
 
+/** Parsed endpoint class plus host metadata. */
 export type ProviderEndpointResolution = {
   endpointClass: ProviderEndpointClass;
   hostname?: string;
   googleVertexRegion?: string;
 };
 
+/** Input used to resolve provider request policy. */
 export type ProviderRequestPolicyInput = {
   provider?: string | null;
   api?: string | null;
@@ -80,6 +87,7 @@ export type ProviderRequestPolicyInput = {
   capability?: ProviderRequestCapability;
 };
 
+/** Provider request route policy and attribution decision. */
 export type ProviderRequestPolicyResolution = {
   provider?: string;
   policy?: ProviderAttributionPolicy;
@@ -95,13 +103,16 @@ export type ProviderRequestPolicyResolution = {
   usesExplicitProxyLikeEndpoint: boolean;
 };
 
+/** Input used to resolve provider request capabilities. */
 export type ProviderRequestCapabilitiesInput = ProviderRequestPolicyInput & {
   modelId?: string | null;
   compat?: unknown;
 };
 
+/** Compatibility family that affects request payload behavior. */
 export type ProviderRequestCompatibilityFamily = "moonshot";
 
+/** Capability flags derived from provider route, API, model id, and compat config. */
 export type ProviderRequestCapabilities = ProviderRequestPolicyResolution & {
   isKnownNativeEndpoint: boolean;
   allowsOpenAIServiceTier: boolean;
@@ -403,6 +414,7 @@ function isLocalEndpointHost(host: string): boolean {
   );
 }
 
+/** Classify a provider base URL into a known endpoint class. */
 export function resolveProviderEndpoint(
   baseUrl: string | null | undefined,
 ): ProviderEndpointResolution {
@@ -446,6 +458,7 @@ function isOpenAIResponsesApi(api: string | null | undefined): boolean {
   return normalizedApi !== undefined && OPENAI_RESPONSES_APIS.has(normalizedApi);
 }
 
+/** Resolve OpenClaw product/version identity used in attribution headers. */
 export function resolveProviderAttributionIdentity(
   env: RuntimeVersionEnv = process.env as RuntimeVersionEnv,
 ): ProviderAttributionIdentity {
@@ -568,6 +581,7 @@ function buildSdkHookOnlyPolicy(
   };
 }
 
+/** List built-in provider attribution policies. */
 export function listProviderAttributionPolicies(
   env: RuntimeVersionEnv = process.env as RuntimeVersionEnv,
 ): ProviderAttributionPolicy[] {
@@ -610,6 +624,7 @@ export function listProviderAttributionPolicies(
   ];
 }
 
+/** Resolve attribution policy by provider id. */
 export function resolveProviderAttributionPolicy(
   provider?: string | null,
   env: RuntimeVersionEnv = process.env as RuntimeVersionEnv,
@@ -618,6 +633,7 @@ export function resolveProviderAttributionPolicy(
   return listProviderAttributionPolicies(env).find((policy) => policy.provider === normalized);
 }
 
+/** Resolve default attribution headers for a provider when enabled. */
 export function resolveProviderAttributionHeaders(
   provider?: string | null,
   env: RuntimeVersionEnv = process.env as RuntimeVersionEnv,
@@ -629,6 +645,7 @@ export function resolveProviderAttributionHeaders(
   return policy.headers;
 }
 
+/** Resolve endpoint, attribution, and route policy for one provider request. */
 export function resolveProviderRequestPolicy(
   input: ProviderRequestPolicyInput,
   env: RuntimeVersionEnv = process.env as RuntimeVersionEnv,
@@ -696,6 +713,7 @@ export function resolveProviderRequestPolicy(
   };
 }
 
+/** Resolve attribution headers for a concrete provider request route. */
 export function resolveProviderRequestAttributionHeaders(
   input: ProviderRequestPolicyInput,
   env: RuntimeVersionEnv = process.env as RuntimeVersionEnv,
@@ -703,6 +721,7 @@ export function resolveProviderRequestAttributionHeaders(
   return resolveProviderRequestPolicy(input, env).attributionHeaders;
 }
 
+/** Resolve provider request capability flags used by payload builders. */
 export function resolveProviderRequestCapabilities(
   input: ProviderRequestCapabilitiesInput,
   env: RuntimeVersionEnv = process.env as RuntimeVersionEnv,
@@ -834,6 +853,7 @@ function describeProviderRequestRouteClass(
   return "native";
 }
 
+/** Produce a compact debug summary of provider request routing. */
 export function describeProviderRequestRoutingSummary(
   input: ProviderRequestPolicyInput,
   env: RuntimeVersionEnv = process.env as RuntimeVersionEnv,

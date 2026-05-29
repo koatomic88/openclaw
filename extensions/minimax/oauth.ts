@@ -1,3 +1,4 @@
+// extensions/minimax oauth helpers and runtime behavior.
 import { randomBytes, randomUUID } from "node:crypto";
 import { resolveExpiresAtMsFromDurationOrEpoch } from "openclaw/plugin-sdk/number-runtime";
 import { generatePkceVerifierChallenge, toFormUrlEncoded } from "openclaw/plugin-sdk/provider-auth";

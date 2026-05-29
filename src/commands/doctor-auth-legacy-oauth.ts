@@ -1,3 +1,4 @@
+/** Doctor repair for legacy OAuth profile id mismatches. */
 import { repairOAuthProfileIdMismatch } from "../agents/auth-profiles/repair.js";
 import { ensureAuthProfileStore } from "../agents/auth-profiles/store.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
@@ -21,6 +22,7 @@ function sanitizePromptLabel(label: string | undefined): string | undefined {
   return sanitized || undefined;
 }
 
+/** Reused helper for maybe Repair Legacy OAuth Profile Ids behavior in src/commands. */
 export async function maybeRepairLegacyOAuthProfileIds(
   cfg: OpenClawConfig,
   prompter: DoctorPrompter,

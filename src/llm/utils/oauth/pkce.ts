@@ -33,6 +33,7 @@ export async function generatePKCE(): Promise<{ verifier: string; challenge: str
   return { verifier, challenge };
 }
 
+/** Reused helper for generate OAuth State behavior in src/llm/utils. */
 export function generateOAuthState(): string {
   const stateBytes = new Uint8Array(32);
   crypto.getRandomValues(stateBytes);

@@ -1,3 +1,4 @@
+// Tests extensions/browser/src/browser cdp helpers test behavior.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { resolveCdpReachabilityPolicy } from "./cdp-reachability-policy.js";
 import {

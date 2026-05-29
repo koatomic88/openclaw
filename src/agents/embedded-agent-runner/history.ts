@@ -1,3 +1,4 @@
+/** Resolves and applies embedded-agent history turn limits. */
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
 import { normalizeOptionalLowercaseString } from "../../shared/string-coerce.js";
 import { normalizeProviderId } from "../provider-id.js";

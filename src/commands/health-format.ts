@@ -1,3 +1,4 @@
+/** Formats health check summaries for CLI output. */
 import { formatChannelStatusState } from "../channels/plugins/status-state.js";
 import { asNullableRecord } from "../shared/record-coerce.js";
 import { colorize, isRich, theme } from "../terminal/theme.js";
@@ -21,6 +22,7 @@ const formatKv = (line: string, rich: boolean) => {
   return `${colorize(rich, theme.muted, `${key}:`)} ${colorize(rich, valueColor, value)}`;
 };
 
+/** Reused helper for format Health Check Failure behavior in src/commands. */
 export function formatHealthCheckFailure(err: unknown, opts: { rich?: boolean } = {}): string {
   const rich = opts.rich ?? isRich();
   const raw = String(err);
@@ -128,6 +130,7 @@ const isProbeFailure = (summary: ChannelAccountHealthSummary): boolean => {
   return ok === false;
 };
 
+/** Reused constant for format Health Channel Lines behavior in src/commands. */
 export const formatHealthChannelLines = (
   summary: HealthSummary,
   opts: {

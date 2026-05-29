@@ -1,6 +1,9 @@
+/** Timezone, timestamp, and user-facing time formatting helpers. */
 import { execFileSync } from "node:child_process";
 
+/** User preference for 12/24-hour clock display. */
 export type TimeFormatPreference = "auto" | "12" | "24";
+/** Concrete resolved time format used for rendering. */
 export type ResolvedTimeFormat = "12" | "24";
 
 let cachedTimeFormat: ResolvedTimeFormat | undefined;
@@ -15,6 +18,7 @@ function buildNormalizedTimestamp(
   return { timestampMs, timestampUtc };
 }
 
+/** Resolve a valid user timezone from config or host defaults. */
 export function resolveUserTimezone(configured?: string): string {
   const trimmed = configured?.trim();
   if (trimmed) {
@@ -29,6 +33,7 @@ export function resolveUserTimezone(configured?: string): string {
   return host?.trim() || "UTC";
 }
 
+/** Resolve user clock format from config, cache, or host settings. */
 export function resolveUserTimeFormat(preference?: TimeFormatPreference): ResolvedTimeFormat {
   if (preference === "12" || preference === "24") {
     return preference;
@@ -40,6 +45,7 @@ export function resolveUserTimeFormat(preference?: TimeFormatPreference): Resolv
   return cachedTimeFormat;
 }
 
+/** Normalize common timestamp inputs into milliseconds and UTC ISO text. */
 export function normalizeTimestamp(
   raw: unknown,
 ): { timestampMs: number; timestampUtc: string } | undefined {
@@ -86,6 +92,7 @@ export function normalizeTimestamp(
   }
 }
 
+/** Add normalized timestamp fields to a record without overwriting valid values. */
 export function withNormalizedTimestamp<T extends Record<string, unknown>>(
   value: T,
   rawTimestamp: unknown,
@@ -169,6 +176,7 @@ function ordinalSuffix(day: number): string {
   }
 }
 
+/** Format a date in the user's timezone and preferred clock format. */
 export function formatUserTime(
   date: Date,
   timeZone: string,

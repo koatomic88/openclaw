@@ -1,3 +1,4 @@
+// test/helpers normalize text helpers and runtime behavior.
 import { stripAnsi } from "../../src/terminal/ansi.js";
 
 export function normalizeTestText(input: string): string {

@@ -1,3 +1,4 @@
+// tasks task flow registry store sqlite helpers and runtime behavior.
 import type { DatabaseSync, StatementSync } from "node:sqlite";
 import { requireNodeSqlite } from "../infra/node-sqlite.js";
 import { configureSqliteWalMaintenance, type SqliteWalMaintenance } from "../infra/sqlite-wal.js";
@@ -443,6 +444,7 @@ function withWriteTransaction(write: (statements: FlowRegistryStatements) => voi
   }
 }
 
+/** Reused helper for load Task Flow Registry State From Sqlite behavior in src/tasks. */
 export function loadTaskFlowRegistryStateFromSqlite(): TaskFlowRegistryStoreSnapshot {
   const { statements } = openFlowRegistryDatabase();
   const rows = statements.selectAll.all() as FlowRegistryRow[];
@@ -451,6 +453,7 @@ export function loadTaskFlowRegistryStateFromSqlite(): TaskFlowRegistryStoreSnap
   };
 }
 
+/** Reused helper for save Task Flow Registry State To Sqlite behavior in src/tasks. */
 export function saveTaskFlowRegistryStateToSqlite(snapshot: TaskFlowRegistryStoreSnapshot) {
   withWriteTransaction((statements) => {
     statements.clearRows.run();
@@ -460,18 +463,21 @@ export function saveTaskFlowRegistryStateToSqlite(snapshot: TaskFlowRegistryStor
   });
 }
 
+/** Reused helper for upsert Task Flow Registry Record To Sqlite behavior in src/tasks. */
 export function upsertTaskFlowRegistryRecordToSqlite(flow: TaskFlowRecord) {
   const store = openFlowRegistryDatabase();
   store.statements.upsertRow.run(bindFlowRecord(flow));
   ensureFlowRegistryPermissions(store.path);
 }
 
+/** Reused helper for delete Task Flow Registry Record From Sqlite behavior in src/tasks. */
 export function deleteTaskFlowRegistryRecordFromSqlite(flowId: string) {
   const store = openFlowRegistryDatabase();
   store.statements.deleteRow.run(flowId);
   ensureFlowRegistryPermissions(store.path);
 }
 
+/** Reused helper for close Task Flow Registry Sqlite Store behavior in src/tasks. */
 export function closeTaskFlowRegistrySqliteStore() {
   if (!cachedDatabase) {
     return;

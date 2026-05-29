@@ -1,3 +1,4 @@
+/** Classifies run results that should trigger model fallback. */
 import { isSilentReplyPayloadText } from "../../auto-reply/tokens.js";
 import { isGpt5ModelId } from "../gpt5-prompt-overlay.js";
 import type { ModelFallbackResultClassification } from "../model-fallback.js";
@@ -55,6 +56,7 @@ function classifyHarnessResult(params: {
   }
 }
 
+/** Reused helper for classify Embedded Agent Run Result For Model Fallback behavior in src/agents/embedded-agent-runner. */
 export function classifyEmbeddedAgentRunResultForModelFallback(params: {
   provider: string;
   model: string;

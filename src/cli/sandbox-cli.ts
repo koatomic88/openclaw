@@ -1,3 +1,4 @@
+/** Registers sandbox inspection and recreation CLI commands. */
 import type { Command } from "commander";
 import { sandboxExplainCommand } from "../commands/sandbox-explain.js";
 import { sandboxListCommand, sandboxRecreateCommand } from "../commands/sandbox.js";
@@ -56,6 +57,7 @@ function createRunner(
 
 // --- Registration ---
 
+/** Reused helper for register Sandbox Cli behavior in src/cli. */
 export function registerSandboxCli(program: Command) {
   const sandbox = program
     .command("sandbox")

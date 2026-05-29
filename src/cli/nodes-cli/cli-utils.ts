@@ -1,8 +1,10 @@
+/** Shared nodes CLI command execution and error helpers. */
 import { defaultRuntime } from "../../runtime.js";
 import { isRich, theme } from "../../terminal/theme.js";
 import { runCommandWithRuntime } from "../cli-utils.js";
 import { unauthorizedHintForMessage } from "./rpc.js";
 
+/** Reused helper for get Nodes Theme behavior in src/cli/nodes-cli. */
 export function getNodesTheme() {
   const rich = isRich();
   const color = (fn: (value: string) => string) => (value: string) => (rich ? fn(value) : value);
@@ -16,6 +18,7 @@ export function getNodesTheme() {
   };
 }
 
+/** Reused helper for run Nodes Command behavior in src/cli/nodes-cli. */
 export function runNodesCommand(label: string, action: () => Promise<void>) {
   return runCommandWithRuntime(defaultRuntime, action, (err) => {
     const message = String(err);

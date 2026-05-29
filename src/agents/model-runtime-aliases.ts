@@ -1,3 +1,4 @@
+/** Resolves CLI runtime aliases and equivalent provider/model refs. */
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { normalizeOptionalLowercaseString } from "../shared/string-coerce.js";
 import {
@@ -26,6 +27,7 @@ export function isCliRuntimeProvider(
   }).includes(normalized);
 }
 
+/** Return whether a runtime id is a CLI runtime alias. */
 export function isCliRuntimeAlias(runtime: string | undefined): boolean {
   const normalized = normalizeProviderId(runtime ?? "");
   return normalized
@@ -33,6 +35,7 @@ export function isCliRuntimeAlias(runtime: string | undefined): boolean {
     : false;
 }
 
+/** Return whether a runtime alias belongs to a provider. */
 export function isCliRuntimeAliasForProvider(params: {
   runtime: string | undefined;
   provider: string | undefined;
@@ -85,6 +88,7 @@ function normalizeRuntimeModelRefForComparison(
   return model ? `${canonicalProvider}/${model}` : canonicalProvider;
 }
 
+/** Return whether runtime model refs refer to the same execution target. */
 export function areRuntimeModelRefsEquivalent(
   left: string,
   right: string,
@@ -96,6 +100,7 @@ export function areRuntimeModelRefsEquivalent(
   );
 }
 
+/** Return whether active runtime alias auth label should be preferred. */
 export function shouldPreferActiveRuntimeAliasAuthLabel(params: {
   runtimeAliasModelEquivalent: boolean;
   selectedAuthLabel?: string;
@@ -214,6 +219,7 @@ function resolveCliRuntimeFromAuthProfile(params: {
     : undefined;
 }
 
+/** Resolve the provider used to execute a CLI runtime alias. */
 export function resolveCliRuntimeExecutionProvider(params: {
   provider: string;
   cfg?: OpenClawConfig;

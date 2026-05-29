@@ -1,3 +1,4 @@
+/** Guarded fetch wrapper for provider transports, SSRF policy, proxy, and local services. */
 import {
   isCloudMetadataIpAddress,
   isLinkLocalIpAddress,
@@ -413,6 +414,7 @@ function resolveModelRequestPolicy(model: Model) {
   });
 }
 
+/** Resolve request timeout from explicit override or model metadata. */
 export function resolveModelRequestTimeoutMs(
   model: Model,
   timeoutMs: number | undefined,
@@ -534,6 +536,7 @@ function resolveModelTransportSsrFPolicy(params: {
   );
 }
 
+/** Build a fetch implementation with SSRF, proxy, timeout, and local-service handling. */
 export function buildGuardedModelFetch(
   model: Model,
   timeoutMs?: number,

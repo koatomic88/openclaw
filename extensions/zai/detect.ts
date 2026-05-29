@@ -1,3 +1,4 @@
+// extensions/zai detect helpers and runtime behavior.
 import {
   ZAI_CN_BASE_URL,
   ZAI_CODING_CN_BASE_URL,

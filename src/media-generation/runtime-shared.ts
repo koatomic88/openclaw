@@ -1,3 +1,4 @@
+// media-generation runtime shared helpers and runtime behavior.
 import { listProfilesForProvider } from "../agents/auth-profiles.js";
 import { ensureAuthProfileStore } from "../agents/auth-profiles.js";
 import { DEFAULT_PROVIDER } from "../agents/defaults.js";
@@ -20,16 +21,19 @@ import type {
   MediaNormalizationValue,
 } from "./normalization.types.js";
 
+/** Shared type for Parsed Provider Model Ref in src/media-generation. */
 export type ParsedProviderModelRef = {
   provider: string;
   model: string;
 };
+/** Re-exported API for src/media-generation. */
 export type {
   MediaGenerationNormalizationMetadataInput,
   MediaNormalizationEntry,
   MediaNormalizationValue,
 } from "./normalization.types.js";
 
+/** Reused helper for record Capability Candidate Failure behavior in src/media-generation. */
 export function recordCapabilityCandidateFailure(params: {
   attempts: FallbackAttempt[];
   provider: string;
@@ -47,6 +51,7 @@ export function recordCapabilityCandidateFailure(params: {
   });
 }
 
+/** Reused helper for has Media Normalization Entry behavior in src/media-generation. */
 export function hasMediaNormalizationEntry<TValue extends MediaNormalizationValue>(
   entry: MediaNormalizationEntry<TValue> | undefined,
 ): entry is MediaNormalizationEntry<TValue> {
@@ -61,6 +66,7 @@ export function hasMediaNormalizationEntry<TValue extends MediaNormalizationValu
 
 const IMAGE_RESOLUTION_ORDER = ["1K", "2K", "4K"] as const;
 
+/** Reused helper for resolve Media Provider Default Timeout Ms behavior in src/media-generation. */
 export function resolveMediaProviderDefaultTimeoutMs(
   timeoutMs: number | undefined,
 ): number | undefined {
@@ -69,6 +75,7 @@ export function resolveMediaProviderDefaultTimeoutMs(
     : undefined;
 }
 
+/** Reused helper for resolve Media Provider Request Timeout Ms behavior in src/media-generation. */
 export function resolveMediaProviderRequestTimeoutMs(params: {
   timeoutMs?: number;
   providerDefaultTimeoutMs?: number;
@@ -179,6 +186,7 @@ function resolveAutoCapabilityFallbackRefs(params: {
   });
 }
 
+/** Reused helper for resolve Capability Model Candidates behavior in src/media-generation. */
 export function resolveCapabilityModelCandidates(params: {
   cfg: OpenClawConfig;
   modelConfig: AgentModelConfig | undefined;
@@ -333,6 +341,7 @@ function greatestCommonDivisor(a: number, b: number): number {
   return left || 1;
 }
 
+/** Reused helper for derive Aspect Ratio From Size behavior in src/media-generation. */
 export function deriveAspectRatioFromSize(size?: string): string | undefined {
   const parsed = parseSizeValue(size);
   if (!parsed) {
@@ -342,6 +351,7 @@ export function deriveAspectRatioFromSize(size?: string): string | undefined {
   return `${parsed.width / divisor}:${parsed.height / divisor}`;
 }
 
+/** Reused helper for resolve Closest Aspect Ratio behavior in src/media-generation. */
 export function resolveClosestAspectRatio(params: {
   requestedAspectRatio?: string;
   requestedSize?: string;
@@ -381,6 +391,7 @@ export function resolveClosestAspectRatio(params: {
   return bestValue;
 }
 
+/** Reused helper for resolve Closest Size behavior in src/media-generation. */
 export function resolveClosestSize(params: {
   requestedSize?: string;
   requestedAspectRatio?: string;
@@ -421,6 +432,7 @@ export function resolveClosestSize(params: {
   return bestValue;
 }
 
+/** Reused helper for resolve Closest Resolution behavior in src/media-generation. */
 export function resolveClosestResolution<TResolution extends string>(params: {
   requestedResolution?: TResolution;
   supportedResolutions?: readonly TResolution[];
@@ -502,6 +514,7 @@ function parseResolutionRank(
   };
 }
 
+/** Reused helper for normalize Duration To Closest Max behavior in src/media-generation. */
 export function normalizeDurationToClosestMax(
   durationSeconds?: number,
   maxDurationSeconds?: number,
@@ -520,6 +533,7 @@ export function normalizeDurationToClosestMax(
   return Math.min(rounded, Math.max(1, Math.round(maxDurationSeconds)));
 }
 
+/** Reused helper for build Media Generation Normalization Metadata behavior in src/media-generation. */
 export function buildMediaGenerationNormalizationMetadata(params: {
   normalization?: MediaGenerationNormalizationMetadataInput;
   requestedSizeForDerivedAspectRatio?: string;
@@ -569,6 +583,7 @@ export function buildMediaGenerationNormalizationMetadata(params: {
   return metadata;
 }
 
+/** Reused helper for throw Capability Generation Failure behavior in src/media-generation. */
 export function throwCapabilityGenerationFailure(params: {
   capabilityLabel: string;
   attempts: FallbackAttempt[];
@@ -624,6 +639,7 @@ function isAbortLikeFallbackAttempt(attempt: FallbackAttempt): boolean {
   );
 }
 
+/** Reused helper for build No Capability Model Configured Message behavior in src/media-generation. */
 export function buildNoCapabilityModelConfiguredMessage(params: {
   capabilityLabel: string;
   modelConfigKey: string;

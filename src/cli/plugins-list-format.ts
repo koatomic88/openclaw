@@ -1,8 +1,10 @@
+/** Formats plugin records for human-readable CLI list output. */
 import type { PluginRecord } from "../plugins/registry.js";
 import { sanitizeTerminalText } from "../terminal/safe-text.js";
 import { theme } from "../terminal/theme.js";
 import { shortenHomeInString } from "../utils.js";
 
+/** Reused helper for format Plugin Line behavior in src/cli. */
 export function formatPluginLine(plugin: PluginRecord, verbose = false): string {
   const status =
     plugin.status === "error"

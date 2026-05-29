@@ -1,6 +1,8 @@
+/** Splits streamed embedded-agent replies into safe block chunks. */
 import type { FenceSpan } from "../markdown/fences.js";
 import { findFenceSpanAt, isSafeFenceBreak, parseFenceSpans } from "../markdown/fences.js";
 
+/** Chunk sizing and preferred break behavior for block replies. */
 export type BlockReplyChunking = {
   minChars: number;
   maxChars: number;
@@ -104,6 +106,7 @@ function findFenceCloseLineStart(buffer: string, fence: FenceSpan, offset = 0): 
   return lastNewline >= 0 ? lastNewline + 1 : -1;
 }
 
+/** Stateful chunker that preserves fenced code blocks while streaming replies. */
 export class EmbeddedBlockChunker {
   #buffer = "";
   readonly #chunking: BlockReplyChunking;

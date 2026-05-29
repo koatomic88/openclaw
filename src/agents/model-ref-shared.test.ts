@@ -1,3 +1,4 @@
+/** Tests shared provider/model ref normalization. */
 import { describe, expect, it } from "vitest";
 import {
   normalizeConfiguredProviderCatalogModelId,

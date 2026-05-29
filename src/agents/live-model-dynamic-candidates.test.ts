@@ -1,3 +1,4 @@
+/** Tests prioritized dynamic live model candidate resolution. */
 import { describe, expect, it, vi } from "vitest";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import type { Model } from "../llm/types.js";

@@ -1,5 +1,7 @@
+// media-understanding provider supports helpers and runtime behavior.
 import type { MediaUnderstandingCapability, MediaUnderstandingProvider } from "./types.js";
 
+/** Reused helper for provider Supports Capability behavior in src/media-understanding. */
 export function providerSupportsCapability(
   provider: MediaUnderstandingProvider | undefined,
   capability: MediaUnderstandingCapability,

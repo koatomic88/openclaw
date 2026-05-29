@@ -1,5 +1,7 @@
+// media-generation capability model ref helpers and runtime behavior.
 import { normalizeOptionalString } from "../shared/string-coerce.js";
 
+/** Shared type for Capability Model Provider Candidate in src/media-generation. */
 export type CapabilityModelProviderCandidate = {
   id: string;
   aliases?: readonly string[];
@@ -7,6 +9,7 @@ export type CapabilityModelProviderCandidate = {
   models?: readonly string[];
 };
 
+/** Shared type for Capability Model Ref in src/media-generation. */
 export type CapabilityModelRef = {
   provider: string;
   model: string;
@@ -25,6 +28,7 @@ function normalizeProviderForMatch(
   return normalizeProviderId ? normalizeProviderId(normalized) : normalized;
 }
 
+/** Reused helper for find Capability Provider By Id behavior in src/media-generation. */
 export function findCapabilityProviderById<T extends CapabilityModelProviderCandidate>(params: {
   providers: readonly T[];
   providerId?: string;
@@ -45,6 +49,7 @@ export function findCapabilityProviderById<T extends CapabilityModelProviderCand
   });
 }
 
+/** Reused helper for resolve Capability Provider Model Only Ref behavior in src/media-generation. */
 export function resolveCapabilityProviderModelOnlyRef(params: {
   providers: readonly CapabilityModelProviderCandidate[];
   raw?: string;
@@ -60,6 +65,7 @@ export function resolveCapabilityProviderModelOnlyRef(params: {
   return provider ? { provider: provider.id, model } : null;
 }
 
+/** Reused helper for resolve Capability Model Ref For Providers behavior in src/media-generation. */
 export function resolveCapabilityModelRefForProviders(params: {
   providers: readonly CapabilityModelProviderCandidate[];
   raw?: string;

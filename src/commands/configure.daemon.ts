@@ -1,3 +1,4 @@
+/** Configure wizard section for gateway daemon install and restart. */
 import { withProgress } from "../cli/progress.js";
 import { getRuntimeConfig } from "../config/config.js";
 import { describeGatewayServiceRestart, resolveGatewayService } from "../daemon/service.js";
@@ -16,6 +17,7 @@ import { resolveGatewayInstallToken } from "./gateway-install-token.js";
 import { guardCancel } from "./onboard-helpers.js";
 import { ensureSystemdUserLingerInteractive } from "./systemd-linger.js";
 
+/** Reused helper for maybe Install Daemon behavior in src/commands. */
 export async function maybeInstallDaemon(params: {
   runtime: RuntimeEnv;
   port: number;

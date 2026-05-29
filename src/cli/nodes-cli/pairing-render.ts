@@ -1,8 +1,10 @@
+/** Renders pending node pairing requests for CLI output. */
 import { formatTimeAgo } from "../../infra/format-time/format-relative.ts";
 import { sanitizeTerminalText } from "../../terminal/safe-text.js";
 import { renderTable } from "../../terminal/table.js";
 import type { PendingRequest } from "./types.js";
 
+/** Reused helper for render Pending Pairing Requests Table behavior in src/cli/nodes-cli. */
 export function renderPendingPairingRequestsTable(params: {
   pending: PendingRequest[];
   now: number;

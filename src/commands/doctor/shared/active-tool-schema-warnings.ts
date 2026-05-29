@@ -1,3 +1,4 @@
+/** Collects doctor warnings for tools whose active schemas drift from config. */
 import {
   listAgentIds,
   resolveAgentConfig,
@@ -76,6 +77,7 @@ function formatDiagnostic(params: {
   );
 }
 
+/** Reused helper for collect Active Tool Schema Projection Warnings behavior in src/commands/doctor. */
 export function collectActiveToolSchemaProjectionWarnings(params: {
   cfg: OpenClawConfig;
   env?: NodeJS.ProcessEnv;

@@ -1,3 +1,4 @@
+// Tests tui/components searchable select list test behavior.
 import { describe, expect, it } from "vitest";
 import { stripAnsi, visibleWidth } from "../../terminal/ansi.js";
 import { SearchableSelectList, type SearchableSelectListTheme } from "./searchable-select-list.js";

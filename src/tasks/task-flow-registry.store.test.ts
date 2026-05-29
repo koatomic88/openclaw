@@ -1,3 +1,4 @@
+// Tests tasks task flow registry store test behavior.
 import { statSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { requireNodeSqlite } from "../infra/node-sqlite.js";

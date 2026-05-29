@@ -1,3 +1,4 @@
+/** Registers status, health, and session inspection commands. */
 import type { Command } from "commander";
 import { setVerbose } from "../../globals.js";
 import { defaultRuntime } from "../../runtime.js";
@@ -98,6 +99,7 @@ async function runWithVerboseAndTimeout(
   });
 }
 
+/** Reused helper for register Status Health Sessions Commands behavior in src/cli/program. */
 export function registerStatusHealthSessionsCommands(program: Command) {
   program
     .command("status")

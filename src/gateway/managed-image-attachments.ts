@@ -1,3 +1,4 @@
+// gateway managed image attachments helpers and runtime behavior.
 import { randomUUID } from "node:crypto";
 import fs from "node:fs/promises";
 import type { IncomingMessage, ServerResponse } from "node:http";
@@ -33,6 +34,7 @@ const MANAGED_OUTGOING_ATTACHMENT_ID_RE =
 const DATA_URL_RE = /^data:/i;
 const WINDOWS_DRIVE_RE = /^[A-Za-z]:[\\/]/;
 
+/** Reused constant for DEFAULT MANAGED IMAGE ATTACHMENT LIMITS behavior in src/gateway. */
 export const DEFAULT_MANAGED_IMAGE_ATTACHMENT_LIMITS = {
   maxBytes: 12 * 1024 * 1024,
   maxWidth: 4096,
@@ -40,6 +42,7 @@ export const DEFAULT_MANAGED_IMAGE_ATTACHMENT_LIMITS = {
   maxPixels: 20_000_000,
 } as const;
 
+/** Shared type for Managed Image Attachment Limits in src/gateway. */
 export type ManagedImageAttachmentLimits = {
   maxBytes: number;
   maxWidth: number;
@@ -101,6 +104,7 @@ const sessionManagedOutgoingAttachmentIndexCache = new Map<
 >();
 const MAX_SESSION_MANAGED_OUTGOING_ATTACHMENT_INDEX_CACHE_ENTRIES = 500;
 
+/** Reused helper for resolve Managed Image Attachment Limits behavior in src/gateway. */
 export function resolveManagedImageAttachmentLimits(
   config?: ManagedImageAttachmentLimitsConfig | null,
 ): ManagedImageAttachmentLimits {
@@ -386,6 +390,7 @@ async function deleteOrphanManagedImageFiles(params: {
   return deletedFileCount;
 }
 
+/** Reused helper for cleanup Managed Outgoing Image Records behavior in src/gateway. */
 export async function cleanupManagedOutgoingImageRecords(params?: {
   stateDir?: string;
   nowMs?: number;
@@ -697,6 +702,7 @@ async function recordMatchesTranscriptMessage(
   );
 }
 
+/** Reused helper for attach Managed Outgoing Images To Message behavior in src/gateway. */
 export async function attachManagedOutgoingImagesToMessage(params: {
   messageId: string;
   blocks?: readonly Record<string, unknown>[];
@@ -732,6 +738,7 @@ export async function attachManagedOutgoingImagesToMessage(params: {
   );
 }
 
+/** Reused helper for create Managed Outgoing Image Blocks behavior in src/gateway. */
 export async function createManagedOutgoingImageBlocks(params: {
   sessionKey: string;
   mediaUrls?: string[] | null;
@@ -918,6 +925,7 @@ function safeAttachmentFilename(value: string | null) {
   return base || fallback;
 }
 
+/** Reused helper for handle Managed Outgoing Image Http Request behavior in src/gateway. */
 export async function handleManagedOutgoingImageHttpRequest(
   req: IncomingMessage,
   res: ServerResponse,

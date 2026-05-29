@@ -1,3 +1,4 @@
+// Renders model-list rows as JSON, plain text, or terminal tables.
 import { type RuntimeEnv, writeRuntimeJson } from "../../runtime.js";
 import { sanitizeTerminalText } from "../../terminal/safe-text.js";
 import { colorize, theme } from "../../terminal/theme.js";
@@ -23,6 +24,7 @@ function formatContextLabel(row: ModelRow): string {
   return formatTokenK(row.contextWindow);
 }
 
+/** Reused helper for print Model Table behavior in src/commands/models. */
 export function printModelTable(
   rows: ModelRow[],
   runtime: RuntimeEnv,

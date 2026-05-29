@@ -1,3 +1,4 @@
+// extensions/qa-lab/src/live-transports/shared live transport scenarios helpers and runtime behavior.
 export type LiveTransportStandardScenarioId =
   | "canary"
   | "mention-gating"

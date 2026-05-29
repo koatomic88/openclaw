@@ -1,8 +1,10 @@
+// media-understanding format helpers and runtime behavior.
 import type { MediaUnderstandingOutput } from "./types.js";
 
 const MEDIA_PLACEHOLDER_RE = /^<media:[^>]+>(\s*\([^)]*\))?$/i;
 const MEDIA_PLACEHOLDER_TOKEN_RE = /^<media:[^>]+>(\s*\([^)]*\))?\s*/i;
 
+/** Reused helper for extract Media User Text behavior in src/media-understanding. */
 export function extractMediaUserText(body?: string): string | undefined {
   const trimmed = body?.trim() ?? "";
   if (!trimmed) {
@@ -29,6 +31,7 @@ function formatSection(
   return lines.join("\n");
 }
 
+/** Reused helper for format Media Understanding Body behavior in src/media-understanding. */
 export function formatMediaUnderstandingBody(params: {
   body?: string;
   outputs: MediaUnderstandingOutput[];
@@ -90,6 +93,7 @@ export function formatMediaUnderstandingBody(params: {
   return sections.join("\n\n").trim();
 }
 
+/** Reused helper for format Audio Transcripts behavior in src/media-understanding. */
 export function formatAudioTranscripts(outputs: MediaUnderstandingOutput[]): string {
   if (outputs.length === 1) {
     return outputs[0].text;

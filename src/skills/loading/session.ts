@@ -1,3 +1,4 @@
+/** Discovers, parses, and formats skills for session prompts. */
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
@@ -71,6 +72,7 @@ function addIgnoreRules(ig: IgnoreMatcher, dir: string, rootDir: string): void {
   }
 }
 
+/** Shared type for Skill Frontmatter in src/agents/sessions. */
 export interface SkillFrontmatter {
   name?: string;
   description?: string;
@@ -78,6 +80,7 @@ export interface SkillFrontmatter {
   [key: string]: unknown;
 }
 
+/** Shared type for Skill in src/agents/sessions. */
 export interface Skill {
   name: string;
   description: string;
@@ -88,6 +91,7 @@ export interface Skill {
   disableModelInvocation: boolean;
 }
 
+/** Shared type for Load Skills Result in src/agents/sessions. */
 export interface LoadSkillsResult {
   skills: Skill[];
   diagnostics: ResourceDiagnostic[];
@@ -134,6 +138,7 @@ function validateDescription(description: string | undefined): string[] {
   return errors;
 }
 
+/** Shared type for Load Skills From Dir Options in src/agents/sessions. */
 export interface LoadSkillsFromDirOptions {
   /** Directory to scan for skills */
   dir: string;
@@ -173,6 +178,7 @@ function createSkillSourceInfo(filePath: string, baseDir: string, source: string
  * - otherwise, load direct .md children in the root
  * - recurse into subdirectories to find SKILL.md
  */
+/** Loads skills from one directory with ignore and source metadata handling. */
 export function loadSkillsFromDir(options: LoadSkillsFromDirOptions): LoadSkillsResult {
   const { dir, source } = options;
   return loadSkillsFromDirInternal(dir, source, true);
@@ -341,6 +347,7 @@ function loadSkillFromFile(
  * Skills with disableModelInvocation=true are excluded from the prompt
  * (they can only be invoked explicitly via /skill:name commands).
  */
+/** Formats loaded skills into compact system-prompt text. */
 export function formatSkillsForPrompt(skills: Skill[]): string {
   const visibleSkills = skills.filter((s) => !s.disableModelInvocation);
 
@@ -378,6 +385,7 @@ function escapeXml(str: string): string {
     .replace(/'/g, "&apos;");
 }
 
+/** Shared type for Load Skills Options in src/agents/sessions. */
 export interface LoadSkillsOptions {
   /** Working directory for project-local skills. */
   cwd: string;
@@ -412,6 +420,7 @@ function resolveSkillPath(p: string, cwd: string): string {
  * Load skills from all configured locations.
  * Returns skills and any validation diagnostics.
  */
+/** Loads skills from user, project, package, and temporary resource roots. */
 export function loadSkills(options: LoadSkillsOptions): LoadSkillsResult {
   const { cwd, agentDir, skillPaths, includeDefaults } = options;
 

@@ -1,17 +1,26 @@
+// packages/agent-core/src llm helpers and runtime behavior.
 import type { TSchema } from "typebox";
 
+/** Public type describing Api for packages/agent-core. */
 export type Api = string;
+/** Public type describing Cache Retention for packages/agent-core. */
 export type CacheRetention = "none" | "short" | "long";
+/** Public type describing Transport for packages/agent-core. */
 export type Transport = "sse" | "websocket" | "websocket-cached" | "auto";
+/** Public type describing Thinking Level for packages/agent-core. */
 export type ThinkingLevel = "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+/** Public type describing Model Thinking Level for packages/agent-core. */
 export type ModelThinkingLevel = "off" | ThinkingLevel;
+/** Public type describing Maybe Promise for packages/agent-core. */
 export type MaybePromise<T> = T | Promise<T>;
 
+/** Public type describing Provider Response for packages/agent-core. */
 export interface ProviderResponse {
   status: number;
   headers: Record<string, string>;
 }
 
+/** Public type describing Thinking Budgets for packages/agent-core. */
 export interface ThinkingBudgets {
   minimal?: number;
   low?: number;
@@ -20,6 +29,7 @@ export interface ThinkingBudgets {
   max?: number;
 }
 
+/** Public type describing Diagnostic Error Info for packages/agent-core. */
 export interface DiagnosticErrorInfo {
   name?: string;
   message: string;
@@ -27,6 +37,7 @@ export interface DiagnosticErrorInfo {
   code?: string | number;
 }
 
+/** Public type describing Assistant Message Diagnostic for packages/agent-core. */
 export interface AssistantMessageDiagnostic {
   type: string;
   timestamp: number;
@@ -34,6 +45,7 @@ export interface AssistantMessageDiagnostic {
   details?: Record<string, unknown>;
 }
 
+/** Public type describing Simple Stream Options for packages/agent-core. */
 export interface SimpleStreamOptions {
   temperature?: number;
   maxTokens?: number;
@@ -53,12 +65,14 @@ export interface SimpleStreamOptions {
   thinkingBudgets?: ThinkingBudgets;
 }
 
+/** Public type describing Text Content for packages/agent-core. */
 export interface TextContent {
   type: "text";
   text: string;
   textSignature?: string;
 }
 
+/** Public type describing Thinking Content for packages/agent-core. */
 export interface ThinkingContent {
   type: "thinking";
   thinking: string;
@@ -66,12 +80,14 @@ export interface ThinkingContent {
   redacted?: boolean;
 }
 
+/** Public type describing Image Content for packages/agent-core. */
 export interface ImageContent {
   type: "image";
   data: string;
   mimeType: string;
 }
 
+/** Public type describing Tool Call for packages/agent-core. */
 export interface ToolCall {
   type: "toolCall";
   id: string;
@@ -81,6 +97,7 @@ export interface ToolCall {
   executionMode?: "sequential" | "parallel";
 }
 
+/** Public type describing Usage for packages/agent-core. */
 export interface Usage {
   input: number;
   output: number;
@@ -96,14 +113,17 @@ export interface Usage {
   };
 }
 
+/** Public type describing Stop Reason for packages/agent-core. */
 export type StopReason = "stop" | "length" | "toolUse" | "aborted" | "error";
 
+/** Public type describing User Message for packages/agent-core. */
 export interface UserMessage {
   role: "user";
   content: string | (TextContent | ImageContent)[];
   timestamp: number;
 }
 
+/** Public type describing Assistant Message for packages/agent-core. */
 export interface AssistantMessage {
   role: "assistant";
   content: (TextContent | ThinkingContent | ToolCall)[];
@@ -119,6 +139,7 @@ export interface AssistantMessage {
   usage: Usage;
 }
 
+/** Public type describing Tool Result Message for packages/agent-core. */
 export interface ToolResultMessage {
   role: "toolResult";
   toolCallId: string;
@@ -129,14 +150,17 @@ export interface ToolResultMessage {
   timestamp: number;
 }
 
+/** Public type describing Message for packages/agent-core. */
 export type Message = UserMessage | AssistantMessage | ToolResultMessage;
 
+/** Public type describing Context for packages/agent-core. */
 export interface Context {
   systemPrompt?: string;
   messages: Message[];
   tools?: Tool[];
 }
 
+/** Public type describing Model for packages/agent-core. */
 export interface Model<TApi extends Api = Api> {
   id: string;
   name: string;
@@ -160,12 +184,14 @@ export interface Model<TApi extends Api = Api> {
   compat?: any;
 }
 
+/** Public type describing Tool for packages/agent-core. */
 export interface Tool<TParameters extends TSchema = TSchema> {
   name: string;
   description: string;
   parameters: TParameters;
 }
 
+/** Public type describing Assistant Message Event for packages/agent-core. */
 export type AssistantMessageEvent =
   | { type: "start"; partial: AssistantMessage }
   | { type: "text_start"; contentIndex: number; partial: AssistantMessage }
@@ -184,6 +210,7 @@ export type AssistantMessageEvent =
     }
   | { type: "error"; reason: Extract<StopReason, "aborted" | "error">; error: AssistantMessage };
 
+/** Public class implementing Event Stream behavior for packages/agent-core. */
 export class EventStream<T, R = T> implements AsyncIterable<T> {
   private queue: T[] = [];
   private waiting: ((value: IteratorResult<T>) => void)[] = [];
@@ -249,20 +276,24 @@ export class EventStream<T, R = T> implements AsyncIterable<T> {
   }
 }
 
+/** Public type describing Assistant Message Event Stream for packages/agent-core. */
 export interface AssistantMessageEventStream extends AsyncIterable<AssistantMessageEvent> {
   result(): Promise<AssistantMessage>;
 }
 
+/** Public type describing Stream Fn for packages/agent-core. */
 export type StreamFn = (
   model: Model,
   context: Context,
   options?: SimpleStreamOptions,
 ) => AssistantMessageEventStream | Promise<AssistantMessageEventStream>;
 
+/** Public type describing Complete Simple Fn for packages/agent-core. */
 export type CompleteSimpleFn = (
   model: Model,
   context: Pick<Context, "systemPrompt" | "messages">,
   options?: SimpleStreamOptions,
 ) => Promise<AssistantMessage>;
 
+/** Public type describing Validate Tool Arguments Fn for packages/agent-core. */
 export type ValidateToolArgumentsFn = (tool: Tool, toolCall: ToolCall) => unknown;

@@ -1,3 +1,4 @@
+/** Loads, coerces, merges, and saves auth profile mutable state sidecars. */
 import fs from "node:fs";
 import { loadJsonFile, saveJsonFile } from "../../infra/json-file.js";
 import { asFiniteNumber } from "../../shared/number-coercion.js";
@@ -145,6 +146,7 @@ function normalizeUsageStats(raw: unknown): AuthProfileState["usageStats"] {
   return Object.keys(normalized).length > 0 ? normalized : undefined;
 }
 
+/** Reused helper for coerce Auth Profile State behavior in src/agents/auth-profiles. */
 export function coerceAuthProfileState(raw: unknown): AuthProfileState {
   if (!isRecord(raw)) {
     return {};
@@ -156,6 +158,7 @@ export function coerceAuthProfileState(raw: unknown): AuthProfileState {
   };
 }
 
+/** Reused helper for merge Auth Profile State behavior in src/agents/auth-profiles. */
 export function mergeAuthProfileState(
   base: AuthProfileState,
   override: AuthProfileState,
@@ -180,6 +183,7 @@ export function mergeAuthProfileState(
   };
 }
 
+/** Reused helper for load Persisted Auth Profile State behavior in src/agents/auth-profiles. */
 export function loadPersistedAuthProfileState(agentDir?: string): AuthProfileState {
   return coerceAuthProfileState(loadJsonFile(resolveAuthStatePath(agentDir)));
 }
@@ -197,6 +201,7 @@ function buildPersistedAuthProfileState(store: AuthProfileState): AuthProfileSta
   };
 }
 
+/** Reused helper for save Persisted Auth Profile State behavior in src/agents/auth-profiles. */
 export function savePersistedAuthProfileState(
   store: AuthProfileState,
   agentDir?: string,

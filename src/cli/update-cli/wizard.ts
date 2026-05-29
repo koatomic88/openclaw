@@ -1,3 +1,4 @@
+/** Interactive update wizard for selecting channel and confirming changes. */
 import { confirm, isCancel } from "@clack/prompts";
 import { readConfigFileSnapshot } from "../../config/config.js";
 import {
@@ -21,6 +22,7 @@ import {
 } from "./shared.js";
 import { updateCommand } from "./update-command.js";
 
+/** Reused helper for update Wizard Command behavior in src/cli/update-cli. */
 export async function updateWizardCommand(opts: UpdateWizardOptions = {}): Promise<void> {
   if (!process.stdin.isTTY) {
     defaultRuntime.error(

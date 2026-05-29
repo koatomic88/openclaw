@@ -1,3 +1,4 @@
+// Tests packages/memory-host-sdk/src/host retry utils test behavior.
 import { describe, expect, it, vi } from "vitest";
 import { resolveRetryConfig, retryAsync } from "./retry-utils.js";
 

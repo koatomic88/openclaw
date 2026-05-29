@@ -1,3 +1,4 @@
+// infra state migrations helpers and runtime behavior.
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -46,6 +47,7 @@ import {
   safeReadDir,
 } from "./state-migrations.fs.js";
 
+/** Shared type for Legacy State Detection in src/infra. */
 export type LegacyStateDetection = {
   targetAgentId: string;
   targetMainKey: string;
@@ -662,6 +664,7 @@ function listTopLevelSessionStoreKeys(raw: string): string[] | null {
   return null;
 }
 
+/** Reused helper for session Store Text May Need Canonicalization behavior in src/infra. */
 export function sessionStoreTextMayNeedCanonicalization(params: {
   raw: string;
   storeAgentIds: Iterable<string>;
@@ -773,15 +776,18 @@ function removeDirIfEmpty(dir: string) {
   }
 }
 
+/** Reused helper for reset Auto Migrate Legacy State For Test behavior in src/infra. */
 export function resetAutoMigrateLegacyStateForTest() {
   autoMigrateChecked = false;
   cachedLegacySessionSurfaces = null;
 }
 
+/** Reused helper for reset Auto Migrate Legacy Agent Dir For Test behavior in src/infra. */
 export function resetAutoMigrateLegacyAgentDirForTest() {
   resetAutoMigrateLegacyStateForTest();
 }
 
+/** Reused helper for reset Auto Migrate Legacy State Dir For Test behavior in src/infra. */
 export function resetAutoMigrateLegacyStateDirForTest() {
   autoMigrateStateDirChecked = false;
 }
@@ -871,6 +877,7 @@ function isLegacyDirSymlinkMirror(legacyDir: string, targetDir: string): boolean
   return isLegacyTreeSymlinkMirror(legacyDir, realTargetDir);
 }
 
+/** Reused helper for auto Migrate Legacy State Dir behavior in src/infra. */
 export async function autoMigrateLegacyStateDir(params: {
   env?: NodeJS.ProcessEnv;
   homedir?: () => string;
@@ -1047,6 +1054,7 @@ async function collectChannelLegacyStateMigrationPlans(params: {
   return plans;
 }
 
+/** Reused helper for detect Legacy State Migrations behavior in src/infra. */
 export async function detectLegacyStateMigrations(params: {
   cfg: OpenClawConfig;
   env?: NodeJS.ProcessEnv;
@@ -1265,6 +1273,7 @@ async function migrateLegacySessions(
   return { changes, warnings };
 }
 
+/** Reused helper for migrate Legacy Agent Dir behavior in src/infra. */
 export async function migrateLegacyAgentDir(
   detected: LegacyStateDetection,
   now: () => number,
@@ -1311,6 +1320,7 @@ export async function migrateLegacyAgentDir(
   return { changes, warnings };
 }
 
+/** Reused helper for run Legacy State Migrations behavior in src/infra. */
 export async function runLegacyStateMigrations(params: {
   detected: LegacyStateDetection;
   now?: () => number;
@@ -1341,6 +1351,7 @@ export async function runLegacyStateMigrations(params: {
   };
 }
 
+/** Reused helper for auto Migrate Legacy Agent Dir behavior in src/infra. */
 export async function autoMigrateLegacyAgentDir(params: {
   cfg: OpenClawConfig;
   env?: NodeJS.ProcessEnv;
@@ -1513,6 +1524,7 @@ function resolveStorePathFromTemplate(
   return path.resolve(expand(template));
 }
 
+/** Reused helper for auto Migrate Legacy State behavior in src/infra. */
 export async function autoMigrateLegacyState(params: {
   cfg: OpenClawConfig;
   env?: NodeJS.ProcessEnv;

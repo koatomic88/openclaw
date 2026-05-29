@@ -1,3 +1,4 @@
+// Tests test/scripts check test behavior.
 import { describe, expect, it } from "vitest";
 import { runCommand } from "../../scripts/check.mjs";
 

@@ -1,3 +1,4 @@
+// markdown tables helpers and runtime behavior.
 import type { MarkdownTableMode } from "../config/types.base.js";
 import { markdownToIRWithMeta } from "./ir.js";
 import { renderMarkdownWithMarkers } from "./render.js";
@@ -10,6 +11,7 @@ const MARKDOWN_STYLE_MARKERS = {
   code_block: { open: "```\n", close: "```" },
 } as const;
 
+/** Reused helper for convert Markdown Tables behavior in src/markdown. */
 export function convertMarkdownTables(markdown: string, mode: MarkdownTableMode): string {
   if (!markdown || mode === "off") {
     return markdown;

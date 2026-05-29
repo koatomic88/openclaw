@@ -1,3 +1,4 @@
+// Tests extensions/browser/src/browser/routes agent act normalize test behavior.
 import { describe, expect, it } from "vitest";
 import { normalizeActRequest } from "./agent.act.normalize.js";
 

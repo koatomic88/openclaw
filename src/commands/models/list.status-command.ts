@@ -1,3 +1,4 @@
+// Adds auth/profile/probe status sections to model-list output.
 import path from "node:path";
 import {
   resolveAgentDir,
@@ -234,6 +235,7 @@ function syntheticAuthCredential(
   };
 }
 
+/** Reused helper for models Status Command behavior in src/commands/models. */
 export async function modelsStatusCommand(
   opts: {
     json?: boolean;

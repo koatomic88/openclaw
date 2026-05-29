@@ -1,3 +1,4 @@
+// plugins provider thinking helpers and runtime behavior.
 import { normalizeProviderId } from "../agents/provider-id.js";
 import { resolveBundledProviderPolicySurface } from "./provider-public-artifacts.js";
 import type {
@@ -61,18 +62,21 @@ type ThinkingHookParams<TContext> = {
   context: TContext;
 };
 
+/** Reused helper for resolve Provider Binary Thinking behavior in src/plugins. */
 export function resolveProviderBinaryThinking(
   params: ThinkingHookParams<ProviderThinkingPolicyContext>,
 ) {
   return resolveActiveThinkingProvider(params.provider)?.isBinaryThinking?.(params.context);
 }
 
+/** Reused helper for resolve Provider XHigh Thinking behavior in src/plugins. */
 export function resolveProviderXHighThinking(
   params: ThinkingHookParams<ProviderThinkingPolicyContext>,
 ) {
   return resolveActiveThinkingProvider(params.provider)?.supportsXHighThinking?.(params.context);
 }
 
+/** Reused helper for resolve Provider Thinking Profile behavior in src/plugins. */
 export function resolveProviderThinkingProfile(
   params: ThinkingHookParams<ProviderDefaultThinkingPolicyContext>,
 ) {
@@ -87,6 +91,7 @@ export function resolveProviderThinkingProfile(
   );
 }
 
+/** Reused helper for resolve Provider Default Thinking Level behavior in src/plugins. */
 export function resolveProviderDefaultThinkingLevel(
   params: ThinkingHookParams<ProviderDefaultThinkingPolicyContext>,
 ) {

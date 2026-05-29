@@ -1,3 +1,4 @@
+/** Tests shared daemon CLI formatters and hint filtering. */
 import { describe, expect, it } from "vitest";
 import { theme } from "../../terminal/theme.js";
 import {

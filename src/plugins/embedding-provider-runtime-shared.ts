@@ -1,3 +1,4 @@
+// plugins embedding provider runtime shared helpers and runtime behavior.
 import { normalizeProviderId } from "../agents/provider-id.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import {
@@ -30,6 +31,7 @@ function resolveConfiguredProviderConfig(
   );
 }
 
+/** Reused helper for read Configured Provider Api Id behavior in src/plugins. */
 export function readConfiguredProviderApiId(params: {
   providerId: string;
   cfg?: OpenClawConfig;
@@ -48,6 +50,7 @@ export function readConfiguredProviderApiId(params: {
   return resolvedProviderId && resolvedProviderId !== normalized ? resolvedProviderId : undefined;
 }
 
+/** Reused helper for resolve Runtime Embedding Provider Lookup Ids behavior in src/plugins. */
 export function resolveRuntimeEmbeddingProviderLookupIds(params: {
   id: string;
   cfg?: OpenClawConfig;
@@ -64,6 +67,7 @@ export function resolveRuntimeEmbeddingProviderLookupIds(params: {
   return ids;
 }
 
+/** Reused helper for list Runtime Embedding Provider Adapters behavior in src/plugins. */
 export function listRuntimeEmbeddingProviderAdapters<TAdapter extends { id: string }>(params: {
   key: EmbeddingProviderCapabilityKey;
   cfg?: OpenClawConfig;
@@ -82,6 +86,7 @@ export function listRuntimeEmbeddingProviderAdapters<TAdapter extends { id: stri
   return [...merged.values()];
 }
 
+/** Reused helper for get Runtime Embedding Provider Adapter behavior in src/plugins. */
 export function getRuntimeEmbeddingProviderAdapter<TAdapter extends { id: string }>(params: {
   key: EmbeddingProviderCapabilityKey;
   cfg?: OpenClawConfig;

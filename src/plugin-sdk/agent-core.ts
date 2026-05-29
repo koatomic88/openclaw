@@ -1,3 +1,4 @@
+// plugin-sdk agent core helpers and runtime behavior.
 import {
   Agent as CoreAgent,
   type AgentOptions as CoreAgentOptions,
@@ -6,11 +7,13 @@ import type { CompleteSimpleFn, StreamFn } from "../../packages/agent-core/src/l
 import type { AgentCoreRuntimeDeps } from "../../packages/agent-core/src/runtime-deps.js";
 import { completeSimple, streamSimple } from "./llm.js";
 
+/** Reused constant for open Claw Agent Core Runtime behavior in src/plugin-sdk. */
 export const openClawAgentCoreRuntime = {
   completeSimple: completeSimple as unknown as CompleteSimpleFn,
   streamSimple: streamSimple as unknown as StreamFn,
 } satisfies AgentCoreRuntimeDeps;
 
+/** Reused class for Agent behavior in src/plugin-sdk. */
 export class Agent extends CoreAgent {
   constructor(options: CoreAgentOptions = {}) {
     super({ runtime: openClawAgentCoreRuntime, ...options });

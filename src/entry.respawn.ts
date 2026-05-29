@@ -1,3 +1,4 @@
+// OpenClaw entry respawn helpers and runtime behavior.
 import { spawn, type ChildProcess } from "node:child_process";
 import path from "node:path";
 import { resolveNodeStartupTlsEnvironment } from "./bootstrap/node-startup-env.js";
@@ -9,8 +10,11 @@ import { normalizeWindowsArgv } from "./cli/windows-argv.js";
 import { isTruthyEnvValue } from "./infra/env.js";
 import { attachChildProcessBridge } from "./process/child-process-bridge.js";
 
+/** Reused constant for EXPERIMENTAL WARNING FLAG behavior in src. */
 export const EXPERIMENTAL_WARNING_FLAG = "--disable-warning=ExperimentalWarning";
+/** Reused constant for OPENCLAW NODE OPTIONS READY behavior in src. */
 export const OPENCLAW_NODE_OPTIONS_READY = "OPENCLAW_NODE_OPTIONS_READY";
+/** Reused constant for OPENCLAW NODE EXTRA CA CERTS READY behavior in src. */
 export const OPENCLAW_NODE_EXTRA_CA_CERTS_READY = "OPENCLAW_NODE_EXTRA_CA_CERTS_READY";
 const WINDOWS_STACK_SIZE_FLAG = "--stack-size=8192";
 const CLI_RESPAWN_SIGNAL_EXIT_GRACE_MS = 1_000;
@@ -34,6 +38,7 @@ function pathModuleForPlatform(platform: NodeJS.Platform): typeof path.posix {
   return platform === "win32" ? path.win32 : path.posix;
 }
 
+/** Reused helper for resolve Cli Respawn Command behavior in src. */
 export function resolveCliRespawnCommand(params: {
   execPath: string;
   platform?: NodeJS.Platform;
@@ -71,6 +76,7 @@ function hasStackSizeConfigured(execArgv: string[]): boolean {
   );
 }
 
+/** Reused helper for build Cli Respawn Plan behavior in src. */
 export function buildCliRespawnPlan(
   params: {
     argv?: string[];
@@ -155,6 +161,7 @@ export function buildCliRespawnPlan(
   };
 }
 
+/** Reused helper for run Cli Respawn Plan behavior in src. */
 export function runCliRespawnPlan(
   plan: CliRespawnPlan,
   runtime: CliRespawnRuntime = {

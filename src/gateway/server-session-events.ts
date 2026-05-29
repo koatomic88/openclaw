@@ -1,3 +1,4 @@
+// gateway server session events helpers and runtime behavior.
 import type { SessionLifecycleEvent } from "../sessions/session-lifecycle-events.js";
 import type { SessionTranscriptUpdate } from "../sessions/transcript-events.js";
 import { asPositiveSafeInteger } from "../shared/number-coercion.js";
@@ -85,6 +86,7 @@ function buildGatewaySessionSnapshot(params: {
   };
 }
 
+/** Reused helper for create Transcript Update Broadcast Handler behavior in src/gateway. */
 export function createTranscriptUpdateBroadcastHandler(params: {
   broadcastToConnIds: GatewayBroadcastToConnIdsFn;
   sessionEventSubscribers: SessionEventSubscribers;
@@ -173,6 +175,7 @@ async function handleTranscriptUpdateBroadcast(
   );
 }
 
+/** Reused helper for create Lifecycle Event Broadcast Handler behavior in src/gateway. */
 export function createLifecycleEventBroadcastHandler(params: {
   broadcastToConnIds: GatewayBroadcastToConnIdsFn;
   sessionEventSubscribers: SessionEventSubscribers;

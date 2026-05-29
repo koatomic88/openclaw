@@ -1,3 +1,4 @@
+/** Tests commitments command listing and status updates. */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { CommitmentRecord } from "../commitments/types.js";
 import type { OutputRuntimeEnv } from "../runtime.js";

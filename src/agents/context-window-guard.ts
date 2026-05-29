@@ -1,14 +1,18 @@
+/** Resolves context-window sizes and blocks models below usable thresholds. */
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { resolveProviderEndpoint } from "./provider-attribution.js";
 import { findNormalizedProviderValue } from "./provider-id.js";
 
+/** Absolute minimum context window OpenClaw will run against. */
 export const CONTEXT_WINDOW_HARD_MIN_TOKENS = 4_000;
+/** Absolute warning threshold for small context windows. */
 export const CONTEXT_WINDOW_WARN_BELOW_TOKENS = 8_000;
 const CONTEXT_WINDOW_HARD_MIN_RATIO = 0.1;
 const CONTEXT_WINDOW_WARN_BELOW_RATIO = 0.2;
 
 type ContextWindowSource = "model" | "modelsConfig" | "agentContextTokens" | "default";
 
+/** Resolved context-window size with source attribution. */
 export type ContextWindowInfo = {
   tokens: number;
   referenceTokens?: number;
@@ -23,6 +27,7 @@ function normalizePositiveInt(value: unknown): number | null {
   return int > 0 ? int : null;
 }
 
+/** Resolve effective context-window tokens from config, model metadata, and defaults. */
 export function resolveContextWindowInfo(params: {
   cfg: OpenClawConfig | undefined;
   provider: string;
@@ -89,6 +94,7 @@ function resolveContextWindowGuardHint(params: {
   };
 }
 
+/** Resolve warning/block thresholds for a context-window size. */
 export function resolveContextWindowGuardThresholds(
   contextWindowTokens: number,
 ): ContextWindowGuardThresholds {
@@ -105,6 +111,7 @@ export function resolveContextWindowGuardThresholds(
   };
 }
 
+/** Format a warning for models with low but usable context windows. */
 export function formatContextWindowWarningMessage(params: {
   provider: string;
   modelId: string;
@@ -134,6 +141,7 @@ export function formatContextWindowWarningMessage(params: {
   );
 }
 
+/** Format a blocking message for unusably small context windows. */
 export function formatContextWindowBlockMessage(params: {
   guard: ContextWindowGuardResult;
   runtimeBaseUrl?: string | null;
@@ -161,6 +169,7 @@ export function formatContextWindowBlockMessage(params: {
   );
 }
 
+/** Evaluate context-window info against warning and hard-min thresholds. */
 export function evaluateContextWindowGuard(params: {
   info: ContextWindowInfo;
   warnBelowTokens?: number;

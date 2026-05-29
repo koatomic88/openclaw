@@ -1,3 +1,4 @@
+/** Live tests for model auth profiles and generated provider config. */
 import { writeSync } from "node:fs";
 import { type Api, completeSimple, type Model } from "openclaw/plugin-sdk/llm";
 import { Type } from "typebox";

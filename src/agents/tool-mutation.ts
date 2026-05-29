@@ -1,3 +1,4 @@
+/** Classifies whether tool calls can mutate external or local state. */
 import {
   normalizeLowercaseStringOrEmpty,
   normalizeOptionalLowercaseString,
@@ -73,6 +74,7 @@ const MESSAGE_MUTATING_ACTIONS = new Set([
 // `buildToolActionFingerprint` stores raw path values in a `|`-delimited
 // string, so a path containing `|` could over-match (e.g. `/tmp/a|left` and
 // `/tmp/a|right` would both extract as `path=/tmp/a`).
+/** Shared type for File Target in src/agents. */
 export type FileTarget = {
   path?: string;
   oldpath?: string;
@@ -124,6 +126,7 @@ function appendFingerprintAlias(
   return false;
 }
 
+/** Reused helper for is Likely Mutating Tool Name behavior in src/agents. */
 export function isLikelyMutatingToolName(toolName: string): boolean {
   const normalized = normalizeLowercaseStringOrEmpty(toolName);
   if (!normalized) {
@@ -137,6 +140,7 @@ export function isLikelyMutatingToolName(toolName: string): boolean {
   );
 }
 
+/** Reused helper for is Mutating Tool Call behavior in src/agents. */
 export function isMutatingToolCall(toolName: string, args: unknown): boolean {
   const normalized = normalizeLowercaseStringOrEmpty(toolName);
   const record = asRecord(args);
@@ -180,6 +184,7 @@ export function isMutatingToolCall(toolName: string, args: unknown): boolean {
   }
 }
 
+/** Reused helper for build Tool Action Fingerprint behavior in src/agents. */
 export function buildToolActionFingerprint(
   toolName: string,
   args: unknown,
@@ -250,6 +255,7 @@ function readArgFingerprintValue(
   return undefined;
 }
 
+/** Reused helper for extract File Target behavior in src/agents. */
 export function extractFileTarget(toolName: string, args: unknown): FileTarget | undefined {
   if (!isFileMutatingToolName(toolName)) {
     return undefined;
@@ -270,6 +276,7 @@ function fileTargetsEqual(a: FileTarget, b: FileTarget): boolean {
   return (a.path ?? "") === (b.path ?? "") && (a.oldpath ?? "") === (b.oldpath ?? "");
 }
 
+/** Reused helper for build Tool Mutation State behavior in src/agents. */
 export function buildToolMutationState(
   toolName: string,
   args: unknown,
@@ -284,6 +291,7 @@ export function buildToolMutationState(
   };
 }
 
+/** Reused helper for is Same Tool Mutation Action behavior in src/agents. */
 export function isSameToolMutationAction(existing: ToolActionRef, next: ToolActionRef): boolean {
   if (existing.actionFingerprint != null || next.actionFingerprint != null) {
     // For mutating flows, fail closed: only clear when both fingerprints exist

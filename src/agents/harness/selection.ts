@@ -1,3 +1,4 @@
+/** Selects agent harnesses and routes attempts/compaction through them. */
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
 import { formatErrorMessage } from "../../infra/errors.js";
 import { createSubsystemLogger } from "../../logging/subsystem.js";
@@ -33,7 +34,9 @@ import type { AgentHarness, AgentHarnessSupport } from "./types.js";
 import { adaptAgentHarnessToV2, runAgentHarnessV2LifecycleAttempt } from "./v2.js";
 
 const log = createSubsystemLogger("agents/harness");
+/** Re-exported API for src/agents/harness, starting with resolve Agent Harness Policy. */
 export { resolveAgentHarnessPolicy } from "./policy.js";
+/** Re-exported API for src/agents/harness, starting with Agent Harness Policy. */
 export type { AgentHarnessPolicy };
 
 const PLUGIN_HARNESS_SENDER_DENY_ALL_PROMPT =
@@ -74,6 +77,7 @@ function listPluginAgentHarnesses(): AgentHarness[] {
   return listRegisteredAgentHarnesses().map((entry) => entry.harness);
 }
 
+/** Resolves harness policy and verifies the requested harness is available. */
 export function resolveAvailableAgentHarnessPolicy(params: {
   provider?: string;
   modelId?: string;
@@ -110,6 +114,7 @@ function compareHarnessSupport(
   return left.harness.id.localeCompare(right.harness.id);
 }
 
+/** Selects the concrete harness for a provider/model request. */
 export function selectAgentHarness(params: {
   provider: string;
   modelId?: string;
@@ -254,6 +259,7 @@ function selectAgentHarnessDecision(params: {
   });
 }
 
+/** Runs one attempt through the selected harness with OpenClaw fallback behavior. */
 export async function runAgentHarnessAttempt(
   params: EmbeddedRunAttemptParams,
 ): Promise<EmbeddedRunAttemptResult> {
@@ -484,6 +490,7 @@ function logAgentHarnessSelection(
   });
 }
 
+/** Delegates compaction to the harness when it owns the session lifecycle. */
 export async function maybeCompactAgentHarnessSession(
   params: CompactEmbeddedAgentSessionParams,
 ): Promise<EmbeddedAgentCompactResult | undefined> {

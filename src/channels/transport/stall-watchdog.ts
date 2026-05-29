@@ -1,10 +1,13 @@
+/** Armable watchdog for detecting stalled channel transport operations. */
 import type { RuntimeEnv } from "../../runtime.js";
 
+/** Shared type for Stall Watchdog Timeout Meta in src/channels/transport. */
 export type StallWatchdogTimeoutMeta = {
   idleMs: number;
   timeoutMs: number;
 };
 
+/** Shared type for Armable Stall Watchdog in src/channels/transport. */
 export type ArmableStallWatchdog = {
   arm: (atMs?: number) => void;
   touch: (atMs?: number) => void;
@@ -13,6 +16,7 @@ export type ArmableStallWatchdog = {
   isArmed: () => boolean;
 };
 
+/** Reused helper for create Armable Stall Watchdog behavior in src/channels/transport. */
 export function createArmableStallWatchdog(params: {
   label: string;
   timeoutMs: number;

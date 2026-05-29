@@ -1,3 +1,4 @@
+// Tests extensions/codex/src/app-server attempt timeouts test behavior.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   CODEX_APP_SERVER_STARTUP_TIMEOUT_FLOOR_MS,

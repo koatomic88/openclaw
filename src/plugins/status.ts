@@ -1,3 +1,4 @@
+// plugins status helpers and runtime behavior.
 import { resolveAgentWorkspaceDir, resolveDefaultAgentId } from "../agents/agent-scope.js";
 import { resolveDefaultAgentWorkspaceDir } from "../agents/workspace.js";
 import { getRuntimeConfig } from "../config/config.js";
@@ -37,17 +38,21 @@ import { loadPluginMetadataRegistrySnapshot } from "./runtime/metadata-registry-
 import { buildPluginDependencyStatus } from "./status-dependencies.js";
 import type { PluginHookName, PluginLogger } from "./types.js";
 
+/** Shared type for Plugin Status Report in src/plugins. */
 export type PluginStatusReport = PluginRegistry & {
   workspaceDir?: string;
 };
 
+/** Shared type for Plugin Registry Status Report in src/plugins. */
 export type PluginRegistryStatusReport = PluginStatusReport & {
   registrySource: PluginRegistrySnapshotSource;
   registryDiagnostics: readonly PluginRegistrySnapshotDiagnostic[];
 };
 
+/** Re-exported API for src/plugins, starting with Plugin Capability Kind. */
 export type { PluginCapabilityKind, PluginInspectShape } from "./inspect-shape.js";
 
+/** Shared type for Plugin Compatibility Notice in src/plugins. */
 export type PluginCompatibilityNotice = {
   pluginId: string;
   code: "legacy-before-agent-start" | "hook-only" | "deprecated-memory-embedding-provider-api";
@@ -56,11 +61,13 @@ export type PluginCompatibilityNotice = {
   message: string;
 };
 
+/** Shared type for Plugin Compatibility Summary in src/plugins. */
 export type PluginCompatibilitySummary = {
   noticeCount: number;
   pluginCount: number;
 };
 
+/** Shared type for Plugin Inspect Report in src/plugins. */
 export type PluginInspectReport = {
   workspaceDir?: string;
   plugin: PluginRegistry["plugins"][number];
@@ -237,6 +244,7 @@ function buildPluginRecordFromInstalledIndex(
   };
 }
 
+/** Reused helper for build Plugin Registry Snapshot Report behavior in src/plugins. */
 export function buildPluginRegistrySnapshotReport(
   params?: PluginReportParams,
 ): PluginRegistryStatusReport {
@@ -390,14 +398,17 @@ function buildPluginReport(
   };
 }
 
+/** Reused helper for build Plugin Snapshot Report behavior in src/plugins. */
 export function buildPluginSnapshotReport(params?: PluginReportParams): PluginStatusReport {
   return buildPluginReport(params, false);
 }
 
+/** Reused helper for build Plugin Diagnostics Report behavior in src/plugins. */
 export function buildPluginDiagnosticsReport(params?: PluginReportParams): PluginStatusReport {
   return buildPluginReport(params, true);
 }
 
+/** Reused helper for build Plugin Inspect Report behavior in src/plugins. */
 export function buildPluginInspectReport(params: {
   id: string;
   config?: OpenClawConfig;
@@ -543,6 +554,7 @@ export function buildPluginInspectReport(params: {
   };
 }
 
+/** Reused helper for build All Plugin Inspect Reports behavior in src/plugins. */
 export function buildAllPluginInspectReports(params?: {
   config?: OpenClawConfig;
   workspaceDir?: string;
@@ -581,6 +593,7 @@ export function buildAllPluginInspectReports(params?: {
     .filter((entry): entry is PluginInspectReport => entry !== null);
 }
 
+/** Reused helper for build Plugin Compatibility Warnings behavior in src/plugins. */
 export function buildPluginCompatibilityWarnings(params?: {
   config?: OpenClawConfig;
   workspaceDir?: string;
@@ -591,6 +604,7 @@ export function buildPluginCompatibilityWarnings(params?: {
   return buildPluginCompatibilityNotices(params).map(formatPluginCompatibilityNotice);
 }
 
+/** Reused helper for build Plugin Compatibility Notices behavior in src/plugins. */
 export function buildPluginCompatibilityNotices(params?: {
   config?: OpenClawConfig;
   workspaceDir?: string;
@@ -601,6 +615,7 @@ export function buildPluginCompatibilityNotices(params?: {
   return buildAllPluginInspectReports(params).flatMap((inspect) => inspect.compatibility);
 }
 
+/** Reused helper for build Plugin Compatibility Snapshot Notices behavior in src/plugins. */
 export function buildPluginCompatibilitySnapshotNotices(params?: {
   config?: OpenClawConfig;
   workspaceDir?: string;
@@ -613,10 +628,12 @@ export function buildPluginCompatibilitySnapshotNotices(params?: {
   });
 }
 
+/** Reused helper for format Plugin Compatibility Notice behavior in src/plugins. */
 export function formatPluginCompatibilityNotice(notice: PluginCompatibilityNotice): string {
   return `${notice.pluginId} ${notice.message}`;
 }
 
+/** Reused helper for summarize Plugin Compatibility behavior in src/plugins. */
 export function summarizePluginCompatibility(
   notices: PluginCompatibilityNotice[],
 ): PluginCompatibilitySummary {

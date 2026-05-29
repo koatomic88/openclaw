@@ -25,6 +25,7 @@ import { shouldIgnoreInstalledPluginDirName } from "./installed-plugin-dirs.js";
 import { extensionUsesSkippedScannerPath, isPathInside } from "./scan-paths.js";
 import type { ExecFn } from "./windows-acl.js";
 
+/** Shared type for Security Audit Finding in src/security. */
 export type SecurityAuditFinding = {
   checkId: string;
   severity: "info" | "warn" | "critical";
@@ -109,6 +110,7 @@ async function loadSandboxBrowserSecurityHashEpoch(): Promise<string> {
   return SANDBOX_BROWSER_SECURITY_HASH_EPOCH;
 }
 
+/** Reused helper for collect Plugins Trust Findings behavior in src/security. */
 export async function collectPluginsTrustFindings(
   params: CollectPluginsTrustFindingsParams,
 ): Promise<SecurityAuditFinding[]> {
@@ -434,6 +436,7 @@ async function readSandboxBrowserPortMappings(params: {
   }
 }
 
+/** Reused helper for collect Sandbox Browser Hash Label Findings behavior in src/security. */
 export async function collectSandboxBrowserHashLabelFindings(params?: {
   execDockerRawFn?: ExecDockerRawFn;
   timeoutMs?: number;
@@ -562,6 +565,7 @@ function buildSandboxBrowserDockerProbeTimeoutFinding(timeoutMs: number): Securi
   };
 }
 
+/** Reused helper for collect Include File Perm Findings behavior in src/security. */
 export async function collectIncludeFilePermFindings(params: {
   configSnapshot: ConfigFileSnapshot;
   env?: NodeJS.ProcessEnv;
@@ -642,6 +646,7 @@ export async function collectIncludeFilePermFindings(params: {
   return findings;
 }
 
+/** Reused helper for collect State Deep Filesystem Findings behavior in src/security. */
 export async function collectStateDeepFilesystemFindings(params: {
   cfg: OpenClawConfig;
   env: NodeJS.ProcessEnv;
@@ -803,6 +808,7 @@ export async function collectStateDeepFilesystemFindings(params: {
   return findings;
 }
 
+/** Reused helper for read Config Snapshot For Audit behavior in src/security. */
 export async function readConfigSnapshotForAudit(params: {
   env: NodeJS.ProcessEnv;
   configPath: string;
@@ -814,6 +820,7 @@ export async function readConfigSnapshotForAudit(params: {
   }).readConfigFileSnapshot();
 }
 
+/** Reused helper for collect Plugins Code Safety Findings behavior in src/security. */
 export async function collectPluginsCodeSafetyFindings(params: {
   stateDir: string;
   summaryCache?: CodeSafetySummaryCache;
@@ -934,6 +941,7 @@ export async function collectPluginsCodeSafetyFindings(params: {
   return findings;
 }
 
+/** Reused helper for collect Installed Skills Code Safety Findings behavior in src/security. */
 export async function collectInstalledSkillsCodeSafetyFindings(params: {
   cfg: OpenClawConfig;
   stateDir: string;

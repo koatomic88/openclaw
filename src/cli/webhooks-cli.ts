@@ -1,3 +1,4 @@
+/** Registers webhook management CLI commands. */
 import type { Command } from "commander";
 import { danger } from "../globals.js";
 import {
@@ -23,6 +24,7 @@ import { formatDocsLink } from "../terminal/links.js";
 import { theme } from "../terminal/theme.js";
 import { formatCliCommand } from "./command-format.js";
 
+/** Reused helper for register Webhooks Cli behavior in src/cli. */
 export function registerWebhooksCli(program: Command) {
   const webhooks = program
     .command("webhooks")

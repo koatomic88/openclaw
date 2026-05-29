@@ -1,3 +1,4 @@
+// plugins current plugin metadata snapshot helpers and runtime behavior.
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import {
   clearCurrentPluginMetadataSnapshotState,
@@ -14,6 +15,7 @@ import type { PluginMetadataSnapshot } from "./plugin-metadata-snapshot.types.js
 type CurrentPluginMetadataSnapshotState = ReturnType<typeof getCurrentPluginMetadataSnapshotState>;
 let currentPluginMetadataConfigIdentityCache = new WeakSet<OpenClawConfig>();
 
+/** Reused helper for resolve Plugin Metadata Control Plane Fingerprint behavior in src/plugins. */
 export function resolvePluginMetadataControlPlaneFingerprint(
   config?: OpenClawConfig,
   options: Omit<ResolvePluginControlPlaneContextParams, "config"> = {},
@@ -24,6 +26,7 @@ export function resolvePluginMetadataControlPlaneFingerprint(
   });
 }
 
+/** Reused helper for is Reusable Current Plugin Metadata Snapshot behavior in src/plugins. */
 export function isReusableCurrentPluginMetadataSnapshot(
   _snapshot: PluginMetadataSnapshot,
 ): boolean {
@@ -32,6 +35,7 @@ export function isReusableCurrentPluginMetadataSnapshot(
 
 // Single-slot Gateway-owned handoff. Replace or clear it at lifecycle boundaries;
 // never accumulate historical metadata snapshots here.
+/** Reused helper for set Current Plugin Metadata Snapshot behavior in src/plugins. */
 export function setCurrentPluginMetadataSnapshot(
   snapshot: PluginMetadataSnapshot | undefined,
   options: {
@@ -85,15 +89,18 @@ export function setCurrentPluginMetadataSnapshot(
   }
 }
 
+/** Reused helper for clear Current Plugin Metadata Snapshot behavior in src/plugins. */
 export function clearCurrentPluginMetadataSnapshot(): void {
   currentPluginMetadataConfigIdentityCache = new WeakSet();
   clearCurrentPluginMetadataSnapshotState();
 }
 
+/** Reused helper for capture Current Plugin Metadata Snapshot State behavior in src/plugins. */
 export function captureCurrentPluginMetadataSnapshotState(): CurrentPluginMetadataSnapshotState {
   return getCurrentPluginMetadataSnapshotState();
 }
 
+/** Reused helper for restore Current Plugin Metadata Snapshot State behavior in src/plugins. */
 export function restoreCurrentPluginMetadataSnapshotState(
   state: CurrentPluginMetadataSnapshotState,
 ): void {
@@ -106,6 +113,7 @@ export function restoreCurrentPluginMetadataSnapshotState(
   );
 }
 
+/** Reused helper for get Current Plugin Metadata Snapshot behavior in src/plugins. */
 export function getCurrentPluginMetadataSnapshot(
   params: {
     config?: OpenClawConfig;

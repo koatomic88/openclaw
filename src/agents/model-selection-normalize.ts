@@ -1,3 +1,4 @@
+/** Normalizes provider/model references for selection and allowlist paths. */
 import type { PluginManifestRecord } from "../plugins/manifest-registry.js";
 import { normalizeLowercaseStringOrEmpty } from "../shared/string-coerce.js";
 import { modelKey as sharedModelKey, normalizeStaticProviderModelId } from "./model-ref-shared.js";
@@ -9,19 +10,23 @@ import {
 } from "./provider-id.js";
 import { normalizeProviderModelIdWithRuntime } from "./provider-model-normalization.runtime.js";
 
+/** Normalized provider/model pair. */
 export type ModelRef = {
   provider: string;
   model: string;
 };
 
+/** Manifest metadata available for model id normalization. */
 export type ModelManifestNormalizationContext = {
   manifestPlugins?: readonly Pick<PluginManifestRecord, "modelIdNormalization">[];
 };
 
+/** Build canonical provider/model key. */
 export function modelKey(provider: string, model: string) {
   return sharedModelKey(provider, model);
 }
 
+/** Build legacy provider/model key when it differs from the canonical key. */
 export function legacyModelKey(provider: string, model: string): string | null {
   const providerId = provider.trim();
   const modelId = model.trim();
@@ -33,6 +38,7 @@ export function legacyModelKey(provider: string, model: string): string | null {
   return rawKey === canonicalKey ? null : rawKey;
 }
 
+/** Re-exported API for src/agents. */
 export {
   findNormalizedProviderKey,
   findNormalizedProviderValue,
@@ -71,6 +77,7 @@ type ModelRefNormalizeOptions = ModelManifestNormalizationContext & {
   allowPluginNormalization?: boolean;
 };
 
+/** Normalize a provider/model pair with manifest and runtime rules. */
 export function normalizeModelRef(
   provider: string,
   model: string,
@@ -84,6 +91,7 @@ export function normalizeModelRef(
 type ParseModelRefOptions = ModelRefNormalizeOptions;
 const OPENROUTER_AUTO_COMPAT_ALIAS = "openrouter:auto";
 
+/** Parse a string model ref into provider/model parts. */
 export function parseModelRef(
   raw: string,
   defaultProvider: string,

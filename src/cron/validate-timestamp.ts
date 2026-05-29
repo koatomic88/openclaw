@@ -1,3 +1,4 @@
+// cron validate timestamp helpers and runtime behavior.
 import { normalizeOptionalString } from "../shared/string-coerce.js";
 import { parseAbsoluteTimeMs } from "./parse.js";
 import type { CronSchedule } from "./types.js";

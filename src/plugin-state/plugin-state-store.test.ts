@@ -1,3 +1,4 @@
+// Tests plugin-state plugin state store test behavior.
 import { mkdirSync, rmSync, statSync } from "node:fs";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { requireNodeSqlite } from "../infra/node-sqlite.js";

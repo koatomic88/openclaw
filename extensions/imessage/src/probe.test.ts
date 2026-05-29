@@ -1,3 +1,4 @@
+// Tests extensions/imessage/src probe test behavior.
 import { describe, expect, it } from "vitest";
 import { imessageRpcSupportsMethod } from "./probe.js";
 

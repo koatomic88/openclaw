@@ -1,3 +1,4 @@
+// Coverage for block reply pipeline payload ordering and delivery.
 import { describe, expect, it } from "vitest";
 import { setReplyPayloadMetadata } from "../reply-payload.js";
 import {

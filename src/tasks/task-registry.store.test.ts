@@ -1,3 +1,4 @@
+// Tests tasks task registry store test behavior.
 import { mkdirSync, statSync } from "node:fs";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";

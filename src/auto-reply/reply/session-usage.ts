@@ -1,3 +1,4 @@
+// Session usage recording and CLI session binding helpers.
 import { setCliSessionBinding, setCliSessionId } from "../../agents/cli-session.js";
 import {
   deriveSessionTotalTokens,
@@ -73,6 +74,7 @@ function estimateSessionRunCostUsd(params: {
   return resolveNonNegativeNumber(estimateUsageCost({ usage: params.usage, cost }));
 }
 
+/** Reused helper for persist Session Usage Update behavior in src/auto-reply/reply. */
 export async function persistSessionUsageUpdate(params: {
   storePath?: string;
   sessionKey?: string;

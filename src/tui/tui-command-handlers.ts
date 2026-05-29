@@ -1,3 +1,4 @@
+// tui tui command handlers helpers and runtime behavior.
 import { randomUUID } from "node:crypto";
 import type { Component, SelectItem, TUI } from "@earendil-works/pi-tui";
 import type { SessionsPatchResult } from "../../packages/gateway-protocol/src/index.js";
@@ -69,6 +70,7 @@ function isSlashStopCommand(text: string): boolean {
   return trimmed.startsWith("/") && isChatStopCommandText(trimmed);
 }
 
+/** Reused helper for create Command Handlers behavior in src/tui. */
 export function createCommandHandlers(context: CommandHandlerContext) {
   const {
     client,

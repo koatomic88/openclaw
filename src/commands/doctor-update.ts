@@ -1,3 +1,4 @@
+/** Offers update guidance before running doctor checks. */
 import fs from "node:fs/promises";
 import path from "node:path";
 import { formatCliCommand } from "../cli/command-format.js";
@@ -34,6 +35,7 @@ async function detectOpenClawGitCheckout(root: string): Promise<"git" | "not-git
     : "not-git";
 }
 
+/** Reused helper for maybe Offer Update Before Doctor behavior in src/commands. */
 export async function maybeOfferUpdateBeforeDoctor(params: {
   runtime: RuntimeEnv;
   options: DoctorOptions;

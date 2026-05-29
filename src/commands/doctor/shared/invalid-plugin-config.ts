@@ -1,3 +1,4 @@
+/** Collects doctor warnings for plugin config validation failures. */
 import type { OpenClawConfig } from "../../../config/types.openclaw.js";
 import { validateConfigObjectWithPlugins } from "../../../config/validation.js";
 import { sanitizeForLog } from "../../../terminal/ansi.js";
@@ -35,6 +36,7 @@ function scanInvalidPluginConfig(cfg: OpenClawConfig): InvalidPluginConfigHit[] 
   return hits;
 }
 
+/** Reused helper for maybe Repair Invalid Plugin Config behavior in src/commands/doctor. */
 export function maybeRepairInvalidPluginConfig(cfg: OpenClawConfig): {
   config: OpenClawConfig;
   changes: string[];

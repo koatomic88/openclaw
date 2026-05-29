@@ -1,3 +1,4 @@
+// extensions/xiaomi speech provider helpers and runtime behavior.
 import { transcodeAudioBufferToOpus } from "openclaw/plugin-sdk/media-runtime";
 import { assertOkOrThrowProviderError } from "openclaw/plugin-sdk/provider-http";
 import { normalizeResolvedSecretInputString } from "openclaw/plugin-sdk/secret-input";

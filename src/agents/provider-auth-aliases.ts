@@ -1,3 +1,4 @@
+/** Resolves provider auth aliases declared by trusted plugin manifests. */
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { normalizePluginsConfig } from "../plugins/config-state.js";
 import { getCurrentPluginMetadataSnapshot } from "../plugins/current-plugin-metadata-snapshot.js";
@@ -12,6 +13,7 @@ import type { PluginMetadataSnapshot } from "../plugins/plugin-metadata-snapshot
 import type { PluginOrigin } from "../plugins/plugin-origin.types.js";
 import { normalizeProviderId } from "./provider-id.js";
 
+/** Inputs controlling provider auth alias lookup and workspace trust. */
 export type ProviderAuthAliasLookupParams = {
   config?: OpenClawConfig;
   workspaceDir?: string;
@@ -51,6 +53,7 @@ function buildProviderAuthAliasMapCacheKey(
   });
 }
 
+/** Clear provider auth alias cache between tests. */
 export function resetProviderAuthAliasMapCacheForTest(): void {
   providerAuthAliasMapCache = new WeakMap<NodeJS.ProcessEnv, Map<string, Record<string, string>>>();
 }
@@ -108,6 +111,7 @@ function setPreferredAlias(params: {
   }
 }
 
+/** Resolve normalized auth alias -> canonical provider id map. */
 export function resolveProviderAuthAliasMap(
   params?: ProviderAuthAliasLookupParams,
 ): Record<string, string> {
@@ -195,6 +199,7 @@ export function resolveProviderAuthAliasMap(
   return aliases;
 }
 
+/** Normalize provider id through configured/plugin auth aliases. */
 export function resolveProviderIdForAuth(
   provider: string,
   params?: ProviderAuthAliasLookupParams,

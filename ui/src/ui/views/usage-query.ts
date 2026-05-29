@@ -1,3 +1,4 @@
+// ui/src/ui/views usage query helpers and runtime behavior.
 import { normalizeLowercaseStringOrEmpty, uniqueStrings } from "../string-coerce.ts";
 import { extractQueryTerms } from "../usage-helpers.ts";
 import type { CostDailyEntry, UsageAggregates, UsageSessionEntry } from "./usageTypes.ts";
@@ -258,7 +259,9 @@ const setQueryTokensForKey = (query: string, key: string, values: string[]): str
   return next.length ? `${next.join(" ")} ` : "";
 };
 
+/** Re-exported API for ui/src/ui/views, starting with Query Suggestion. */
 export type { QuerySuggestion };
+/** Re-exported API for ui/src/ui/views. */
 export {
   addQueryToken,
   applySuggestionToQuery,

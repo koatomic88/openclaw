@@ -1,3 +1,4 @@
+/** Delivery helpers for routing subagent completion announcements to parent sessions/users. */
 import { completionRequiresMessageToolDelivery } from "../auto-reply/reply/completion-delivery-policy.js";
 import { isSilentReplyPayloadText, SILENT_REPLY_TOKEN } from "../auto-reply/tokens.js";
 import { getLoadedChannelPluginForRead } from "../channels/plugins/registry-loaded-read.js";
@@ -317,11 +318,13 @@ async function resolveActiveWakeWithRetries(
   return outcome;
 }
 
+/** Resolves bounded announce delivery timeout from runtime config. */
 export function resolveSubagentAnnounceTimeoutMs(cfg: OpenClawConfig): number {
   const configured = cfg.agents?.defaults?.subagents?.announceTimeoutMs;
   return clampTimerTimeoutMs(configured) ?? DEFAULT_SUBAGENT_ANNOUNCE_TIMEOUT_MS;
 }
 
+/** Returns true when requester delivery should stay internal to an orchestration session. */
 export function isInternalAnnounceRequesterSession(sessionKey: string | undefined): boolean {
   return getSubagentDepthFromSessionStore(sessionKey) >= 1 || isCronSessionKey(sessionKey);
 }
@@ -427,6 +430,7 @@ async function waitForAnnounceRetryDelay(ms: number, signal?: AbortSignal): Prom
   });
 }
 
+/** Retries transient announce delivery failures without retrying permanent routing errors. */
 export async function runAnnounceDeliveryWithRetry<T>(params: {
   operation: string;
   signal?: AbortSignal;
@@ -456,6 +460,7 @@ export async function runAnnounceDeliveryWithRetry<T>(params: {
   }
 }
 
+/** Resolves the outbound origin used for a child completion announcement. */
 export async function resolveSubagentCompletionOrigin(params: {
   childSessionKey: string;
   requesterSessionKey: string;
@@ -549,6 +554,7 @@ export async function resolveSubagentCompletionOrigin(params: {
   }
 }
 
+/** Loads requester session metadata for announcement routing. */
 export function loadRequesterSessionEntry(requesterSessionKey: string) {
   const cfg = subagentAnnounceDeliveryDeps.getRuntimeConfig();
   const canonicalKey = resolveRequesterStoreKey(cfg, requesterSessionKey);
@@ -559,6 +565,7 @@ export function loadRequesterSessionEntry(requesterSessionKey: string) {
   return { cfg, entry, canonicalKey };
 }
 
+/** Loads any session metadata by session key for announcement routing. */
 export function loadSessionEntryByKey(sessionKey: string) {
   const cfg = subagentAnnounceDeliveryDeps.getRuntimeConfig();
   const agentId = resolveAgentIdFromSessionKey(sessionKey);
@@ -1378,6 +1385,7 @@ async function sendSubagentAnnounceDirectly(params: {
   }
 }
 
+/** Delivers a subagent announcement through direct and/or steered paths. */
 export async function deliverSubagentAnnouncement(params: {
   requesterSessionKey: string;
   announceId?: string;
@@ -1432,6 +1440,7 @@ export async function deliverSubagentAnnouncement(params: {
   });
 }
 
+/** Test-only override hook for announcement delivery dependencies. */
 export const testing = {
   setDepsForTest(
     overrides?: Partial<SubagentAnnounceDeliveryDeps> & {
@@ -1461,4 +1470,5 @@ export const testing = {
       : defaultSubagentAnnounceDeliveryDeps;
   },
 };
+/** Re-exported API for src/agents, starting with testing. */
 export { testing as __testing };

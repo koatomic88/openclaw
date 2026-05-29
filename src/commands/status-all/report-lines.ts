@@ -1,3 +1,4 @@
+// Assembles the status-all text report from reusable table/section builders.
 import type { ProgressReporter } from "../../cli/progress.js";
 import { getTerminalTableWidth, renderTable } from "../../terminal/table.js";
 import { isRich, theme } from "../../terminal/theme.js";
@@ -43,6 +44,7 @@ type AgentStatusLike = {
   }>;
 };
 
+/** Reused helper for build Status All Report Lines behavior in src/commands/status-all. */
 export async function buildStatusAllReportLines(params: {
   progress: ProgressReporter;
   overviewRows: OverviewRow[];

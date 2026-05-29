@@ -1,3 +1,4 @@
+// Tests extensions/whatsapp/src login qr test behavior.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { startWebLoginWithQr, waitForWebLogin } from "./login-qr.js";
 import { renderQrPngDataUrl } from "./qr-image.js";

@@ -1,3 +1,4 @@
+// Chat command handler for compacting active agent sessions.
 import { resolveAgentDir, resolveSessionAgentId } from "../../agents/agent-scope.js";
 import { resolveContextTokensForModel } from "../../agents/context.js";
 import { resolveAgentHarnessPolicy } from "../../agents/harness/selection.js";
@@ -195,6 +196,7 @@ function resolveManualCompactContextModelId(params: {
   return model;
 }
 
+/** Reused constant for handle Compact Command behavior in src/auto-reply/reply. */
 export const handleCompactCommand: CommandHandler = async (params) => {
   const compactRequested =
     params.command.commandBodyNormalized === "/compact" ||

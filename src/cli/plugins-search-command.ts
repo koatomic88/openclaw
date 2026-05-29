@@ -1,3 +1,4 @@
+/** Implements plugin search CLI command against ClawHub package metadata. */
 import {
   searchClawHubPackages,
   type ClawHubPackageFamily,
@@ -8,6 +9,7 @@ import { defaultRuntime, writeRuntimeJson, type RuntimeEnv } from "../runtime.js
 import { normalizeOptionalString } from "../shared/string-coerce.js";
 import { theme } from "../terminal/theme.js";
 
+/** Shared type for Plugins Search Options in src/cli. */
 export type PluginsSearchOptions = {
   json?: boolean;
   limit?: number;
@@ -66,6 +68,7 @@ function formatPackageSearchLine(entry: ClawHubPackageSearchResult): string {
   return `${pkg.name}  ${theme.muted(flags.join(" | "))}${summary}\n  ${theme.muted(`Install: openclaw plugins install clawhub:${pkg.name}`)}`;
 }
 
+/** Reused helper for run Plugins Search Command behavior in src/cli. */
 export async function runPluginsSearchCommand(
   queryParts: string[] | string,
   opts: PluginsSearchOptions = {},

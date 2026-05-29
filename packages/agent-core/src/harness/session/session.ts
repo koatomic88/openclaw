@@ -1,3 +1,4 @@
+// packages/agent-core/src/harness/session session helpers and runtime behavior.
 import type { ImageContent, TextContent } from "../../llm.js";
 import type { AgentMessage } from "../../types.js";
 import {
@@ -22,6 +23,7 @@ import type {
 } from "../types.js";
 import { SessionError } from "../types.js";
 
+/** Public helper for build Session Context behavior in packages/agent-core. */
 export function buildSessionContext(pathEntries: SessionTreeEntry[]): SessionContext {
   let thinkingLevel = "off";
   let model: { provider: string; modelId: string } | null = null;
@@ -91,6 +93,7 @@ export function buildSessionContext(pathEntries: SessionTreeEntry[]): SessionCon
   return { messages, thinkingLevel, model };
 }
 
+/** Public class implementing Session behavior for packages/agent-core. */
 export class Session<TMetadata extends SessionMetadata = SessionMetadata> {
   private storage: SessionStorage<TMetadata>;
 

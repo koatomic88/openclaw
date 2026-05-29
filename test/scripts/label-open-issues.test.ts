@@ -1,3 +1,4 @@
+// Tests test/scripts label open issues test behavior.
 import { describe, expect, it } from "vitest";
 import { testing } from "../../scripts/label-open-issues.ts";
 

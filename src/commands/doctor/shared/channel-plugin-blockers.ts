@@ -1,3 +1,4 @@
+/** Scans config for channel plugin blockers that doctor should report. */
 import type { OpenClawConfig } from "../../../config/types.openclaw.js";
 import {
   listExplicitConfiguredChannelIdsForConfig,
@@ -11,6 +12,7 @@ import { loadPluginManifestRegistryForPluginRegistry } from "../../../plugins/pl
 import { normalizeOptionalLowercaseString } from "../../../shared/string-coerce.js";
 import { sanitizeForLog } from "../../../terminal/ansi.js";
 
+/** Shared type for Channel Plugin Blocker Hit in src/commands/doctor. */
 export type ChannelPluginBlockerHit = {
   channelId: string;
   pluginId: string;
@@ -36,6 +38,7 @@ function hasExplicitChannelPluginBlockerConfig(cfg: OpenClawConfig): boolean {
   });
 }
 
+/** Reused helper for scan Configured Channel Plugin Blockers behavior in src/commands/doctor. */
 export function scanConfiguredChannelPluginBlockers(
   cfg: OpenClawConfig,
   env: NodeJS.ProcessEnv = process.env,
@@ -123,6 +126,7 @@ function formatReason(hit: ChannelPluginBlockerHit): string {
   return `plugin "${sanitizeForLog(hit.pluginId)}" is not loadable (${sanitizeForLog(hit.reason)}).`;
 }
 
+/** Reused helper for collect Configured Channel Plugin Blocker Warnings behavior in src/commands/doctor. */
 export function collectConfiguredChannelPluginBlockerWarnings(
   hits: ChannelPluginBlockerHit[],
 ): string[] {
@@ -132,6 +136,7 @@ export function collectConfiguredChannelPluginBlockerWarnings(
   );
 }
 
+/** Reused helper for is Warning Blocked By Channel Plugin behavior in src/commands/doctor. */
 export function isWarningBlockedByChannelPlugin(
   warning: string,
   hits: ChannelPluginBlockerHit[],

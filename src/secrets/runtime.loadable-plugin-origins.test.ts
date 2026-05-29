@@ -1,3 +1,4 @@
+// Tests secrets runtime loadable plugin origins test behavior.
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { asConfig, setupSecretsRuntimeSnapshotTestHooks } from "./runtime.test-support.ts";
 

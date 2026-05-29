@@ -1,3 +1,4 @@
+// hooks frontmatter helpers and runtime behavior.
 import { parseFrontmatterBlock } from "../markdown/frontmatter.js";
 import {
   applyOpenClawManifestInstallCommonFields,
@@ -19,6 +20,7 @@ import type {
   ParsedHookFrontmatter,
 } from "./types.js";
 
+/** Reused helper for parse Frontmatter behavior in src/hooks. */
 export function parseFrontmatter(content: string): ParsedHookFrontmatter {
   return parseFrontmatterBlock(content);
 }
@@ -45,6 +47,7 @@ function parseInstallSpec(input: unknown): HookInstallSpec | undefined {
   return spec;
 }
 
+/** Reused helper for resolve Open Claw Metadata behavior in src/hooks. */
 export function resolveOpenClawMetadata(
   frontmatter: ParsedHookFrontmatter,
 ): OpenClawHookMetadata | undefined {
@@ -69,6 +72,7 @@ export function resolveOpenClawMetadata(
   };
 }
 
+/** Reused helper for resolve Hook Invocation Policy behavior in src/hooks. */
 export function resolveHookInvocationPolicy(
   frontmatter: ParsedHookFrontmatter,
 ): HookInvocationPolicy {
@@ -77,6 +81,7 @@ export function resolveHookInvocationPolicy(
   };
 }
 
+/** Reused helper for resolve Hook Key behavior in src/hooks. */
 export function resolveHookKey(hookName: string, entry?: HookEntry): string {
   return entry?.metadata?.hookKey ?? hookName;
 }

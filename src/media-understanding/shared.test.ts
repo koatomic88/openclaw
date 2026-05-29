@@ -1,3 +1,4 @@
+// Tests media-understanding shared test behavior.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { VERSION } from "../version.js";
 

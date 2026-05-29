@@ -1,3 +1,4 @@
+// extensions/mattermost/src/mattermost monitor resources helpers and runtime behavior.
 import { normalizeStringEntries } from "openclaw/plugin-sdk/string-coerce-runtime";
 import {
   fetchMattermostChannel,

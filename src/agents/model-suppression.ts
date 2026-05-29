@@ -1,3 +1,4 @@
+/** Applies manifest-driven suppression rules to built-in models. */
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import {
   buildManifestBuiltInModelSuppressionResolver,
@@ -46,6 +47,7 @@ function resolveBuiltInModelSuppression(params: {
   return undefined;
 }
 
+/** Return whether a manifest explicitly suppresses a built-in model. */
 export function shouldSuppressBuiltInModelFromManifest(params: {
   provider?: string | null;
   id?: string | null;
@@ -54,6 +56,7 @@ export function shouldSuppressBuiltInModelFromManifest(params: {
   return resolveBuiltInModelSuppressionFromManifest(params)?.suppress ?? false;
 }
 
+/** Return whether a built-in model should be hidden. */
 export function shouldSuppressBuiltInModel(params: {
   provider?: string | null;
   id?: string | null;
@@ -66,6 +69,7 @@ export function shouldSuppressBuiltInModel(params: {
 // Checks only unconditional suppressions (no `when` clause). Used for inline
 // model entries where user configuration may override conditional suppressions
 // (e.g. custom endpoint overrides) but not absolute provider capability blocks.
+/** Return whether a model is unconditionally suppressed. */
 export function shouldUnconditionallySuppress(params: {
   provider?: string | null;
   id?: string | null;
@@ -77,6 +81,7 @@ export function shouldUnconditionallySuppress(params: {
   );
 }
 
+/** Build an error message for suppressed built-in model use. */
 export function buildSuppressedBuiltInModelError(params: {
   provider?: string | null;
   id?: string | null;
@@ -86,6 +91,7 @@ export function buildSuppressedBuiltInModelError(params: {
   return resolveBuiltInModelSuppression(params)?.errorMessage;
 }
 
+/** Build a reusable built-in model suppression predicate. */
 export function buildShouldSuppressBuiltInModel(params: {
   config?: OpenClawConfig;
 }): (input: { provider?: string | null; id?: string | null; baseUrl?: string | null }) => boolean {

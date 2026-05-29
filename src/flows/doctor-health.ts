@@ -1,3 +1,4 @@
+// flows doctor health helpers and runtime behavior.
 import { intro as clackIntro, outro as clackOutro } from "@clack/prompts";
 import type { DoctorOptions } from "../commands/doctor-prompter.js";
 import type { RuntimeEnv } from "../runtime.js";
@@ -6,6 +7,7 @@ import { stylePromptTitle } from "../terminal/prompt-style.js";
 const intro = (message: string) => clackIntro(stylePromptTitle(message) ?? message);
 const outro = (message: string) => clackOutro(stylePromptTitle(message) ?? message);
 
+/** Reused helper for doctor Command behavior in src/flows. */
 export async function doctorCommand(runtime?: RuntimeEnv, options: DoctorOptions = {}) {
   const effectiveRuntime = runtime ?? (await import("../runtime.js")).defaultRuntime;
   if (options.repair === true || options.yes === true || options.generateGatewayToken === true) {

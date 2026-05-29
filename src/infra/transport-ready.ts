@@ -1,12 +1,15 @@
+// infra transport ready helpers and runtime behavior.
 import { danger } from "../globals.js";
 import type { RuntimeEnv } from "../runtime.js";
 import { sleepWithAbort } from "./backoff.js";
 
+/** Shared type for Transport Ready Result in src/infra. */
 export type TransportReadyResult = {
   ok: boolean;
   error?: string | null;
 };
 
+/** Shared type for Wait For Transport Ready Params in src/infra. */
 export type WaitForTransportReadyParams = {
   label: string;
   timeoutMs: number;
@@ -18,6 +21,7 @@ export type WaitForTransportReadyParams = {
   check: () => Promise<TransportReadyResult>;
 };
 
+/** Reused helper for wait For Transport Ready behavior in src/infra. */
 export async function waitForTransportReady(params: WaitForTransportReadyParams): Promise<void> {
   const started = Date.now();
   const timeoutMs = Math.max(0, params.timeoutMs);

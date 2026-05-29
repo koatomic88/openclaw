@@ -1,3 +1,4 @@
+// Runtime boundary for extensions/openai openai codex oauth types runtime behavior.
 import type { Model } from "openclaw/plugin-sdk/llm";
 
 export type OAuthCredentials = {

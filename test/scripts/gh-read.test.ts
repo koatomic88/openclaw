@@ -1,3 +1,4 @@
+// Tests test/scripts gh read test behavior.
 import { describe, expect, it } from "vitest";
 import {
   buildReadPermissions,

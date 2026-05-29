@@ -1,3 +1,4 @@
+// extensions/browser/src/gateway browser request helpers and runtime behavior.
 import crypto from "node:crypto";
 import {
   normalizeLowercaseStringOrEmpty,

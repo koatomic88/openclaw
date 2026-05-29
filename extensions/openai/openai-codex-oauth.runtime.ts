@@ -1,3 +1,4 @@
+// Runtime boundary for extensions/openai openai codex oauth runtime behavior.
 import path from "node:path";
 import { formatErrorMessage } from "openclaw/plugin-sdk/error-runtime";
 import type { ProviderAuthContext } from "openclaw/plugin-sdk/plugin-entry";

@@ -1,5 +1,7 @@
+// Shared types for llm types behavior.
 import type { AssistantMessageDiagnostic } from "./utils/diagnostics.js";
 
+/** Shared type for Known Api in src/llm. */
 export type KnownApi =
   | "openai-completions"
   | "mistral-conversations"
@@ -11,20 +13,29 @@ export type KnownApi =
   | "google-generative-ai"
   | "google-vertex";
 
+/** Shared type for Api in src/llm. */
 export type Api = KnownApi | (string & {});
 
+/** Shared type for Known Images Api in src/llm. */
 export type KnownImagesApi = "openrouter-images";
 
+/** Shared type for Images Api in src/llm. */
 export type ImagesApi = KnownImagesApi | (string & {});
 
+/** Shared type for Provider in src/llm. */
 export type Provider = string;
 
+/** Shared type for Known Images Provider in src/llm. */
 export type KnownImagesProvider = "openrouter";
 
+/** Shared type for Images Provider in src/llm. */
 export type ImagesProvider = string;
 
+/** Shared type for Thinking Level in src/llm. */
 export type ThinkingLevel = "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+/** Shared type for Model Thinking Level in src/llm. */
 export type ModelThinkingLevel = "off" | ThinkingLevel;
+/** Shared type for Thinking Level Map in src/llm. */
 export type ThinkingLevelMap = Partial<Record<ModelThinkingLevel, string | null>>;
 
 /** Token budgets for each thinking level (token-based providers only) */
@@ -37,17 +48,22 @@ export interface ThinkingBudgets {
 }
 
 // Base options all providers share
+/** Shared type for Cache Retention in src/llm. */
 export type CacheRetention = "none" | "short" | "long";
 
+/** Shared type for Transport in src/llm. */
 export type Transport = "sse" | "websocket" | "websocket-cached" | "auto";
 
+/** Shared type for Maybe Promise in src/llm. */
 export type MaybePromise<T> = T | Promise<T>;
 
+/** Shared type for Provider Response in src/llm. */
 export interface ProviderResponse {
   status: number;
   headers: Record<string, string>;
 }
 
+/** Shared type for Stream Options in src/llm. */
 export interface StreamOptions {
   temperature?: number;
   maxTokens?: number;
@@ -116,8 +132,10 @@ export interface StreamOptions {
   metadata?: Record<string, unknown>;
 }
 
+/** Shared type for Provider Stream Options in src/llm. */
 export type ProviderStreamOptions = StreamOptions & Record<string, unknown>;
 
+/** Shared type for Images Options in src/llm. */
 export interface ImagesOptions {
   signal?: AbortSignal;
   apiKey?: string;
@@ -158,9 +176,11 @@ export interface ImagesOptions {
   metadata?: Record<string, unknown>;
 }
 
+/** Shared type for Provider Images Options in src/llm. */
 export type ProviderImagesOptions = ImagesOptions & Record<string, unknown>;
 
 // Unified options with reasoning passed to streamSimple() and completeSimple()
+/** Shared type for Simple Stream Options in src/llm. */
 export interface SimpleStreamOptions extends StreamOptions {
   reasoning?: ThinkingLevel;
   /** Custom token budgets for thinking levels (token-based providers only) */
@@ -175,6 +195,7 @@ export interface SimpleStreamOptions extends StreamOptions {
 //   returned stream, not thrown.
 // - Error termination must produce an AssistantMessage with stopReason
 //   "error" or "aborted" and errorMessage, emitted via the stream protocol.
+/** Shared type for Stream Function in src/llm. */
 export type StreamFunction<
   TApi extends Api = Api,
   TOptions extends StreamOptions = StreamOptions,
@@ -184,6 +205,7 @@ export type StreamFunction<
   options?: TOptions,
 ) => AssistantMessageEventStreamContract;
 
+/** Shared type for Images Function in src/llm. */
 export type ImagesFunction<
   TApi extends ImagesApi = ImagesApi,
   TOptions extends ImagesOptions = ImagesOptions,
@@ -193,18 +215,21 @@ export type ImagesFunction<
   options?: TOptions,
 ) => Promise<AssistantImages>;
 
+/** Shared type for Text Signature V1 in src/llm. */
 export interface TextSignatureV1 {
   v: 1;
   id: string;
   phase?: "commentary" | "final_answer";
 }
 
+/** Shared type for Text Content in src/llm. */
 export interface TextContent {
   type: "text";
   text: string;
   textSignature?: string; // e.g., for OpenAI responses, message metadata (legacy id string or TextSignatureV1 JSON)
 }
 
+/** Shared type for Thinking Content in src/llm. */
 export interface ThinkingContent {
   type: "thinking";
   thinking: string;
@@ -215,12 +240,14 @@ export interface ThinkingContent {
   redacted?: boolean;
 }
 
+/** Shared type for Image Content in src/llm. */
 export interface ImageContent {
   type: "image";
   data: string; // base64 encoded image data
   mimeType: string; // e.g., "image/jpeg", "image/png"
 }
 
+/** Shared type for Tool Call in src/llm. */
 export interface ToolCall {
   type: "toolCall";
   id: string;
@@ -229,6 +256,7 @@ export interface ToolCall {
   thoughtSignature?: string; // Google-specific: opaque signature for reusing thought context
 }
 
+/** Shared type for Usage in src/llm. */
 export interface Usage {
   input: number;
   output: number;
@@ -244,14 +272,17 @@ export interface Usage {
   };
 }
 
+/** Shared type for Stop Reason in src/llm. */
 export type StopReason = "stop" | "length" | "toolUse" | "error" | "aborted";
 
+/** Shared type for User Message in src/llm. */
 export interface UserMessage {
   role: "user";
   content: string | (TextContent | ImageContent)[];
   timestamp: number; // Unix timestamp in milliseconds
 }
 
+/** Shared type for Assistant Message in src/llm. */
 export interface AssistantMessage {
   role: "assistant";
   content: (TextContent | ThinkingContent | ToolCall)[];
@@ -267,6 +298,7 @@ export interface AssistantMessage {
   timestamp: number; // Unix timestamp in milliseconds
 }
 
+/** Shared type for Tool Result Message in src/llm. */
 export interface ToolResultMessage<TDetails = unknown> {
   role: "toolResult";
   toolCallId: string;
@@ -277,17 +309,23 @@ export interface ToolResultMessage<TDetails = unknown> {
   timestamp: number; // Unix timestamp in milliseconds
 }
 
+/** Shared type for Message in src/llm. */
 export type Message = UserMessage | AssistantMessage | ToolResultMessage;
 
+/** Shared type for Images Input Content in src/llm. */
 export type ImagesInputContent = TextContent | ImageContent;
+/** Shared type for Images Output Content in src/llm. */
 export type ImagesOutputContent = TextContent | ImageContent;
 
+/** Shared type for Images Context in src/llm. */
 export interface ImagesContext {
   input: ImagesInputContent[];
 }
 
+/** Shared type for Images Stop Reason in src/llm. */
 export type ImagesStopReason = "stop" | "error" | "aborted";
 
+/** Shared type for Assistant Images in src/llm. */
 export interface AssistantImages {
   api: ImagesApi;
   provider: ImagesProvider;
@@ -302,12 +340,14 @@ export interface AssistantImages {
 
 import type { TSchema } from "typebox";
 
+/** Shared type for Tool in src/llm. */
 export interface Tool<TParameters extends TSchema = TSchema> {
   name: string;
   description: string;
   parameters: TParameters;
 }
 
+/** Shared type for Context in src/llm. */
 export interface Context {
   systemPrompt?: string;
   messages: Message[];
@@ -340,6 +380,7 @@ export type AssistantMessageEvent =
     }
   | { type: "error"; reason: Extract<StopReason, "aborted" | "error">; error: AssistantMessage };
 
+/** Shared type for Assistant Message Event Stream Contract in src/llm. */
 export interface AssistantMessageEventStreamContract extends AsyncIterable<AssistantMessageEvent> {
   push(event: AssistantMessageEvent): void;
   end(result?: AssistantMessage): void;
@@ -520,6 +561,7 @@ export interface VercelGatewayRouting {
 }
 
 // Model interface for the unified model system
+/** Shared type for Model in src/llm. */
 export interface Model<TApi extends Api = Api> {
   id: string;
   name: string;
@@ -552,6 +594,7 @@ export interface Model<TApi extends Api = Api> {
         : never;
 }
 
+/** Shared type for Images Model in src/llm. */
 export interface ImagesModel<TApi extends ImagesApi = ImagesApi> extends Omit<
   Model,
   "api" | "provider" | "reasoning" | "contextWindow" | "maxTokens" | "compat"

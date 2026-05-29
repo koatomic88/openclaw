@@ -1,3 +1,4 @@
+/** Converts OpenClaw auth-profile credentials into agent runtime credentials. */
 import { coerceSecretRef } from "../config/types.secrets.js";
 import { normalizeOptionalString } from "../shared/string-coerce.js";
 import type { AuthProfileCredential, AuthProfileStore } from "./auth-profiles.js";
@@ -11,9 +12,12 @@ type AgentOAuthCredential = {
   expires: number;
 };
 
+/** Shared type for Agent Credential in src/agents. */
 export type AgentCredential = AgentApiKeyCredential | AgentOAuthCredential;
+/** Shared type for Agent Credential Map in src/agents. */
 export type AgentCredentialMap = Record<string, AgentCredential>;
 
+/** Shared type for Resolve Agent Credential Map Options in src/agents. */
 export type ResolveAgentCredentialMapOptions = {
   includeSecretRefPlaceholders?: boolean;
 };
@@ -77,6 +81,7 @@ function convertAuthProfileCredentialToAgent(
   return null;
 }
 
+/** Resolve provider credentials from an auth-profile store for runtime discovery. */
 export function resolveAgentCredentialMapFromStore(
   store: AuthProfileStore,
   options?: ResolveAgentCredentialMapOptions,
@@ -95,6 +100,7 @@ export function resolveAgentCredentialMapFromStore(
   return credentials;
 }
 
+/** Compare normalized agent credentials by credential type and value. */
 export function agentCredentialsEqual(a: AgentCredential | undefined, b: AgentCredential): boolean {
   if (!a || typeof a !== "object") {
     return false;

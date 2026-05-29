@@ -1,3 +1,4 @@
+// extensions/codex/src/app-server image payload sanitizer helpers and runtime behavior.
 import { isRecord } from "openclaw/plugin-sdk/string-coerce-runtime";
 
 const DATA_URL_PREFIX = "data:";

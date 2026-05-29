@@ -1,3 +1,4 @@
+// extensions/browser/src/node-host invoke browser helpers and runtime behavior.
 import fsPromises from "node:fs/promises";
 import { normalizeStringEntries } from "openclaw/plugin-sdk/string-coerce-runtime";
 import { redactCdpUrl } from "../browser/cdp.helpers.js";

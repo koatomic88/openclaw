@@ -1,3 +1,4 @@
+// extensions/xiaomi thinking helpers and runtime behavior.
 import type { ProviderThinkingProfile } from "openclaw/plugin-sdk/plugin-entry";
 
 const MIMO_REASONING_MODEL_IDS = new Set([

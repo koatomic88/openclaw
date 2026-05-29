@@ -1,3 +1,4 @@
+// packages/agent-core/src/harness prompt templates helpers and runtime behavior.
 import {
   basenameEnvPath,
   parseFrontmatter,
@@ -5,6 +6,7 @@ import {
 } from "./file-loader-utils.js";
 import { type ExecutionEnv, type PromptTemplate, type Result } from "./types.js";
 
+/** Public type describing Prompt Template Diagnostic Code for packages/agent-core. */
 export type PromptTemplateDiagnosticCode =
   | "file_info_failed"
   | "list_failed"

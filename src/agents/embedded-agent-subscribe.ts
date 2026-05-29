@@ -1,3 +1,4 @@
+/** Subscribes to embedded-agent sessions and emits user-facing replies/events. */
 import { setReplyPayloadMetadata } from "../auto-reply/reply-payload.js";
 import { parseReplyDirectives } from "../auto-reply/reply/reply-directives.js";
 import { createStreamingDirectiveAccumulator } from "../auto-reply/reply/streaming-directives.js";
@@ -146,8 +147,10 @@ function collectPendingMediaFromInternalEvents(
   return pending;
 }
 
+/** Re-exported API for src/agents, starting with Subscribe Embedded Agent Session Params. */
 export type { SubscribeEmbeddedAgentSessionParams } from "./embedded-agent-subscribe.types.js";
 
+/** Attach reply/event handlers to an embedded-agent session stream. */
 export function subscribeEmbeddedAgentSession(params: SubscribeEmbeddedAgentSessionParams) {
   const log = resolveEmbeddedAgentSessionLogger(params.messageChannel);
   const reasoningMode = params.reasoningMode ?? "off";

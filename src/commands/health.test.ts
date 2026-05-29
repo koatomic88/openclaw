@@ -1,3 +1,4 @@
+/** Tests health command summary formatting and failures. */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { stripAnsi } from "../terminal/ansi.js";
 import { formatHealthCheckFailure } from "./health-format.js";

@@ -1,3 +1,4 @@
+// Tests extensions/memory-core/src/memory manager embedding timeout test behavior.
 import { describe, expect, it } from "vitest";
 import {
   resolveEmbeddingTimeoutMs,

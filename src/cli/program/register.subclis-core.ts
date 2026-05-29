@@ -1,3 +1,4 @@
+/** Core helpers for selecting and registering sub-CLI command groups. */
 import type { Command } from "commander";
 import { resolveCliArgvInvocation } from "../argv-invocation.js";
 import { resolveCliCommandPathPolicy } from "../command-path-policy.js";
@@ -23,8 +24,10 @@ import {
   type SubCliDescriptor,
 } from "./subcli-descriptors.js";
 
+/** Re-exported API for src/cli/program, starting with get Sub Cli Commands With Subcommands. */
 export { getSubCliCommandsWithSubcommands };
 
+/** Shared type for Sub Cli Registration Context in src/cli/program. */
 export type SubCliRegistrationContext = {
   purpose?: "runtime" | "completion";
 };
@@ -284,10 +287,12 @@ function resolveSubCliCommandGroups(
   );
 }
 
+/** Reused helper for get Sub Cli Entries behavior in src/cli/program. */
 export function getSubCliEntries(): ReadonlyArray<SubCliDescriptor> {
   return getSubCliEntryDescriptors();
 }
 
+/** Reused helper for register Sub Cli By Name behavior in src/cli/program. */
 export async function registerSubCliByName(
   program: Command,
   name: string,
@@ -301,6 +306,7 @@ export async function registerSubCliByName(
   return registerCommandGroupByName(program, resolveSubCliCommandGroups(argv, context), name);
 }
 
+/** Reused helper for register Sub Cli Commands behavior in src/cli/program. */
 export function registerSubCliCommands(program: Command, argv: string[] = process.argv) {
   const { primary } = resolveCliArgvInvocation(argv);
   registerCommandGroups(program, resolveSubCliCommandGroups(argv), {

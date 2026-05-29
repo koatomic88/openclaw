@@ -1,3 +1,4 @@
+// packages/agent-core/src agent helpers and runtime behavior.
 import { runAgentLoop, runAgentLoopContinue } from "./agent-loop.js";
 import {
   type ImageContent,
@@ -26,6 +27,7 @@ import type {
   ToolExecutionMode,
 } from "./types.js";
 
+/** Re-exported public API for packages/agent-core, starting with Queue Mode. */
 export type { QueueMode } from "./types.js";
 
 function defaultConvertToLlm(messages: AgentMessage[]): Message[] {

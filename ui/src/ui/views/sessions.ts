@@ -1,3 +1,4 @@
+// ui/src/ui/views sessions helpers and runtime behavior.
 import { html, nothing } from "lit";
 import { t } from "../../i18n/index.ts";
 import { formatRelativeTimestamp, parseSessionKeyParts } from "../format.ts";
@@ -21,6 +22,7 @@ import type {
 } from "../types.ts";
 import { resolveAgentRuntimeLabel } from "./agents-utils.ts";
 
+/** Shared type for Sessions Props in ui/src/ui/views. */
 export type SessionsProps = {
   loading: boolean;
   result: SessionsListResult | null;
@@ -469,6 +471,7 @@ function renderFilterToggle(params: {
   `;
 }
 
+/** Reused helper for render Sessions behavior in ui/src/ui/views. */
 export function renderSessions(props: SessionsProps) {
   const rawRows = props.result?.sessions ?? [];
   const filtered = filterRows(rawRows, props.searchQuery, props.agentIdentityById);

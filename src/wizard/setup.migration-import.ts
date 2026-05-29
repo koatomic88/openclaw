@@ -1,3 +1,4 @@
+// wizard setup migration import helpers and runtime behavior.
 import fs from "node:fs/promises";
 import path from "node:path";
 import type { OnboardOptions } from "../commands/onboard-types.js";
@@ -9,6 +10,7 @@ import { resolveUserPath } from "../utils.js";
 import { t } from "./i18n/index.js";
 import { WizardCancelledError, type WizardPrompter } from "./prompts.js";
 
+/** Shared type for Setup Migration Detection in src/wizard. */
 export type SetupMigrationDetection = {
   providerId: string;
   label: string;
@@ -50,6 +52,7 @@ function hasMeaningfulConfig(config: OpenClawConfig): boolean {
   );
 }
 
+/** Reused helper for inspect Setup Migration Freshness behavior in src/wizard. */
 export async function inspectSetupMigrationFreshness(params: {
   baseConfig: OpenClawConfig;
   stateDir: string;
@@ -90,6 +93,7 @@ function assertFreshSetupMigrationTarget(freshness: {
   );
 }
 
+/** Reused helper for detect Setup Migration Sources behavior in src/wizard. */
 export async function detectSetupMigrationSources(params: {
   config: OpenClawConfig;
   runtime: RuntimeEnv;
@@ -201,6 +205,7 @@ async function selectSetupMigrationProvider(params: {
   return { provider, providerId };
 }
 
+/** Reused helper for run Setup Migration Import behavior in src/wizard. */
 export async function runSetupMigrationImport(params: {
   opts: OnboardOptions;
   baseConfig: OpenClawConfig;

@@ -1,3 +1,4 @@
+// infra backup create helpers and runtime behavior.
 import { randomUUID } from "node:crypto";
 import { constants as fsConstants } from "node:fs";
 import fs from "node:fs/promises";
@@ -37,6 +38,7 @@ class BackupLinkCache extends Map<BackupLinkCacheKey, string> {
   }
 }
 
+/** Shared type for Backup Create Options in src/infra. */
 export type BackupCreateOptions = {
   output?: string;
   dryRun?: boolean;
@@ -85,6 +87,7 @@ type BackupManifest = {
   }>;
 };
 
+/** Shared type for Backup Create Result in src/infra. */
 export type BackupCreateResult = {
   createdAt: string;
   archiveRoot: string;
@@ -137,6 +140,7 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/** Shared type for Backup Tar Retry Logger in src/infra. */
 export type BackupTarRetryLogger = (message: string) => void;
 
 async function writeTarArchiveWithRetry(params: {
@@ -184,7 +188,9 @@ async function writeTarArchiveWithRetry(params: {
   throw new Error(`Backup archive write failed: ${final.message}${suffix}`, { cause: final });
 }
 
+/** Reused constant for test Api behavior in src/infra. */
 export const testApi = { writeTarArchiveWithRetry, isTarEofRaceError };
+/** Re-exported API for src/infra, starting with test Api. */
 export { testApi as __test };
 
 async function resolveOutputPath(params: {
@@ -379,6 +385,7 @@ function buildManifest(params: {
   };
 }
 
+/** Reused helper for format Backup Create Summary behavior in src/infra. */
 export function formatBackupCreateSummary(result: BackupCreateResult): string[] {
   const lines = [`Backup archive: ${result.archivePath}`];
   lines.push(`Included ${result.assets.length} path${result.assets.length === 1 ? "" : "s"}:`);
@@ -429,6 +436,7 @@ function normalizeBackupFilterPath(value: string): string {
   return value.replaceAll("\\", "/").replace(/\/+$/u, "");
 }
 
+/** Reused helper for build Extensions Node Modules Filter behavior in src/infra. */
 export function buildExtensionsNodeModulesFilter(stateDir: string): (filePath: string) => boolean {
   const normalizedStateDir = normalizeBackupFilterPath(stateDir);
   const extensionsPrefix = `${normalizedStateDir}/extensions/`;
@@ -443,6 +451,7 @@ export function buildExtensionsNodeModulesFilter(stateDir: string): (filePath: s
   };
 }
 
+/** Reused helper for create Backup Archive behavior in src/infra. */
 export async function createBackupArchive(
   opts: BackupCreateOptions = {},
 ): Promise<BackupCreateResult> {

@@ -26,31 +26,38 @@ import {
   normalizeGooglePreviewModelId,
 } from "./provider-model-id-normalize.js";
 
+/** Re-exported API for src/plugin-sdk. */
 export type {
   ModelApi,
   ModelProviderDeclarationConfig as ModelProviderConfig,
 } from "../config/types.models.js";
+/** Re-exported API for src/plugin-sdk. */
 export type {
   UnifiedModelCatalogEntry,
   UnifiedModelCatalogKind,
   UnifiedModelCatalogSource,
 } from "../model-catalog/types.js";
+/** Re-exported API for src/plugin-sdk. */
 export type {
   BedrockDiscoveryConfig,
   ModelCompatConfig,
   ModelDefinitionConfig,
 } from "../config/types.models.js";
+/** Re-exported API for src/plugin-sdk. */
 export type {
   ProviderEndpointClass,
   ProviderEndpointResolution,
 } from "../agents/provider-attribution.js";
+/** Re-exported API for src/plugin-sdk. */
 export type {
   ProviderPlugin,
   UnifiedModelCatalogProviderContext,
   UnifiedModelCatalogProviderPlugin,
 } from "../plugins/types.js";
 
+/** Re-exported API for src/plugin-sdk, starting with DEFAULT CONTEXT TOKENS. */
 export { DEFAULT_CONTEXT_TOKENS } from "../agents/defaults.js";
+/** Re-exported API for src/plugin-sdk. */
 export {
   GPT5_BEHAVIOR_CONTRACT,
   GPT5_FRIENDLY_CHAT_PROMPT_OVERLAY,
@@ -63,7 +70,9 @@ export {
   resolveGpt5SystemPromptContribution,
   type Gpt5PromptOverlayMode,
 } from "../agents/gpt5-prompt-overlay.js";
+/** Re-exported API for src/plugin-sdk, starting with resolve Provider Endpoint. */
 export { resolveProviderEndpoint } from "../agents/provider-attribution.js";
+/** Re-exported API for src/plugin-sdk. */
 export {
   applyModelCompatPatch,
   hasToolSchemaProfile,
@@ -72,7 +81,9 @@ export {
   resolveUnsupportedToolSchemaKeywords,
   resolveToolCallArgumentsEncoding,
 } from "../plugins/provider-model-compat.js";
+/** Re-exported API for src/plugin-sdk, starting with normalize Provider Id. */
 export { normalizeProviderId } from "../agents/provider-id.js";
+/** Re-exported API for src/plugin-sdk. */
 export {
   buildAnthropicReplayPolicyForModel,
   buildGoogleGeminiReplayPolicy,
@@ -84,10 +95,12 @@ export {
   sanitizeGoogleGeminiReplayHistory,
   buildStrictAnthropicReplayPolicy,
 };
+/** Re-exported API for src/plugin-sdk. */
 export {
   createMoonshotThinkingWrapper,
   resolveMoonshotThinkingType,
 } from "../llm/providers/stream-wrappers/moonshot-thinking.js";
+/** Re-exported API for src/plugin-sdk. */
 export {
   cloneFirstTemplateModel,
   matchesExactOrPrefix,
@@ -168,8 +181,10 @@ export function resolveClaudeThinkingProfile(modelId: string): ProviderThinkingP
   return { levels: BASE_CLAUDE_THINKING_LEVELS };
 }
 
+/** Re-exported API for src/plugin-sdk, starting with normalize Antigravity Preview Model Id. */
 export { normalizeAntigravityPreviewModelId, normalizeGooglePreviewModelId };
 
+/** Shared type for Provider Replay Family in src/plugin-sdk. */
 export type ProviderReplayFamily =
   | "openai-compatible"
   | "anthropic-by-model"
@@ -198,6 +213,7 @@ type BuildProviderReplayFamilyHooksOptions =
       anthropicModelDropThinkingBlocks?: boolean;
     };
 
+/** Reused helper for build Provider Replay Family Hooks behavior in src/plugin-sdk. */
 export function buildProviderReplayFamilyHooks(
   options: BuildProviderReplayFamilyHooksOptions,
 ): ProviderReplayFamilyHooks {

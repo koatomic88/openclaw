@@ -1,3 +1,4 @@
+// Runtime boundary for extensions/openai register runtime behavior.
 export { buildOpenAIImageGenerationProvider } from "./image-generation-provider.js";
 export {
   openaiCodexMediaUnderstandingProvider,

@@ -1,3 +1,4 @@
+// Runtime boundary for extensions/openai openai codex oauth abort runtime behavior.
 export function createOAuthLoginCancelledError(): Error {
   return new Error("Login cancelled");
 }

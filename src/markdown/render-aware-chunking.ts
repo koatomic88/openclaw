@@ -1,3 +1,4 @@
+// markdown render aware chunking helpers and runtime behavior.
 import { resolveIntegerOption } from "../shared/number-coercion.js";
 import {
   chunkMarkdownIR,
@@ -7,11 +8,13 @@ import {
   type MarkdownStyleSpan,
 } from "./ir.js";
 
+/** Shared type for Rendered Markdown Chunk in src/markdown. */
 export type RenderedMarkdownChunk<TRendered> = {
   rendered: TRendered;
   source: MarkdownIR;
 };
 
+/** Shared type for Render Markdown IRChunks Within Limit Options in src/markdown. */
 export type RenderMarkdownIRChunksWithinLimitOptions<TRendered> = {
   ir: MarkdownIR;
   limit: number;
@@ -24,6 +27,7 @@ type RenderResolver<TRendered> = Pick<
   "measureRendered" | "renderChunk"
 >;
 
+/** Reused helper for render Markdown IRChunks Within Limit behavior in src/markdown. */
 export function renderMarkdownIRChunksWithinLimit<TRendered>(
   options: RenderMarkdownIRChunksWithinLimitOptions<TRendered>,
 ): RenderedMarkdownChunk<TRendered>[] {

@@ -1,7 +1,9 @@
+// Chooses the cheapest model-list source plan for the current filters and config.
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
 import type { NormalizedModelCatalogRow } from "../../model-catalog/index.js";
 import type { PluginMetadataSnapshot } from "../../plugins/plugin-metadata-snapshot.types.js";
 
+/** Shared type for Model List Source Plan Kind in src/commands/models. */
 export type ModelListSourcePlanKind =
   | "registry"
   | "manifest"
@@ -9,6 +11,7 @@ export type ModelListSourcePlanKind =
   | "provider-runtime-static"
   | "provider-runtime-scoped";
 
+/** Shared type for Model List Source Plan in src/commands/models. */
 export type ModelListSourcePlan = {
   kind: ModelListSourcePlanKind;
   manifestCatalogRows: readonly NormalizedModelCatalogRow[];
@@ -36,6 +39,7 @@ function createSourcePlan(params: {
   };
 }
 
+/** Reused helper for create Registry Model List Source Plan behavior in src/commands/models. */
 export function createRegistryModelListSourcePlan(): ModelListSourcePlan {
   return createSourcePlan({
     kind: "registry",
@@ -43,6 +47,7 @@ export function createRegistryModelListSourcePlan(): ModelListSourcePlan {
   });
 }
 
+/** Reused helper for plan All Model List Sources behavior in src/commands/models. */
 export async function planAllModelListSources(params: {
   all?: boolean;
   enableCascade?: boolean;

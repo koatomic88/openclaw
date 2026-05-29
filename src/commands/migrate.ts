@@ -1,3 +1,4 @@
+/** Runs plugin-provided migration plans from the CLI. */
 import { cancel, confirm, isCancel, log } from "@clack/prompts";
 import { formatCliCommand } from "../cli/command-format.js";
 import { withProgress } from "../cli/progress.js";
@@ -43,6 +44,7 @@ import type {
   MigrateDefaultOptions,
 } from "./migrate/types.js";
 
+/** Re-exported API for src/commands, starting with Migrate Apply Options. */
 export type { MigrateApplyOptions, MigrateCommonOptions, MigrateDefaultOptions };
 
 function selectMigrationItems(plan: MigrationPlan, opts: MigrateCommonOptions): MigrationPlan {
@@ -330,6 +332,7 @@ function logNoCodexSelection(runtime: RuntimeEnv, plan: MigrationPlan): void {
   runtime.log("No Codex skills or native Codex plugins selected for migration.");
 }
 
+/** Reused helper for migrate List Command behavior in src/commands. */
 export async function migrateListCommand(runtime: RuntimeEnv, opts: { json?: boolean } = {}) {
   const cfg = getRuntimeConfig();
   ensureStandaloneMigrationProviderRegistryLoaded({ cfg });
@@ -359,6 +362,7 @@ export async function migrateListCommand(runtime: RuntimeEnv, opts: { json?: boo
   );
 }
 
+/** Reused helper for migrate Plan Command behavior in src/commands. */
 export async function migratePlanCommand(
   runtime: RuntimeEnv,
   opts: MigrateCommonOptions,
@@ -383,14 +387,17 @@ export async function migratePlanCommand(
   return plan;
 }
 
+/** Reused helper for migrate Apply Command behavior in src/commands. */
 export async function migrateApplyCommand(
   runtime: RuntimeEnv,
   opts: MigrateApplyOptions & { yes: true },
 ): Promise<MigrationApplyResult>;
+/** Reused helper for migrate Apply Command behavior in src/commands. */
 export async function migrateApplyCommand(
   runtime: RuntimeEnv,
   opts: MigrateApplyOptions,
 ): Promise<MigrationApplyResult | MigrationPlan>;
+/** Reused helper for migrate Apply Command behavior in src/commands. */
 export async function migrateApplyCommand(
   runtime: RuntimeEnv,
   opts: MigrateApplyOptions,
@@ -454,6 +461,7 @@ export async function migrateApplyCommand(
   });
 }
 
+/** Reused helper for migrate Default Command behavior in src/commands. */
 export async function migrateDefaultCommand(
   runtime: RuntimeEnv,
   opts: MigrateDefaultOptions,

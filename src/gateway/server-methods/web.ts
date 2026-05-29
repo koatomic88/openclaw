@@ -1,3 +1,4 @@
+// gateway/server-methods web helpers and runtime behavior.
 import {
   ErrorCodes,
   errorShape,
@@ -61,6 +62,7 @@ function wasChannelRunning(params: {
   return defaultRuntime?.accountId === params.accountId && defaultRuntime.running === true;
 }
 
+/** Reused constant for web Handlers behavior in src/gateway/server-methods. */
 export const webHandlers: GatewayRequestHandlers = {
   "web.login.start": async ({ params, respond, context }) => {
     if (!validateWebLoginStartParams(params)) {

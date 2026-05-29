@@ -1,3 +1,4 @@
+// Tests extensions/telegram/src request timeouts test behavior.
 import { describe, expect, it } from "vitest";
 import {
   resolveTelegramLongPollTimeoutSeconds,

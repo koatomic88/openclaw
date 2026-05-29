@@ -1,3 +1,4 @@
+// Tests crestodian probes test behavior.
 import { describe, expect, it } from "vitest";
 import { probeLocalCommand } from "./probes.js";
 

@@ -1,3 +1,4 @@
+// flows model picker provider catalog helpers and runtime behavior.
 import { resolveDefaultAgentDir } from "../agents/agent-scope.js";
 import { ensureAuthProfileStoreWithoutExternalProfiles } from "../agents/auth-profiles.js";
 import type { ModelCatalogEntry } from "../agents/model-catalog.js";
@@ -136,6 +137,7 @@ function modelFromProviderCatalog(params: {
   };
 }
 
+/** Reused helper for load Preferred Provider Picker Catalog behavior in src/flows. */
 export async function loadPreferredProviderPickerCatalog(params: {
   cfg: OpenClawConfig;
   preferredProvider: string;

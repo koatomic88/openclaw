@@ -1,3 +1,4 @@
+/** Handles failover decisions after an assistant/provider error is observed. */
 import type { OpenClawConfig } from "../../../config/types.openclaw.js";
 import type { AssistantMessage } from "../../../llm/types.js";
 import { sanitizeForLog } from "../../../terminal/ansi.js";
@@ -32,6 +33,7 @@ type AssistantFailoverOutcome =
       error: FailoverError;
     };
 
+/** Classifies assistant failures, records auth state, and chooses retry/fallback. */
 export async function handleAssistantFailover(params: {
   initialDecision: AssistantFailoverDecision;
   aborted: boolean;

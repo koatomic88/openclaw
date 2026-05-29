@@ -1,3 +1,4 @@
+/** Builds workspace skill status entries for CLI, UI, and installer surfaces. */
 import path from "node:path";
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
 import { evaluateEntryRequirementsForCurrentPlatform } from "../../shared/entry-status.js";
@@ -30,8 +31,10 @@ import type {
 } from "../types.js";
 import { resolveEffectiveAgentSkillFilter } from "./agent-filter.js";
 
+/** Config requirement check exposed in skill status reports. */
 export type SkillStatusConfigCheck = RequirementConfigCheck;
 
+/** Installer action shown for an eligible skill status entry. */
 export type SkillInstallOption = {
   id: string;
   kind: SkillInstallSpec["kind"];
@@ -39,6 +42,7 @@ export type SkillInstallOption = {
   bins: string[];
 };
 
+/** Complete per-skill status row used by CLI and UI consumers. */
 export type SkillStatusEntry = {
   name: string;
   description: string;
@@ -66,6 +70,7 @@ export type SkillStatusEntry = {
   skillCard?: LocalSkillCardStatus;
 };
 
+/** Workspace-level skill status report with optional agent filter context. */
 export type SkillStatusReport = {
   workspaceDir: string;
   managedSkillsDir: string;
@@ -291,6 +296,7 @@ function buildSkillStatus(
   };
 }
 
+/** Builds deterministic status for all visible workspace/managed/bundled skills. */
 export function buildWorkspaceSkillStatus(
   workspaceDir: string,
   opts?: {

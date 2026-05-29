@@ -1,3 +1,4 @@
+/** Builds provider/model target matchers for live tests. */
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { normalizeGooglePreviewModelId } from "../plugin-sdk/provider-model-id-normalize.js";
 import {
@@ -63,6 +64,7 @@ function parseModelTarget(raw: string): ModelTarget | null {
   };
 }
 
+/** Create a matcher for optional provider/model live-test target filters. */
 export function createLiveTargetMatcher(params: {
   providerFilter: Set<string> | null;
   modelFilter: Set<string> | null;

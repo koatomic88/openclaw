@@ -1,3 +1,4 @@
+/** Collects doctor warnings for preview runtimes and models. */
 import { resolveAgentConfig } from "../../../agents/agent-scope-config.js";
 import { DEFAULT_MODEL, DEFAULT_PROVIDER } from "../../../agents/defaults.js";
 import { parseModelRef } from "../../../agents/model-selection-normalize.js";
@@ -305,6 +306,7 @@ function formatTargets(targets: string[]): string {
   return `${targets.slice(0, 2).join(", ")}, and ${targets.length - 2} more`;
 }
 
+/** Reused helper for collect Visible Reply Tool Policy Warnings behavior in src/commands/doctor. */
 export function collectVisibleReplyToolPolicyWarnings(cfg: OpenClawConfig): string[] {
   const groupPolicy = resolveGroupVisibleReplyProvenance(cfg);
   const warnings: string[] = [];
@@ -345,6 +347,7 @@ function formatChannelList(channels: string[]): string {
     .join(", ")}, and ${channels.length - 2} more`;
 }
 
+/** Reused helper for collect Channel Bound Message Tool Policy Warnings behavior in src/commands/doctor. */
 export function collectChannelBoundMessageToolPolicyWarnings(cfg: OpenClawConfig): string[] {
   return collectChannelRouteTargets(cfg).flatMap((target) => {
     const agentTools = resolveAgentConfig(cfg, target.agentId)?.tools;
@@ -686,6 +689,7 @@ function collectInheritedByProviderConfiguredToolSectionWarnings(params: {
   });
 }
 
+/** Reused helper for collect Profile Configured Tool Section Warnings behavior in src/commands/doctor. */
 export function collectProfileConfiguredToolSectionWarnings(cfg: OpenClawConfig): string[] {
   const warnings: string[] = [];
   const globalTools = hasRecord(cfg.tools) ? cfg.tools : undefined;
@@ -753,11 +757,13 @@ export function collectProfileConfiguredToolSectionWarnings(cfg: OpenClawConfig)
   return warnings;
 }
 
+/** Shared type for Doctor Preview Notes in src/commands/doctor. */
 export type DoctorPreviewNotes = {
   infoNotes: string[];
   warningNotes: string[];
 };
 
+/** Reused helper for collect Doctor Preview Notes behavior in src/commands/doctor. */
 export async function collectDoctorPreviewNotes(params: {
   cfg: OpenClawConfig;
   doctorFixCommand: string;
@@ -959,6 +965,7 @@ export async function collectDoctorPreviewNotes(params: {
   return { infoNotes, warningNotes: warnings };
 }
 
+/** Reused helper for collect Doctor Preview Warnings behavior in src/commands/doctor. */
 export async function collectDoctorPreviewWarnings(params: {
   cfg: OpenClawConfig;
   doctorFixCommand: string;

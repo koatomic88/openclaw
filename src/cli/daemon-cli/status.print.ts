@@ -1,3 +1,4 @@
+/** Renders daemon status reports for human and JSON CLI output. */
 import { formatConfigIssueLine } from "../../config/issue-format.js";
 import {
   resolveGatewayLaunchAgentLabel,
@@ -86,6 +87,7 @@ function formatConnectionLine(
   return `${pid}${ppid}${direction}${command}${address}${commandLine}`;
 }
 
+/** Reused helper for print Daemon Status behavior in src/cli/daemon-cli. */
 export function printDaemonStatus(status: DaemonStatus, opts: { json: boolean }) {
   if (opts.json) {
     const sanitized = sanitizeDaemonStatusForJson(status);

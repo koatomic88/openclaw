@@ -1,3 +1,4 @@
+// extensions/google-meet/src/transports chrome browser proxy helpers and runtime behavior.
 import type { PluginRuntime } from "openclaw/plugin-sdk/plugin-runtime";
 
 type BrowserProxyResult = {

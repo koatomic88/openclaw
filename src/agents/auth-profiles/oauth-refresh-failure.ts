@@ -1,7 +1,9 @@
+/** Formats actionable OAuth refresh failure details. */
 import { formatCliCommand } from "../../cli/command-format.js";
 import { sanitizeForLog } from "../../terminal/ansi.js";
 import { normalizeProviderId } from "../provider-id.js";
 
+/** Shared type for OAuth Refresh Failure Reason in src/agents/auth-profiles. */
 export type OAuthRefreshFailureReason =
   | "refresh_token_reused"
   | "invalid_grant"
@@ -32,6 +34,7 @@ function sanitizeOAuthRefreshFailureProvider(provider: string | null | undefined
   return normalized && SAFE_PROVIDER_ID_RE.test(normalized) ? normalized : null;
 }
 
+/** Reused helper for classify OAuth Refresh Failure Reason behavior in src/agents/auth-profiles. */
 export function classifyOAuthRefreshFailureReason(
   message: string,
 ): OAuthRefreshFailureReason | null {
@@ -54,6 +57,7 @@ export function classifyOAuthRefreshFailureReason(
   return null;
 }
 
+/** Reused helper for classify OAuth Refresh Failure behavior in src/agents/auth-profiles. */
 export function classifyOAuthRefreshFailure(message: string): {
   provider: string | null;
   reason: OAuthRefreshFailureReason | null;
@@ -67,6 +71,7 @@ export function classifyOAuthRefreshFailure(message: string): {
   };
 }
 
+/** Reused helper for build OAuth Refresh Failure Login Command behavior in src/agents/auth-profiles. */
 export function buildOAuthRefreshFailureLoginCommand(provider: string | null | undefined): string {
   const safeProvider = sanitizeOAuthRefreshFailureProvider(provider);
   return safeProvider

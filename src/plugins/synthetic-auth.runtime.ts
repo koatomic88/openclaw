@@ -1,3 +1,4 @@
+// Runtime boundary for plugins synthetic auth runtime behavior.
 import { normalizeProviderId } from "../agents/provider-id.js";
 import { loadPluginManifestRegistryForInstalledIndex } from "./manifest-registry-installed.js";
 import { loadPluginRegistrySnapshotWithMetadata } from "./plugin-registry.js";
@@ -60,12 +61,14 @@ function resolveManifestExternalAuthProviderRefs(
   );
 }
 
+/** Reused helper for resolve Runtime Synthetic Auth Provider Refs behavior in src/plugins. */
 export function resolveRuntimeSyntheticAuthProviderRefs(
   params: SyntheticAuthProviderRefParams = {},
 ): string[] {
   return resolveRuntimeSyntheticAuthProviderRefState(params).refs;
 }
 
+/** Reused helper for resolve Runtime Synthetic Auth Provider Ref State behavior in src/plugins. */
 export function resolveRuntimeSyntheticAuthProviderRefState(
   params: SyntheticAuthProviderRefParams = {},
 ): { refs: string[]; complete: boolean } {
@@ -95,6 +98,7 @@ export function resolveRuntimeSyntheticAuthProviderRefState(
   return resolveManifestSyntheticAuthProviderRefState(params);
 }
 
+/** Reused helper for resolve Runtime External Auth Provider Refs behavior in src/plugins. */
 export function resolveRuntimeExternalAuthProviderRefs(
   params: SyntheticAuthProviderRefParams = {},
 ): string[] {

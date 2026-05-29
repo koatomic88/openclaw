@@ -1,3 +1,4 @@
+/** Ensures Codex plugin install state for Codex-backed model selections. */
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { modelSelectionShouldEnsureCodexPlugin } from "../agents/openai-codex-routing.js";
@@ -9,6 +10,7 @@ import type { RuntimeEnv } from "../runtime.js";
 import { resolveUserPath } from "../utils.js";
 import type { WizardPrompter } from "../wizard/prompts.js";
 
+/** Reused constant for CODEX RUNTIME PLUGIN ID behavior in src/commands. */
 export const CODEX_RUNTIME_PLUGIN_ID = "codex";
 const CODEX_RUNTIME_PLUGIN_LABEL = "Codex";
 const CODEX_RUNTIME_PLUGIN_NPM_SPEC = "@openclaw/codex";
@@ -24,6 +26,7 @@ function isInstalledRecordPresentOnDisk(
   return existsSync(path.join(resolveUserPath(installPath, env), "package.json"));
 }
 
+/** Shared type for Codex Runtime Plugin Install Result in src/commands. */
 export type CodexRuntimePluginInstallResult = {
   cfg: OpenClawConfig;
   required: boolean;
@@ -31,6 +34,7 @@ export type CodexRuntimePluginInstallResult = {
   status?: "installed" | "skipped" | "failed" | "timed_out";
 };
 
+/** Reused helper for selected Model Should Ensure Codex Runtime Plugin behavior in src/commands. */
 export function selectedModelShouldEnsureCodexRuntimePlugin(params: {
   cfg: OpenClawConfig;
   model?: string;
@@ -41,6 +45,7 @@ export function selectedModelShouldEnsureCodexRuntimePlugin(params: {
   });
 }
 
+/** Reused helper for ensure Codex Runtime Plugin For Model Selection behavior in src/commands. */
 export async function ensureCodexRuntimePluginForModelSelection(params: {
   cfg: OpenClawConfig;
   model?: string;
@@ -103,6 +108,7 @@ export async function ensureCodexRuntimePluginForModelSelection(params: {
   };
 }
 
+/** Reused helper for repair Codex Runtime Plugin Install For Model Selection behavior in src/commands. */
 export async function repairCodexRuntimePluginInstallForModelSelection(params: {
   cfg: OpenClawConfig;
   model?: string;

@@ -1,3 +1,4 @@
+// extensions/matrix/src/matrix thread bindings helpers and runtime behavior.
 import path from "node:path";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
 import { readJsonFileWithFallback, writeJsonFileAtomically } from "openclaw/plugin-sdk/json-store";

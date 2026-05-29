@@ -1,3 +1,4 @@
+/** Tests bundled channel entry contracts, source fallback, and boundary enforcement. */
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";

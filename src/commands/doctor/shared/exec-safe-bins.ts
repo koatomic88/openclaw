@@ -1,3 +1,4 @@
+/** Doctor checks for configured safe executable bins. */
 import type { OpenClawConfig } from "../../../config/types.openclaw.js";
 import { resolveCommandResolutionFromArgv } from "../../../infra/exec-command-resolution.js";
 import {
@@ -14,6 +15,7 @@ import { normalizeOptionalLowercaseString } from "../../../shared/string-coerce.
 import { sanitizeForLog } from "../../../terminal/ansi.js";
 import { asObjectRecord } from "./object.js";
 
+/** Shared type for Exec Safe Bin Coverage Hit in src/commands/doctor. */
 export type ExecSafeBinCoverageHit = {
   scopePath: string;
   bin: string;
@@ -30,6 +32,7 @@ type ExecSafeBinScopeRef = {
   trustedSafeBinDirs: ReadonlySet<string>;
 };
 
+/** Shared type for Exec Safe Bin Trusted Dir Hint Hit in src/commands/doctor. */
 export type ExecSafeBinTrustedDirHintHit = {
   scopePath: string;
   bin: string;
@@ -112,6 +115,7 @@ function collectExecSafeBinScopes(cfg: OpenClawConfig): ExecSafeBinScopeRef[] {
   return scopes;
 }
 
+/** Reused helper for scan Exec Safe Bin Coverage behavior in src/commands/doctor. */
 export function scanExecSafeBinCoverage(cfg: OpenClawConfig): ExecSafeBinCoverageHit[] {
   const hits: ExecSafeBinCoverageHit[] = [];
   for (const scope of collectExecSafeBinScopes(cfg)) {
@@ -139,6 +143,7 @@ export function scanExecSafeBinCoverage(cfg: OpenClawConfig): ExecSafeBinCoverag
   return hits;
 }
 
+/** Reused helper for scan Exec Safe Bin Trusted Dir Hints behavior in src/commands/doctor. */
 export function scanExecSafeBinTrustedDirHints(
   cfg: OpenClawConfig,
 ): ExecSafeBinTrustedDirHintHit[] {
@@ -167,6 +172,7 @@ export function scanExecSafeBinTrustedDirHints(
   return hits;
 }
 
+/** Reused helper for collect Exec Safe Bin Coverage Warnings behavior in src/commands/doctor. */
 export function collectExecSafeBinCoverageWarnings(params: {
   hits: ExecSafeBinCoverageHit[];
   doctorFixCommand: string;
@@ -222,6 +228,7 @@ export function collectExecSafeBinCoverageWarnings(params: {
   return lines;
 }
 
+/** Reused helper for collect Exec Safe Bin Trusted Dir Hint Warnings behavior in src/commands/doctor. */
 export function collectExecSafeBinTrustedDirHintWarnings(
   hits: ExecSafeBinTrustedDirHintHit[],
 ): string[] {
@@ -243,6 +250,7 @@ export function collectExecSafeBinTrustedDirHintWarnings(
   return lines;
 }
 
+/** Reused helper for maybe Repair Exec Safe Bin Profiles behavior in src/commands/doctor. */
 export function maybeRepairExecSafeBinProfiles(cfg: OpenClawConfig): {
   config: OpenClawConfig;
   changes: string[];

@@ -1,7 +1,9 @@
+/** Shared filesystem fixtures for workspace skill discovery tests. */
 import fs from "node:fs/promises";
 import path from "node:path";
 import { createSyntheticSourceInfo, type Skill } from "../loading/skill-contract.js";
 
+/** Writes a minimal SKILL.md fixture into a named skill directory. */
 export async function writeSkill(params: {
   dir: string;
   name: string;
@@ -23,6 +25,7 @@ ${body ?? `# ${name}\n`}
   );
 }
 
+/** Builds the canonical fixture skill markdown used across prompt/status tests. */
 export function createCanonicalFixtureSkill(params: {
   name: string;
   description: string;

@@ -1,3 +1,4 @@
+// Tests extensions/qqbot/src/engine/gateway outbound dispatch test behavior.
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import type { InboundContext } from "./inbound-context.js";
 import { dispatchOutbound } from "./outbound-dispatch.js";

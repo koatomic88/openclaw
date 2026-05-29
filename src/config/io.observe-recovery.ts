@@ -1,3 +1,4 @@
+// config io observe recovery helpers and runtime behavior.
 import crypto from "node:crypto";
 import path from "node:path";
 import { isRecord } from "../utils.js";
@@ -19,6 +20,7 @@ import {
 } from "./recovery-policy.js";
 import type { ConfigFileSnapshot } from "./types.openclaw.js";
 
+/** Shared type for Observe Recovery Deps in src/config. */
 export type ObserveRecoveryDeps = {
   fs: {
     promises: {
@@ -540,6 +542,7 @@ function readConfigFingerprintForPathSync(
   }
 }
 
+/** Reused helper for resolve Last Known Good Config Path behavior in src/config. */
 export function resolveLastKnownGoodConfigPath(configPath: string): string {
   return `${configPath}.last-good`;
 }
@@ -581,6 +584,7 @@ function collectPollutedSecretPlaceholders(
   return output;
 }
 
+/** Reused helper for maybe Recover Suspicious Config Read behavior in src/config. */
 export async function maybeRecoverSuspiciousConfigRead(params: {
   deps: ObserveRecoveryDeps;
   configPath: string;
@@ -691,6 +695,7 @@ export async function maybeRecoverSuspiciousConfigRead(params: {
   return { raw: backupRaw, parsed: backupParsed };
 }
 
+/** Reused helper for maybe Recover Suspicious Config Read Sync behavior in src/config. */
 export function maybeRecoverSuspiciousConfigReadSync(params: {
   deps: ObserveRecoveryDeps;
   configPath: string;
@@ -803,6 +808,7 @@ export function maybeRecoverSuspiciousConfigReadSync(params: {
   return { raw: backupRaw, parsed: backupParsed };
 }
 
+/** Reused helper for promote Config Snapshot To Last Known Good behavior in src/config. */
 export async function promoteConfigSnapshotToLastKnownGood(params: {
   deps: ObserveRecoveryDeps;
   snapshot: ConfigFileSnapshot;
@@ -849,6 +855,7 @@ export async function promoteConfigSnapshotToLastKnownGood(params: {
   return true;
 }
 
+/** Reused helper for recover Config From Last Known Good behavior in src/config. */
 export async function recoverConfigFromLastKnownGood(params: {
   deps: ObserveRecoveryDeps;
   snapshot: ConfigFileSnapshot;

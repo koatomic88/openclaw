@@ -1,3 +1,4 @@
+/** Configures Commander help text, sections, and visible command groups. */
 import type { Command } from "commander";
 import { resolveCommitHash } from "../../infra/git-commit.js";
 import { formatDocsLink } from "../../terminal/links.js";
@@ -43,6 +44,7 @@ const EXAMPLES = [
   ],
 ] as const;
 
+/** Reused helper for configure Program Help behavior in src/cli/program. */
 export function configureProgramHelp(
   program: Command,
   ctx: ProgramContext,

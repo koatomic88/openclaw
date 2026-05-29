@@ -1,3 +1,4 @@
+/** Tests current date/time prompt formatting. */
 import { describe, expect, it } from "vitest";
 import { normalizeTimestamp } from "./date-time.js";
 

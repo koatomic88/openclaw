@@ -1,3 +1,4 @@
+/** Registers CLI commands for hook status, checks, and config updates. */
 import type { Command } from "commander";
 import { resolveAgentWorkspaceDir, resolveDefaultAgentId } from "../agents/agent-scope.js";
 import { getRuntimeConfig, readConfigFileSnapshot, replaceConfigFile } from "../config/config.js";
@@ -23,20 +24,24 @@ import { runNativeHookRelayCli, type NativeHookRelayCliOptions } from "./native-
 import { runPluginInstallCommand } from "./plugins-install-command.js";
 import { runPluginUpdateCommand } from "./plugins-update-command.js";
 
+/** Shared type for Hooks List Options in src/cli. */
 export type HooksListOptions = {
   json?: boolean;
   eligible?: boolean;
   verbose?: boolean;
 };
 
+/** Shared type for Hook Info Options in src/cli. */
 export type HookInfoOptions = {
   json?: boolean;
 };
 
+/** Shared type for Hooks Check Options in src/cli. */
 export type HooksCheckOptions = {
   json?: boolean;
 };
 
+/** Shared type for Hooks Update Options in src/cli. */
 export type HooksUpdateOptions = {
   all?: boolean;
   dryRun?: boolean;
@@ -419,6 +424,7 @@ export function formatHooksCheck(report: HookStatusReport, opts: HooksCheckOptio
   return lines.join("\n");
 }
 
+/** Reused helper for enable Hook behavior in src/cli. */
 export async function enableHook(hookName: string): Promise<void> {
   const snapshot = await readConfigFileSnapshot();
   const config = (snapshot.sourceConfig ?? snapshot.config) as OpenClawConfig;
@@ -439,6 +445,7 @@ export async function enableHook(hookName: string): Promise<void> {
   );
 }
 
+/** Reused helper for disable Hook behavior in src/cli. */
 export async function disableHook(hookName: string): Promise<void> {
   const snapshot = await readConfigFileSnapshot();
   const config = (snapshot.sourceConfig ?? snapshot.config) as OpenClawConfig;
@@ -454,6 +461,7 @@ export async function disableHook(hookName: string): Promise<void> {
   );
 }
 
+/** Reused helper for register Hooks Cli behavior in src/cli. */
 export function registerHooksCli(program: Command): void {
   const hooks = program
     .command("hooks")

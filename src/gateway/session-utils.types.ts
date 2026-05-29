@@ -1,3 +1,4 @@
+// Shared types for gateway session utils types behavior.
 import type { ChatType } from "../channels/chat-type.js";
 import type { SessionCompactionCheckpoint, SessionEntry } from "../config/sessions/types.js";
 import type { PluginSessionExtensionProjection } from "../plugins/host-hooks.js";
@@ -9,6 +10,7 @@ import type {
 } from "../shared/session-types.js";
 import type { DeliveryContext } from "../utils/delivery-context.types.js";
 
+/** Shared type for Gateway Sessions Defaults in src/gateway. */
 export type GatewaySessionsDefaults = {
   modelProvider: string | null;
   model: string | null;
@@ -23,15 +25,18 @@ type GatewayThinkingLevelOption = {
   label: string;
 };
 
+/** Shared type for Session Run Status in src/gateway. */
 export type SessionRunStatus = "running" | "done" | "failed" | "killed" | "timeout";
 
 type SubagentRunState = "active" | "interrupted" | "historical";
 
+/** Shared type for Session Compaction Checkpoint Preview in src/gateway. */
 export type SessionCompactionCheckpointPreview = Pick<
   SessionCompactionCheckpoint,
   "checkpointId" | "createdAt" | "reason"
 >;
 
+/** Shared type for Gateway Session Row in src/gateway. */
 export type GatewaySessionRow = {
   key: string;
   spawnedBy?: string;
@@ -96,26 +101,32 @@ export type GatewaySessionRow = {
   pluginExtensions?: PluginSessionExtensionProjection[];
 };
 
+/** Shared type for Gateway Agent Row in src/gateway. */
 export type GatewayAgentRow = SharedGatewayAgentRow;
 
+/** Shared type for Session Preview Item in src/gateway. */
 export type SessionPreviewItem = {
   role: "user" | "assistant" | "tool" | "system" | "other";
   text: string;
 };
 
+/** Shared type for Sessions Preview Entry in src/gateway. */
 export type SessionsPreviewEntry = {
   key: string;
   status: "ok" | "empty" | "missing" | "error";
   items: SessionPreviewItem[];
 };
 
+/** Shared type for Sessions Preview Result in src/gateway. */
 export type SessionsPreviewResult = {
   ts: number;
   previews: SessionsPreviewEntry[];
 };
 
+/** Shared type for Sessions List Result in src/gateway. */
 export type SessionsListResult = SessionsListResultBase<GatewaySessionsDefaults, GatewaySessionRow>;
 
+/** Shared type for Sessions Patch Result in src/gateway. */
 export type SessionsPatchResult = SessionsPatchResultBase<SessionEntry> & {
   entry: SessionEntry;
   resolved?: {

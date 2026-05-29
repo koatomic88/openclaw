@@ -1,3 +1,4 @@
+/** Legacy runtime config migrations for agent defaults and tools. */
 import { normalizeProviderId } from "../../../agents/provider-id.js";
 import { isKnownCoreToolId } from "../../../agents/tool-catalog.js";
 import { isToolAllowedByPolicyName } from "../../../agents/tool-policy-match.js";
@@ -1144,6 +1145,7 @@ function addProfileConfiguredSectionGrantsWithConfiguredGrants(
   }
 }
 
+/** Reused constant for LEGACY CONFIG MIGRATIONS RUNTIME AGENTS behavior in src/commands/doctor. */
 export const LEGACY_CONFIG_MIGRATIONS_RUNTIME_AGENTS: LegacyConfigMigrationSpec[] = [
   defineLegacyConfigMigration({
     id: "tools.profile-configured-sections-alsoAllow",

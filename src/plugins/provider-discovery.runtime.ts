@@ -1,3 +1,4 @@
+// Runtime boundary for plugins provider discovery runtime behavior.
 import path from "node:path";
 import type { ModelDefinitionConfig, ModelProviderConfig } from "../config/types.models.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
@@ -49,6 +50,7 @@ function resolveProviderDiscoveryDependencyRoot(rootDir: string): string {
   return rootDir;
 }
 
+/** Reused helper for clear Provider Discovery Module Loaders behavior in src/plugins. */
 export function clearProviderDiscoveryModuleLoaders(): void {
   providerDiscoveryModuleLoaders.clear();
   for (const [modulePath, rootDir] of providerDiscoveryModuleRoots) {
@@ -355,6 +357,7 @@ function resolveRuntimeEntryProviders(entryResult: ProviderDiscoveryEntryResult)
   });
 }
 
+/** Reused helper for resolve Plugin Discovery Providers Runtime behavior in src/plugins. */
 export function resolvePluginDiscoveryProvidersRuntime(params: {
   config?: OpenClawConfig;
   workspaceDir?: string;

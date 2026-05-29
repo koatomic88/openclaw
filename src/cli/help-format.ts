@@ -1,5 +1,7 @@
+/** Formats command help examples and section labels. */
 import { theme } from "../terminal/theme.js";
 
+/** Shared type for Help Example in src/cli. */
 export type HelpExample = readonly [command: string, description: string];
 
 function formatHelpExample(command: string, description: string): string {
@@ -13,6 +15,7 @@ function formatHelpExampleLine(command: string, description: string): string {
   return `  ${theme.command(command)} ${theme.muted(`# ${description}`)}`;
 }
 
+/** Reused helper for format Help Examples behavior in src/cli. */
 export function formatHelpExamples(examples: ReadonlyArray<HelpExample>, inline = false): string {
   const formatter = inline ? formatHelpExampleLine : formatHelpExample;
   return examples.map(([command, description]) => formatter(command, description)).join("\n");

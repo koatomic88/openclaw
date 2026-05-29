@@ -1,3 +1,4 @@
+// Tests gateway/server-methods agent test behavior.
 import fs from "node:fs/promises";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {

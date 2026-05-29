@@ -1,3 +1,4 @@
+// Tests extensions/minimax oauth test behavior.
 import { describe, expect, it } from "vitest";
 import { normalizeOAuthExpires } from "./oauth.js";
 

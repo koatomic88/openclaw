@@ -1,3 +1,5 @@
+// extensions/zalo/src runtime api helpers and runtime behavior.
+/** Re-exported zalo plugin public API. */
 export {
   addWildcardAllowFrom,
   applyAccountNameToChannelSection,
@@ -68,4 +70,5 @@ export {
   withResolvedWebhookRequestPipeline,
   type WizardPrompter,
 } from "./runtime-support.js";
+/** Re-exported zalo plugin public API, starting with set Zalo Runtime. */
 export { setZaloRuntime } from "./runtime.js";

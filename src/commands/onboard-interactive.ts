@@ -1,3 +1,4 @@
+/** Runs the interactive onboarding wizard. */
 import type { RuntimeEnv } from "../runtime.js";
 import { defaultRuntime } from "../runtime.js";
 import { restoreTerminalState } from "../terminal/restore.js";
@@ -6,6 +7,7 @@ import { WizardCancelledError } from "../wizard/prompts.js";
 import { runSetupWizard } from "../wizard/setup.js";
 import type { OnboardOptions } from "./onboard-types.js";
 
+/** Reused helper for run Interactive Setup behavior in src/commands. */
 export async function runInteractiveSetup(
   opts: OnboardOptions,
   runtime: RuntimeEnv = defaultRuntime,

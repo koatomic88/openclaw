@@ -1,3 +1,4 @@
+// Tests extensions/voice-call/src/manager timers test behavior.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { persistCallRecordMock } = vi.hoisted(() => ({

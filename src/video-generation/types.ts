@@ -1,7 +1,9 @@
+// Shared types for video-generation types behavior.
 import type { AuthProfileStore } from "../agents/auth-profiles/types.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import type { MediaNormalizationEntry } from "../media-generation/normalization.types.js";
 
+/** Shared type for Generated Video Asset in src/video-generation. */
 export type GeneratedVideoAsset = {
   /** Raw video bytes. Required for local delivery; omit when url is provided instead. */
   buffer?: Buffer;
@@ -14,6 +16,7 @@ export type GeneratedVideoAsset = {
   metadata?: Record<string, unknown>;
 };
 
+/** Shared type for Video Generation Resolution in src/video-generation. */
 export type VideoGenerationResolution =
   | "360P"
   | "480P"
@@ -36,6 +39,7 @@ export type VideoGenerationAssetRole =
   | "reference_video"
   | "reference_audio";
 
+/** Shared type for Video Generation Source Asset in src/video-generation. */
 export type VideoGenerationSourceAsset = {
   url?: string;
   buffer?: Buffer;
@@ -53,11 +57,13 @@ export type VideoGenerationSourceAsset = {
   metadata?: Record<string, unknown>;
 };
 
+/** Shared type for Video Generation Provider Configured Context in src/video-generation. */
 export type VideoGenerationProviderConfiguredContext = {
   cfg?: OpenClawConfig;
   agentDir?: string;
 };
 
+/** Shared type for Video Generation Request in src/video-generation. */
 export type VideoGenerationRequest = {
   provider: string;
   model: string;
@@ -81,6 +87,7 @@ export type VideoGenerationRequest = {
   providerOptions?: Record<string, unknown>;
 };
 
+/** Shared type for Video Generation Model Capabilities Context in src/video-generation. */
 export type VideoGenerationModelCapabilitiesContext = {
   provider: string;
   model: string;
@@ -90,17 +97,20 @@ export type VideoGenerationModelCapabilitiesContext = {
   timeoutMs?: number;
 };
 
+/** Shared type for Video Generation Result in src/video-generation. */
 export type VideoGenerationResult = {
   videos: GeneratedVideoAsset[];
   model?: string;
   metadata?: Record<string, unknown>;
 };
 
+/** Shared type for Video Generation Ignored Override in src/video-generation. */
 export type VideoGenerationIgnoredOverride = {
   key: "size" | "aspectRatio" | "resolution" | "audio" | "watermark";
   value: string | boolean;
 };
 
+/** Shared type for Video Generation Mode in src/video-generation. */
 export type VideoGenerationMode = "generate" | "imageToVideo" | "videoToVideo";
 
 /**
@@ -149,12 +159,14 @@ export type VideoGenerationTransformCapabilities = VideoGenerationModeCapabiliti
   enabled: boolean;
 };
 
+/** Shared type for Video Generation Provider Capabilities in src/video-generation. */
 export type VideoGenerationProviderCapabilities = VideoGenerationModeCapabilities & {
   generate?: VideoGenerationModeCapabilities;
   imageToVideo?: VideoGenerationTransformCapabilities;
   videoToVideo?: VideoGenerationTransformCapabilities;
 };
 
+/** Shared type for Video Generation Normalization in src/video-generation. */
 export type VideoGenerationNormalization = {
   size?: MediaNormalizationEntry<string>;
   aspectRatio?: MediaNormalizationEntry<string>;
@@ -162,6 +174,7 @@ export type VideoGenerationNormalization = {
   durationSeconds?: MediaNormalizationEntry<number>;
 };
 
+/** Shared type for Video Generation Provider in src/video-generation. */
 export type VideoGenerationProvider = {
   id: string;
   aliases?: string[];

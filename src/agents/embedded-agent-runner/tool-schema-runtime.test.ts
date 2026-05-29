@@ -1,3 +1,4 @@
+/** Covers provider-owned tool schema normalization diagnostics. */
 import { describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -18,9 +19,8 @@ vi.mock("./logger.js", () => ({
   log: mocks.log,
 }));
 
-const { logProviderToolSchemaDiagnostics, normalizeProviderToolSchemas } = await import(
-  "./tool-schema-runtime.js"
-);
+const { logProviderToolSchemaDiagnostics, normalizeProviderToolSchemas } =
+  await import("./tool-schema-runtime.js");
 
 describe("tool schema runtime diagnostics", () => {
   it("stays quiet when a provider reports no diagnostics", () => {

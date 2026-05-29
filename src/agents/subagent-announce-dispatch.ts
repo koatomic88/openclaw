@@ -1,9 +1,11 @@
+/** Chooses direct vs steered delivery paths for subagent completion announcements. */
 type SubagentDeliveryPath = "steered" | "direct" | "none";
 
 type SubagentAnnounceSteerOutcome =
   | { status: "steered"; deliveredAt?: number; enqueuedAt?: number }
   | { status: "none" | "dropped" };
 
+/** Delivery result plus phase trace for subagent announce attempts. */
 export type SubagentAnnounceDeliveryResult = {
   delivered: boolean;
   path: SubagentDeliveryPath;
@@ -24,6 +26,7 @@ type SubagentAnnounceDispatchPhaseResult = {
   error?: string;
 };
 
+/** Converts a steer operation result into the shared announce delivery result shape. */
 export function mapSteerOutcomeToDeliveryResult(
   outcome: SubagentAnnounceSteerOutcome,
 ): SubagentAnnounceDeliveryResult {
@@ -41,6 +44,7 @@ export function mapSteerOutcomeToDeliveryResult(
   };
 }
 
+/** Runs the announce dispatch strategy, preferring direct delivery when completion is required. */
 export async function runSubagentAnnounceDispatch(params: {
   expectsCompletionMessage: boolean;
   signal?: AbortSignal;

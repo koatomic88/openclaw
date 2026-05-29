@@ -1,3 +1,4 @@
+// Tests extensions/telegram/src/bot helpers test behavior.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildTelegramInboundOriginTarget,

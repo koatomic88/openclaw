@@ -1,3 +1,4 @@
+// media-generation model ref helpers and runtime behavior.
 import { normalizeOptionalString } from "../shared/string-coerce.js";
 
 type ParsedGenerationModelRef = {
@@ -5,6 +6,7 @@ type ParsedGenerationModelRef = {
   model: string;
 };
 
+/** Reused helper for parse Generation Model Ref behavior in src/media-generation. */
 export function parseGenerationModelRef(raw: string | undefined): ParsedGenerationModelRef | null {
   const trimmed = normalizeOptionalString(raw);
   if (!trimmed) {

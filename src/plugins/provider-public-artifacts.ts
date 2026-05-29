@@ -1,3 +1,4 @@
+// plugins provider public artifacts helpers and runtime behavior.
 import { normalizeProviderId } from "../agents/provider-id.js";
 import type { ModelProviderConfig } from "../config/types.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
@@ -17,6 +18,7 @@ import { loadBundledPluginPublicArtifactModuleSync } from "./public-surface-load
 const PROVIDER_POLICY_ARTIFACT_CANDIDATES = ["provider-policy-api.js"] as const;
 const providerPolicySurfaceByPluginId = new Map<string, BundledProviderPolicySurface | null>();
 
+/** Shared type for Bundled Provider Policy Surface in src/plugins. */
 export type BundledProviderPolicySurface = {
   normalizeConfig?: (ctx: ProviderNormalizeConfigContext) => ModelProviderConfig | null | undefined;
   applyConfigDefaults?: (
@@ -102,6 +104,7 @@ function resolveBundledProviderPolicyPluginId(
   return null;
 }
 
+/** Reused helper for resolve Bundled Provider Policy Surface behavior in src/plugins. */
 export function resolveBundledProviderPolicySurface(
   providerId: string,
   options: { manifestRegistry?: Pick<PluginManifestRegistry, "plugins"> } = {},

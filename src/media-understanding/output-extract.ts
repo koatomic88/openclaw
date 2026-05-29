@@ -1,3 +1,4 @@
+// media-understanding output extract helpers and runtime behavior.
 function extractLastJsonObject(raw: string): unknown {
   const trimmed = raw.trim();
   const start = trimmed.lastIndexOf("{");
@@ -12,6 +13,7 @@ function extractLastJsonObject(raw: string): unknown {
   }
 }
 
+/** Reused helper for extract Gemini Response behavior in src/media-understanding. */
 export function extractGeminiResponse(raw: string): string | null {
   const payload = extractLastJsonObject(raw);
   if (!payload || typeof payload !== "object") {

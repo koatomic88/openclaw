@@ -1,3 +1,4 @@
+// extensions/imessage/src/monitor catchup bridge helpers and runtime behavior.
 import { warn } from "openclaw/plugin-sdk/runtime-env";
 import type { IMessageRpcClient } from "../client.js";
 import {

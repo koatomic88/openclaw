@@ -1,3 +1,4 @@
+// packages/agent-core/src/harness/compaction utils helpers and runtime behavior.
 import type { Message } from "../../llm.js";
 import type { AgentMessage } from "../../types.js";
 

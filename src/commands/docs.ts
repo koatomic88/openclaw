@@ -1,3 +1,4 @@
+/** Searches OpenClaw documentation from the CLI. */
 import { formatCliCommand } from "../cli/command-format.js";
 import type { RuntimeEnv } from "../runtime.js";
 import { formatDocsLink } from "../terminal/links.js";
@@ -104,6 +105,7 @@ function parseDocsSearchResults(raw: unknown): DocResult[] {
   return results;
 }
 
+/** Reused helper for docs Search Command behavior in src/commands. */
 export async function docsSearchCommand(queryParts: string[], runtime: RuntimeEnv) {
   const query = queryParts.join(" ").trim();
   if (!query) {

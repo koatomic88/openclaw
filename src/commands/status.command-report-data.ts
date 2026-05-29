@@ -1,3 +1,4 @@
+/** Assembles report data consumed by human status output. */
 import type { ConnectPairingRequiredReason } from "../../packages/gateway-protocol/src/connect-error-details.js";
 import type { HeartbeatEventPayload } from "../infra/heartbeat-events.js";
 import type { resolveOsSummary } from "../infra/os-summary.js";
@@ -28,6 +29,7 @@ import {
 import type { MemoryPluginStatus, MemoryStatusSnapshot } from "./status.scan.shared.js";
 import type { SessionStatus, StatusSummary } from "./status.types.js";
 
+/** Reused helper for build Status Command Report Data behavior in src/commands. */
 export async function buildStatusCommandReportData(
   params: {
     opts: {

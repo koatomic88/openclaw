@@ -1,6 +1,8 @@
+// plugins provider config owner helpers and runtime behavior.
 import { normalizeProviderId } from "../agents/provider-id.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 
+/** Reused helper for resolve Provider Config Api Owner Hint behavior in src/plugins. */
 export function resolveProviderConfigApiOwnerHint(params: {
   provider: string;
   config?: OpenClawConfig;

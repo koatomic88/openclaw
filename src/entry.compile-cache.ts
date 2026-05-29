@@ -1,3 +1,4 @@
+// OpenClaw entry compile cache helpers and runtime behavior.
 import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { enableCompileCache, getCompileCacheDir } from "node:module";
@@ -9,12 +10,14 @@ const COMPILE_CACHE_RESPAWN_SIGNAL_EXIT_GRACE_MS = 1_000;
 const COMPILE_CACHE_RESPAWN_SIGNAL_FORCE_KILL_GRACE_MS = 1_000;
 const COMPILE_CACHE_RESPAWN_SIGNAL_HARD_EXIT_GRACE_MS = 1_000;
 
+/** Reused helper for resolve Entry Install Root behavior in src. */
 export function resolveEntryInstallRoot(entryFile: string): string {
   const entryDir = path.dirname(entryFile);
   const entryParent = path.basename(entryDir);
   return entryParent === "dist" || entryParent === "src" ? path.dirname(entryDir) : entryDir;
 }
 
+/** Reused helper for is Source Checkout Install Root behavior in src. */
 export function isSourceCheckoutInstallRoot(installRoot: string): boolean {
   return (
     existsSync(path.join(installRoot, ".git")) ||
@@ -30,6 +33,7 @@ function isNodeCompileCacheRequested(env: NodeJS.ProcessEnv | undefined): boolea
   return env?.NODE_COMPILE_CACHE !== undefined && !isNodeCompileCacheDisabled(env);
 }
 
+/** Reused helper for should Enable Open Claw Compile Cache behavior in src. */
 export function shouldEnableOpenClawCompileCache(params: {
   env?: NodeJS.ProcessEnv;
   installRoot: string;
@@ -63,6 +67,7 @@ function readPackageVersion(packageJsonPath: string): string {
   return "unknown";
 }
 
+/** Reused helper for resolve Open Claw Compile Cache Directory behavior in src. */
 export function resolveOpenClawCompileCacheDirectory(params: {
   env?: NodeJS.ProcessEnv;
   installRoot: string;
@@ -89,6 +94,7 @@ export function resolveOpenClawCompileCacheDirectory(params: {
   );
 }
 
+/** Shared type for Open Claw Compile Cache Respawn Plan in src. */
 export type OpenClawCompileCacheRespawnPlan = {
   command: string;
   args: string[];
@@ -102,6 +108,7 @@ type OpenClawCompileCacheRespawnRuntime = {
   writeError: (message: string) => void;
 };
 
+/** Reused helper for build Open Claw Compile Cache Respawn Plan behavior in src. */
 export function buildOpenClawCompileCacheRespawnPlan(params: {
   currentFile: string;
   env?: NodeJS.ProcessEnv;
@@ -138,6 +145,7 @@ export function buildOpenClawCompileCacheRespawnPlan(params: {
   };
 }
 
+/** Reused helper for respawn Without Open Claw Compile Cache If Needed behavior in src. */
 export function respawnWithoutOpenClawCompileCacheIfNeeded(params: {
   currentFile: string;
   installRoot: string;
@@ -154,6 +162,7 @@ export function respawnWithoutOpenClawCompileCacheIfNeeded(params: {
   return true;
 }
 
+/** Reused helper for run Open Claw Compile Cache Respawn Plan behavior in src. */
 export function runOpenClawCompileCacheRespawnPlan(
   plan: OpenClawCompileCacheRespawnPlan,
   runtime: OpenClawCompileCacheRespawnRuntime = {
@@ -243,6 +252,7 @@ export function runOpenClawCompileCacheRespawnPlan(
   return child;
 }
 
+/** Reused helper for enable Open Claw Compile Cache behavior in src. */
 export function enableOpenClawCompileCache(params: {
   env?: NodeJS.ProcessEnv;
   installRoot: string;

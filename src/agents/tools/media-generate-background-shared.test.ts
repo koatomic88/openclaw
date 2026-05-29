@@ -1,3 +1,4 @@
+/** Covers shared background media generation task helpers. */
 import { describe, expect, it, vi } from "vitest";
 
 const subagentAnnounceDeliveryMocks = vi.hoisted(() => ({

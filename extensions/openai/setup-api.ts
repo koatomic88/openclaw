@@ -1,3 +1,4 @@
+// extensions/openai setup api helpers and runtime behavior.
 import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
 import type { ProviderAuthContext, ProviderAuthResult } from "openclaw/plugin-sdk/plugin-entry";
 import type { ProviderAuthMethod } from "openclaw/plugin-sdk/plugin-entry";
@@ -42,6 +43,7 @@ async function runOpenAICodexProviderAuthMethod(
   return method.run(ctx);
 }
 
+/** Public openai plugin helper for build Open AISetup Provider behavior. */
 export function buildOpenAISetupProvider(): ProviderPlugin {
   const oauthMethod = {
     id: "oauth",
@@ -99,6 +101,7 @@ export function buildOpenAISetupProvider(): ProviderPlugin {
   };
 }
 
+/** Public openai plugin helper for build Open AICodex Setup Provider behavior. */
 export function buildOpenAICodexSetupProvider(): ProviderPlugin {
   const oauthMethod = {
     id: "oauth",

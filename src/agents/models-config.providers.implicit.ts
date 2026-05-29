@@ -1,3 +1,4 @@
+/** Discovers implicit model providers from env, auth profiles, and plugin catalogs. */
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { formatErrorMessage } from "../infra/errors.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
@@ -222,6 +223,7 @@ function appendNormalizedPluginMetadataOwners(
   }
 }
 
+/** Expose provider discovery plugin filtering for focused tests. */
 export function resolveProviderDiscoveryFilterForTest(params: {
   config?: OpenClawConfig;
   workspaceDir?: string;
@@ -232,6 +234,7 @@ export function resolveProviderDiscoveryFilterForTest(params: {
   return resolveProviderDiscoveryFilter(params);
 }
 
+/** Expose provider-owner lookup from plugin metadata for focused tests. */
 export function resolvePluginMetadataProviderOwnersForTest(
   pluginMetadataSnapshot: Pick<PluginMetadataSnapshot, "owners"> | undefined,
   provider: string,
@@ -491,6 +494,7 @@ async function runProviderCatalogWithTimeout(
   }
 }
 
+/** Resolve generated provider config entries not explicitly listed in config. */
 export async function resolveImplicitProviders(
   params: ImplicitProviderParams,
 ): Promise<NonNullable<OpenClawConfig["models"]>["providers"]> {

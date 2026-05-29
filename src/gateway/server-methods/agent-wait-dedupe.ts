@@ -1,3 +1,4 @@
+// gateway/server-methods agent wait dedupe helpers and runtime behavior.
 import { AGENT_RUN_ABORTED_ERROR, isAbortedAgentStopReason } from "../../agents/run-termination.js";
 import {
   normalizeAgentRunTimeoutPhase,
@@ -11,6 +12,7 @@ import { asOptionalRecord } from "../../shared/record-coerce.js";
 import { setSafeTimeout } from "../../utils/timer-delay.js";
 import type { DedupeEntry } from "../server-shared.js";
 
+/** Shared type for Agent Wait Terminal Snapshot in src/gateway/server-methods. */
 export type AgentWaitTerminalSnapshot = {
   status: "ok" | "error" | "timeout";
   startedAt?: number;
@@ -161,6 +163,7 @@ function readTerminalSnapshotFromDedupeEntry(entry: DedupeEntry): AgentWaitTermi
   return null;
 }
 
+/** Reused helper for read Terminal Snapshot From Gateway Dedupe behavior in src/gateway/server-methods. */
 export function readTerminalSnapshotFromGatewayDedupe(params: {
   dedupe: Map<string, DedupeEntry>;
   runId: string;
@@ -199,6 +202,7 @@ export function readTerminalSnapshotFromGatewayDedupe(params: {
   return agentSnapshot ?? chatSnapshot;
 }
 
+/** Reused helper for wait For Terminal Gateway Dedupe behavior in src/gateway/server-methods. */
 export async function waitForTerminalGatewayDedupe(params: {
   dedupe: Map<string, DedupeEntry>;
   runId: string;
@@ -256,6 +260,7 @@ export async function waitForTerminalGatewayDedupe(params: {
   });
 }
 
+/** Reused helper for set Gateway Dedupe Entry behavior in src/gateway/server-methods. */
 export function setGatewayDedupeEntry(params: {
   dedupe: Map<string, DedupeEntry>;
   key: string;
@@ -278,6 +283,7 @@ export function setGatewayDedupeEntry(params: {
   notifyWaiters(runId);
 }
 
+/** Reused constant for testing behavior in src/gateway/server-methods. */
 export const testing = {
   getWaiterCount(runId?: string): number {
     if (runId) {
@@ -293,4 +299,5 @@ export const testing = {
     AGENT_WAITERS_BY_RUN_ID.clear();
   },
 };
+/** Re-exported API for src/gateway/server-methods, starting with testing. */
 export { testing as __testing };

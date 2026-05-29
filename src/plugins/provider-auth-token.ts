@@ -1,6 +1,8 @@
+// plugins provider auth token helpers and runtime behavior.
 import { normalizeProviderId } from "../agents/provider-id.js";
 import { normalizeLowercaseStringOrEmpty } from "../shared/string-coerce.js";
 
+/** Reused constant for ANTHROPIC SETUP TOKEN PREFIX behavior in src/plugins. */
 export const ANTHROPIC_SETUP_TOKEN_PREFIX = "sk-ant-oat01-";
 const ANTHROPIC_SETUP_TOKEN_MIN_LENGTH = 80;
 const DEFAULT_TOKEN_PROFILE_NAME = "default";

@@ -1,9 +1,11 @@
+/** Registers interactive configure command sections. */
 import type { Command } from "commander";
 import { CONFIGURE_WIZARD_SECTIONS } from "../../commands/configure.shared.js";
 import { formatDocsLink } from "../../terminal/links.js";
 import { theme } from "../../terminal/theme.js";
 import { runCommandWithRuntime } from "../cli-utils.js";
 
+/** Reused helper for register Configure Command behavior in src/cli/program. */
 export function registerConfigureCommand(program: Command): void {
   program
     .command("configure")

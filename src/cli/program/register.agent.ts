@@ -1,3 +1,4 @@
+/** Registers agent management commands. */
 import type { Command } from "commander";
 import { defaultRuntime } from "../../runtime.js";
 import { normalizeLowercaseStringOrEmpty } from "../../shared/string-coerce.js";
@@ -54,6 +55,7 @@ async function loadSetVerbose(): Promise<GlobalStateModule["setVerbose"]> {
   return (await import("../../global-state.js")).setVerbose;
 }
 
+/** Reused helper for register Agent Commands behavior in src/cli/program. */
 export function registerAgentCommands(
   program: Command,
   args: { agentChannelOptions: string },

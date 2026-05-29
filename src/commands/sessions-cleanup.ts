@@ -1,3 +1,4 @@
+/** Runs session cleanup command against configured session stores. */
 import { getRuntimeConfig } from "../config/config.js";
 import {
   resolveSessionCleanupAction,
@@ -189,6 +190,7 @@ async function maybeRunGatewayCleanup(
   }
 }
 
+/** Reused helper for sessions Cleanup Command behavior in src/commands. */
 export async function sessionsCleanupCommand(opts: SessionsCleanupOptions, runtime: RuntimeEnv) {
   const gatewayResult = await maybeRunGatewayCleanup(opts);
   if (gatewayResult) {

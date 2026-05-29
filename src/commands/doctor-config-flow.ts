@@ -1,3 +1,4 @@
+/** Doctor flow for config validation, migration, and targeted repairs. */
 import path from "node:path";
 import { formatCliCommand } from "../cli/command-format.js";
 import { CONFIG_PATH } from "../config/paths.js";
@@ -80,6 +81,7 @@ function emitDoctorChangesPanel(
   note(message, title);
 }
 
+/** Reused helper for load And Maybe Migrate Doctor Config behavior in src/commands. */
 export async function loadAndMaybeMigrateDoctorConfig(params: {
   options: DoctorOptions;
   confirm: (p: { message: string; initialValue: boolean }) => Promise<boolean>;

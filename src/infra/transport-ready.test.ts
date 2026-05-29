@@ -1,3 +1,4 @@
+// Tests infra transport ready test behavior.
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const transportReadyMocks = vi.hoisted(() => ({

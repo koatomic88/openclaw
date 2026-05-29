@@ -1,3 +1,4 @@
+/** Public SDK helpers for native approval routing, prompt suppression, and target resolution. */
 import type {
   ExecApprovalForwardingConfig,
   ExecApprovalForwardingMode,
@@ -56,6 +57,7 @@ type ChannelApprovalForwardingEvaluatorParams = {
   }) => boolean;
 };
 
+/** Inputs for checking whether an approval request can be routed through a channel. */
 export type ChannelApprovalForwardingEligibilityParams = {
   cfg: OpenClawConfig;
   accountId?: string | null;
@@ -63,6 +65,7 @@ export type ChannelApprovalForwardingEligibilityParams = {
   request: ApprovalRequest;
 };
 
+/** Inputs for checking whether channel config could route any approval later. */
 export type ChannelApprovalPotentialRouteParams = {
   cfg: OpenClawConfig;
   accountId?: string | null;
@@ -70,6 +73,7 @@ export type ChannelApprovalPotentialRouteParams = {
   nativeSessionOnly?: boolean;
 };
 
+/** Inputs for checking an explicit configured approval forwarding target. */
 export type ChannelApprovalExplicitTargetEligibilityParams =
   ChannelApprovalForwardingEligibilityParams & {
     target: ChannelApprovalForwardTarget;
@@ -155,12 +159,14 @@ type CustomOriginResolverParams<TTarget> = {
   resolveFallbackTarget?: (request: ApprovalRequest) => TTarget | null;
 };
 
+/** Canonical native approval route target used for origin and approver-DM matching. */
 export type NativeApprovalTarget = {
   to: string;
   accountId?: string | null;
   threadId?: string | number | null;
 };
 
+/** Compare native approval targets using the same exact route semantics as outbound channels. */
 export function nativeApprovalTargetsMatch(params: {
   channel?: string | null;
   left: NativeApprovalTarget;
@@ -182,6 +188,7 @@ export function nativeApprovalTargetsMatch(params: {
   });
 }
 
+/** Decide whether a native exec approval route has enough proof to suppress local prompting. */
 export function shouldSuppressLocalNativeExecApprovalPrompt(params: {
   cfg: OpenClawConfig;
   accountId?: string | null;
@@ -271,6 +278,7 @@ function nativeApprovalTargetMatcher(channel: string): (left: unknown, right: un
     nativeApprovalTargetsMatch({ channel, left, right });
 }
 
+/** Infer the approval kind from the request shape when the caller did not pass it explicitly. */
 export function resolveApprovalKind(
   request: ApprovalRequest,
   approvalKind?: ApprovalKind,
@@ -316,6 +324,7 @@ function matchesForwardingFilters(params: {
   });
 }
 
+/** Build reusable predicates for approval forwarding modes, filters, targets, and session routes. */
 export function createChannelApprovalForwardingEvaluator(
   params: ChannelApprovalForwardingEvaluatorParams,
 ) {
@@ -439,6 +448,7 @@ function normalizeOptionalAccountId(value?: string | null): string | undefined {
   return value?.trim() || undefined;
 }
 
+/** Build a fallback suppressor that suppresses generic forwarding only for proven native routes. */
 export function createNativeApprovalForwardingFallbackSuppressor<
   TTarget extends NativeApprovalTarget,
 >(
@@ -501,6 +511,8 @@ export function createNativeApprovalForwardingFallbackSuppressor<
     if (!forwardingTargetForMatch) {
       return false;
     }
+    // Suppress only when the requested fallback target exactly matches the native origin or one of
+    // the approver DM targets; partial routing proof would drop approvals.
     const originTarget = params.resolveOriginTarget({
       cfg: input.cfg,
       accountId,
@@ -567,12 +579,15 @@ function hasCustomTargetsMatch<TTarget>(
   return typeof params.targetsMatch === "function";
 }
 
+/** Build an origin-target resolver using native target matching by default. */
 export function createChannelNativeOriginTargetResolver<TTarget extends NativeApprovalTarget>(
   params: NativeOriginResolverParams<TTarget>,
 ): (input: ApprovalResolverParams) => TTarget | null;
+/** Reused helper for create Channel Native Origin Target Resolver behavior in src/plugin-sdk. */
 export function createChannelNativeOriginTargetResolver<TTarget>(
   params: CustomOriginResolverParams<TTarget>,
 ): (input: ApprovalResolverParams) => TTarget | null;
+/** Reused helper for create Channel Native Origin Target Resolver behavior in src/plugin-sdk. */
 export function createChannelNativeOriginTargetResolver<TTarget>(
   params: NativeOriginResolverParams<NativeApprovalTarget> | CustomOriginResolverParams<TTarget>,
 ): (input: ApprovalResolverParams) => NativeApprovalTarget | TTarget | null {
@@ -585,6 +600,7 @@ export function createChannelNativeOriginTargetResolver<TTarget>(
   });
 }
 
+/** Build an approver-DM resolver by mapping configured approvers into native targets. */
 export function createChannelApproverDmTargetResolver<
   TApprover,
   TTarget extends NativeApprovalTarget = NativeApprovalTarget,

@@ -1,3 +1,4 @@
+// extensions/telegram/src request timeouts helpers and runtime behavior.
 export const TELEGRAM_GET_UPDATES_REQUEST_TIMEOUT_MS = 45_000;
 const TELEGRAM_OUTBOUND_TEXT_REQUEST_TIMEOUT_MS = 60_000;
 const TELEGRAM_DEFAULT_LONG_POLL_TIMEOUT_SECONDS = 30;

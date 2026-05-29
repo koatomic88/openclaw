@@ -1,3 +1,4 @@
+// extensions/discord/src/monitor message channel info helpers and runtime behavior.
 import { logVerbose } from "openclaw/plugin-sdk/runtime-env";
 import { normalizeOptionalStringifiedId } from "openclaw/plugin-sdk/string-coerce-runtime";
 import type { ChannelType, Message } from "../internal/discord.js";

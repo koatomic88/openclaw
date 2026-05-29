@@ -1,3 +1,4 @@
+/** Doctor checks for context-engine host/runtime compatibility. */
 import { normalizeEmbeddedAgentRuntime } from "../../../agents/agent-runtime-id.js";
 import { resolveDefaultAgentDir } from "../../../agents/agent-scope-config.js";
 import { resolveCliBackendConfig } from "../../../agents/cli-backends.js";
@@ -21,6 +22,7 @@ import { defaultSlotIdForKey } from "../../../plugins/slots.js";
 import { uniqueStrings } from "../../../shared/string-normalization.js";
 import { isRecord, resolveUserPath } from "../../../utils.js";
 
+/** Shared type for Host Candidate in src/commands/doctor. */
 export type HostCandidate = {
   runtimeId: string;
   host: ContextEngineHostSupport;

@@ -1,3 +1,4 @@
+/** Repairs configured plugin ids that lack install records. */
 import { existsSync } from "node:fs";
 import { readFile, rm } from "node:fs/promises";
 import path from "node:path";
@@ -1017,6 +1018,7 @@ async function adoptExistingNpmPackage(params: {
   };
 }
 
+/** Shared type for Repair Missing Plugin Installs Result in src/commands/doctor. */
 export type RepairMissingPluginInstallsResult = {
   changes: string[];
   warnings: string[];
@@ -1033,6 +1035,7 @@ export type RepairMissingPluginInstallsResult = {
   records: Record<string, PluginInstallRecord>;
 };
 
+/** Reused helper for repair Missing Configured Plugin Installs behavior in src/commands/doctor. */
 export async function repairMissingConfiguredPluginInstalls(params: {
   cfg: OpenClawConfig;
   env?: NodeJS.ProcessEnv;
@@ -1055,6 +1058,7 @@ export async function repairMissingConfiguredPluginInstalls(params: {
   });
 }
 
+/** Reused helper for repair Missing Plugin Installs For Ids behavior in src/commands/doctor. */
 export async function repairMissingPluginInstallsForIds(params: {
   cfg: OpenClawConfig;
   pluginIds: Iterable<string>;

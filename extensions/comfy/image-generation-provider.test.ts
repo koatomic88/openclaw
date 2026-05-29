@@ -1,3 +1,4 @@
+// Tests extensions/comfy image generation provider test behavior.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   setComfyFetchGuardForTesting,

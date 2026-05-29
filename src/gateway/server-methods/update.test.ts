@@ -1,3 +1,4 @@
+// Tests gateway/server-methods update test behavior.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   DEFAULT_RESTART_SUCCESS_CONTINUATION_MESSAGE,

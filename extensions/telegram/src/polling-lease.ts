@@ -1,3 +1,4 @@
+// extensions/telegram/src polling lease helpers and runtime behavior.
 import { fingerprintTelegramBotToken } from "./token-fingerprint.js";
 
 const TELEGRAM_POLLING_LEASES_KEY = Symbol.for("openclaw.telegram.pollingLeases");

@@ -1,3 +1,4 @@
+/** Parses skill frontmatter into OpenClaw metadata and policy. */
 import { validateRegistryNpmSpec } from "../../infra/npm-registry-spec.js";
 import { parseFrontmatterBlock } from "../../markdown/frontmatter.js";
 import {
@@ -21,6 +22,7 @@ import type {
 } from "../types.js";
 import type { Skill } from "./skill-contract.js";
 
+/** Parses raw skill markdown frontmatter into string metadata. */
 export function parseFrontmatter(content: string): ParsedSkillFrontmatter {
   return parseFrontmatterBlock(content);
 }
@@ -184,6 +186,7 @@ function parseInstallSpec(input: unknown): SkillInstallSpec | undefined {
   return spec;
 }
 
+/** Resolves OpenClaw-specific metadata from parsed skill frontmatter. */
 export function resolveOpenClawMetadata(
   frontmatter: ParsedSkillFrontmatter,
 ): OpenClawSkillMetadata | undefined {
@@ -206,6 +209,7 @@ export function resolveOpenClawMetadata(
   };
 }
 
+/** Resolves whether a skill should be injected, commandable, and callable. */
 export function resolveSkillInvocationPolicy(
   frontmatter: ParsedSkillFrontmatter,
 ): SkillInvocationPolicy {
@@ -218,6 +222,7 @@ export function resolveSkillInvocationPolicy(
   };
 }
 
+/** Resolves the stable key used for skill tools and workspace sync paths. */
 export function resolveSkillKey(skill: Skill, entry?: SkillEntry): string {
   return entry?.metadata?.skillKey ?? skill.name;
 }

@@ -1,3 +1,4 @@
+/** Registers Crestodian maintenance command. */
 import type { Command } from "commander";
 import { runCrestodian } from "../../crestodian/crestodian.js";
 import { defaultRuntime } from "../../runtime.js";
@@ -5,6 +6,7 @@ import { theme } from "../../terminal/theme.js";
 import { runCommandWithRuntime } from "../cli-utils.js";
 import { formatHelpExamples } from "../help-format.js";
 
+/** Reused helper for register Crestodian Command behavior in src/cli/program. */
 export function registerCrestodianCommand(program: Command) {
   program
     .command("crestodian")

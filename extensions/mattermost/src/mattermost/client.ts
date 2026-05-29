@@ -1,3 +1,4 @@
+// extensions/mattermost/src/mattermost client helpers and runtime behavior.
 import { sleep } from "openclaw/plugin-sdk/runtime-env";
 import {
   fetchWithSsrFGuard,

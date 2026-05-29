@@ -1,3 +1,4 @@
+/** Registers TUI launch commands and parses TUI-specific options. */
 import type { Command } from "commander";
 import { parseStrictPositiveInteger } from "../infra/parse-finite-number.js";
 import { defaultRuntime } from "../runtime.js";
@@ -5,6 +6,7 @@ import { formatDocsLink } from "../terminal/links.js";
 import { theme } from "../terminal/theme.js";
 import { parseTimeoutMs } from "./parse-timeout.js";
 
+/** Reused helper for register Tui Cli behavior in src/cli. */
 export function registerTuiCli(program: Command) {
   program
     .command("tui")

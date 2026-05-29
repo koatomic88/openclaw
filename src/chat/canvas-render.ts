@@ -1,3 +1,4 @@
+/** Parses assistant canvas-render metadata from markdown and tool payloads. */
 import { parseFenceSpans } from "../markdown/fences.js";
 import { asFiniteNumber } from "../shared/number-coercion.js";
 import { asOptionalRecord } from "../shared/record-coerce.js";
@@ -176,6 +177,7 @@ function previewFromShortcode(attrs: Record<string, string>): CanvasPreview | un
   return undefined;
 }
 
+/** Reused helper for extract Canvas From Text behavior in src/chat. */
 export function extractCanvasFromText(
   outputText: string | undefined,
   _toolName?: string,
@@ -184,6 +186,7 @@ export function extractCanvasFromText(
   return coerceCanvasPreview(parsed);
 }
 
+/** Reused helper for extract Canvas Shortcodes behavior in src/chat. */
 export function extractCanvasShortcodes(text: string | undefined): {
   text: string;
   previews: CanvasPreview[];

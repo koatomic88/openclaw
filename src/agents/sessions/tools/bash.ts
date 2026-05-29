@@ -1,3 +1,4 @@
+/** Bash tool definition and local process execution operations. */
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { Container, Text, truncateToWidth } from "@earendil-works/pi-tui";
@@ -28,8 +29,10 @@ const bashSchema = Type.Object({
     Type.Number({ description: "Timeout in seconds (optional, no default timeout)" }),
   ),
 });
+/** Re-exported API for src/agents/sessions, starting with Bash Tool Details. */
 export type { BashToolDetails, BashToolInput } from "./tool-contracts.js";
 
+/** Re-exported API for src/agents/sessions, starting with Bash Operations. */
 export type { BashOperations } from "./bash-operations.js";
 
 /**
@@ -38,6 +41,7 @@ export type { BashOperations } from "./bash-operations.js";
  * This is useful for extensions that intercept user_bash and still want OpenClaw runtime's
  * standard local shell behavior while wrapping or rewriting commands.
  */
+/** Creates local process operations for the bash tool. */
 export function createLocalBashOperations(options?: { shellPath?: string }): BashOperations {
   return {
     exec: (command, cwd, { onData, signal, timeout, env }) => {
@@ -126,12 +130,14 @@ export function createLocalBashOperations(options?: { shellPath?: string }): Bas
   };
 }
 
+/** Shared type for Bash Spawn Context in src/agents/sessions. */
 export interface BashSpawnContext {
   command: string;
   cwd: string;
   env: NodeJS.ProcessEnv;
 }
 
+/** Shared type for Bash Spawn Hook in src/agents/sessions. */
 export type BashSpawnHook = (context: BashSpawnContext) => BashSpawnContext;
 
 function resolveSpawnContext(
@@ -143,6 +149,7 @@ function resolveSpawnContext(
   return spawnHook ? spawnHook(baseContext) : baseContext;
 }
 
+/** Shared type for Bash Tool Options in src/agents/sessions. */
 export interface BashToolOptions {
   /** Custom operations for command execution. Default: local shell */
   operations?: BashOperations;
@@ -276,6 +283,7 @@ function rebuildBashResultRenderComponent(
   }
 }
 
+/** Creates the SDK tool definition for shell command execution. */
 export function createBashToolDefinition(
   cwd: string,
   options?: BashToolOptions,
@@ -465,6 +473,7 @@ export function createBashToolDefinition(
   };
 }
 
+/** Creates the runtime AgentTool wrapper for bash execution. */
 export function createBashTool(
   cwd: string,
   options?: BashToolOptions,

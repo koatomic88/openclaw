@@ -1,3 +1,4 @@
+// media-understanding resolve helpers and runtime behavior.
 import type { MsgContext } from "../auto-reply/templating.js";
 import type { OpenClawConfig } from "../config/types.js";
 import type {
@@ -17,11 +18,13 @@ import { normalizeMediaProviderId } from "./provider-id.js";
 import { normalizeMediaUnderstandingChatType, resolveMediaUnderstandingScope } from "./scope.js";
 import type { MediaUnderstandingCapability } from "./types.js";
 
+/** Reused helper for resolve Timeout Ms behavior in src/media-understanding. */
 export function resolveTimeoutMs(seconds: number | undefined, fallbackSeconds: number): number {
   const value = typeof seconds === "number" && Number.isFinite(seconds) ? seconds : fallbackSeconds;
   return Math.max(1000, Math.floor(value * 1000));
 }
 
+/** Reused helper for resolve Prompt behavior in src/media-understanding. */
 export function resolvePrompt(
   capability: MediaUnderstandingCapability,
   prompt?: string,
@@ -34,6 +37,7 @@ export function resolvePrompt(
   return `${base} Respond in at most ${maxChars} characters.`;
 }
 
+/** Reused helper for resolve Max Chars behavior in src/media-understanding. */
 export function resolveMaxChars(params: {
   capability: MediaUnderstandingCapability;
   entry: MediaUnderstandingModelConfig;
@@ -49,6 +53,7 @@ export function resolveMaxChars(params: {
   return DEFAULT_MAX_CHARS_BY_CAPABILITY[capability];
 }
 
+/** Reused helper for resolve Max Bytes behavior in src/media-understanding. */
 export function resolveMaxBytes(params: {
   capability: MediaUnderstandingCapability;
   entry: MediaUnderstandingModelConfig;
@@ -65,6 +70,7 @@ export function resolveMaxBytes(params: {
   return DEFAULT_MAX_BYTES[params.capability];
 }
 
+/** Reused helper for resolve Scope Decision behavior in src/media-understanding. */
 export function resolveScopeDecision(params: {
   scope?: MediaUnderstandingScopeConfig;
   ctx: MsgContext;
@@ -77,6 +83,7 @@ export function resolveScopeDecision(params: {
   });
 }
 
+/** Reused helper for resolve Model Entries behavior in src/media-understanding. */
 export function resolveModelEntries(params: {
   cfg: OpenClawConfig;
   capability: MediaUnderstandingCapability;
@@ -116,6 +123,7 @@ export function resolveModelEntries(params: {
     .map(({ entry }) => entry);
 }
 
+/** Reused helper for resolve Concurrency behavior in src/media-understanding. */
 export function resolveConcurrency(cfg: OpenClawConfig): number {
   const configured = cfg.tools?.media?.concurrency;
   if (typeof configured === "number" && Number.isFinite(configured) && configured > 0) {
@@ -124,6 +132,7 @@ export function resolveConcurrency(cfg: OpenClawConfig): number {
   return DEFAULT_MEDIA_CONCURRENCY;
 }
 
+/** Reused helper for resolve Entries With Active Fallback behavior in src/media-understanding. */
 export function resolveEntriesWithActiveFallback(params: {
   cfg: OpenClawConfig;
   capability: MediaUnderstandingCapability;

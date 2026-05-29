@@ -1,3 +1,4 @@
+// Tests extensions/browser/src/browser pw session dialogs test behavior.
 import type { Dialog, Page } from "playwright-core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {

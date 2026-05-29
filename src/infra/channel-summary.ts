@@ -1,3 +1,4 @@
+// infra channel summary helpers and runtime behavior.
 import { resolveInspectedChannelAccount } from "../channels/account-inspection.js";
 import { hasConfiguredUnavailableCredentialStatus } from "../channels/account-snapshot-fields.js";
 import {
@@ -13,6 +14,7 @@ import { sanitizeForLog } from "../terminal/ansi.js";
 import { theme } from "../terminal/theme.js";
 import { formatTimeAgo } from "./format-time/format-relative.ts";
 
+/** Shared type for Channel Summary Options in src/infra. */
 export type ChannelSummaryOptions = {
   colorize?: boolean;
   includeAllowFrom?: boolean;
@@ -119,6 +121,7 @@ const buildAccountDetails = (params: {
   return details;
 };
 
+/** Reused helper for build Channel Summary behavior in src/infra. */
 export async function buildChannelSummary(
   cfg?: OpenClawConfig,
   options?: ChannelSummaryOptions,

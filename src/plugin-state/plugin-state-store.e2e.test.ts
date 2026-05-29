@@ -1,3 +1,4 @@
+// Tests plugin-state plugin state store e2e test behavior.
 import { mkdirSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { requireNodeSqlite } from "../infra/node-sqlite.js";

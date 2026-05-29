@@ -1,3 +1,4 @@
+// Tests gateway gateway cli backend live helpers test behavior.
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { testing as cliBackendsTesting } from "../agents/cli-backends.js";
 import { GATEWAY_CLIENT_MODES, GATEWAY_CLIENT_NAMES } from "../utils/message-channel.js";

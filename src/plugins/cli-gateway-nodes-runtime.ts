@@ -1,3 +1,4 @@
+// plugins cli gateway nodes runtime helpers and runtime behavior.
 import { randomUUID } from "node:crypto";
 import {
   GATEWAY_CLIENT_MODES,
@@ -6,6 +7,7 @@ import {
 import { callGateway } from "../gateway/call.js";
 import type { PluginRuntime } from "./runtime/types.js";
 
+/** Reused helper for create Plugin Cli Gateway Nodes Runtime behavior in src/plugins. */
 export function createPluginCliGatewayNodesRuntime(): PluginRuntime["nodes"] {
   return {
     async list(params) {

@@ -1,3 +1,4 @@
+/** Tests config readiness checks before command execution. */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { note } from "../../terminal/note.js";
 import { formatCliCommand } from "../command-format.js";

@@ -1,3 +1,4 @@
+/** Implements plugin list CLI output and JSON serialization. */
 import { getRuntimeConfig } from "../config/config.js";
 import { formatPluginSourceForTable, resolvePluginSourceRoots } from "../plugins/source-display.js";
 import { defaultRuntime, writeRuntimeJson, type RuntimeEnv } from "../runtime.js";
@@ -7,12 +8,14 @@ import { formatCliCommand } from "./command-format.js";
 import { quietPluginJsonLogger } from "./plugins-command-helpers.js";
 import { formatPluginLine } from "./plugins-list-format.js";
 
+/** Shared type for Plugins List Options in src/cli. */
 export type PluginsListOptions = {
   json?: boolean;
   enabled?: boolean;
   verbose?: boolean;
 };
 
+/** Reused helper for run Plugins List Command behavior in src/cli. */
 export async function runPluginsListCommand(
   opts: PluginsListOptions,
   runtime: RuntimeEnv = defaultRuntime,

@@ -1,3 +1,4 @@
+// extensions/feishu/src async helpers and runtime behavior.
 const RACE_TIMEOUT = Symbol("race-timeout");
 const RACE_ABORT = Symbol("race-abort");
 

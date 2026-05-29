@@ -1,3 +1,4 @@
+// gateway/server-methods approval shared helpers and runtime behavior.
 import { ErrorCodes, errorShape } from "../../../packages/gateway-protocol/src/index.js";
 import { hasApprovalTurnSourceRoute } from "../../infra/approval-turn-source.js";
 import type { ExecApprovalDecision } from "../../infra/exec-approvals.js";
@@ -48,6 +49,7 @@ function isPromiseLike<T>(value: T | Promise<T>): value is Promise<T> {
   return typeof value === "object" && value !== null && "then" in value;
 }
 
+/** Reused helper for is Approval Decision behavior in src/gateway/server-methods. */
 export function isApprovalDecision(value: string): value is ExecApprovalDecision {
   return value === "allow-once" || value === "allow-always" || value === "deny";
 }
@@ -82,6 +84,7 @@ function normalizeApprovalIdentity(value: string | null | undefined): string | n
   return normalizeOptionalString(value) ?? null;
 }
 
+/** Reused helper for is Approval Record Visible To Client behavior in src/gateway/server-methods. */
 export function isApprovalRecordVisibleToClient<TPayload>(params: {
   record: ExecApprovalRecord<TPayload>;
   client: GatewayClient | null;
@@ -114,6 +117,7 @@ export function isApprovalRecordVisibleToClient<TPayload>(params: {
   return true;
 }
 
+/** Reused helper for resolve Approval Request Recipient Conn Ids behavior in src/gateway/server-methods. */
 export function resolveApprovalRequestRecipientConnIds<TPayload>(params: {
   context: GatewayRequestContext;
   record: ExecApprovalRecord<TPayload>;
@@ -132,6 +136,7 @@ export function resolveApprovalRequestRecipientConnIds<TPayload>(params: {
   );
 }
 
+/** Reused helper for resolve Pending Approval Record behavior in src/gateway/server-methods. */
 export function resolvePendingApprovalRecord<TPayload>(params: {
   manager: ExecApprovalManager<TPayload>;
   inputId: string;
@@ -209,6 +214,7 @@ function resolveResolvedApprovalRecord<TPayload>(params: {
   return { ok: true, approvalId: resolvedId.id, snapshot };
 }
 
+/** Reused helper for respond Pending Approval Lookup Error behavior in src/gateway/server-methods. */
 export function respondPendingApprovalLookupError(params: {
   respond: RespondFn;
   response: PendingApprovalLookupError;
@@ -220,6 +226,7 @@ export function respondPendingApprovalLookupError(params: {
   params.respond(false, undefined, errorShape(params.response.code, params.response.message));
 }
 
+/** Reused helper for handle Approval Wait Decision behavior in src/gateway/server-methods. */
 export async function handleApprovalWaitDecision<TPayload>(params: {
   manager: ExecApprovalManager<TPayload>;
   inputId: unknown;
@@ -268,6 +275,7 @@ export async function handleApprovalWaitDecision<TPayload>(params: {
   );
 }
 
+/** Reused helper for handle Pending Approval Request behavior in src/gateway/server-methods. */
 export async function handlePendingApprovalRequest<
   TPayload extends ApprovalTurnSourceFields,
 >(params: {
@@ -386,6 +394,7 @@ export async function handlePendingApprovalRequest<
   );
 }
 
+/** Reused helper for handle Approval Resolve behavior in src/gateway/server-methods. */
 export async function handleApprovalResolve<TPayload, TResolvedEvent extends object>(params: {
   manager: ExecApprovalManager<TPayload>;
   inputId: string;

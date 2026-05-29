@@ -1,3 +1,4 @@
+/** Doctor checks and repairs for gateway daemon service state. */
 import { formatCliCommand } from "../cli/command-format.js";
 import { resolveGatewayPort } from "../config/config.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
@@ -147,6 +148,7 @@ async function maybeReportEstablishedGatewayClients(params: {
   }
 }
 
+/** Reused helper for maybe Repair Gateway Daemon behavior in src/commands. */
 export async function maybeRepairGatewayDaemon(params: {
   cfg: OpenClawConfig;
   runtime: RuntimeEnv;

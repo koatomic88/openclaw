@@ -1,8 +1,10 @@
+/** Normalizes compaction reason strings for reporting and metrics. */
 import { normalizeLowercaseStringOrEmpty } from "../../shared/string-coerce.js";
 import { sanitizeForLog } from "../../terminal/ansi.js";
 
 const MAX_COMPACTION_REASON_DETAIL_CHARS = 100;
 
+/** Reused constant for DEFERRED CONTEXT ENGINE COMPACTION REASON behavior in src/agents/embedded-agent-runner. */
 export const DEFERRED_CONTEXT_ENGINE_COMPACTION_REASON =
   "deferred to background context-engine maintenance";
 
@@ -11,6 +13,7 @@ function isGenericCompactionCancelledReason(reason: string): boolean {
   return normalized === "compaction cancelled" || normalized === "error: compaction cancelled";
 }
 
+/** Reused helper for resolve Compaction Failure Reason behavior in src/agents/embedded-agent-runner. */
 export function resolveCompactionFailureReason(params: {
   reason: string;
   safeguardCancelReason?: string | null;
@@ -21,6 +24,7 @@ export function resolveCompactionFailureReason(params: {
   return params.reason;
 }
 
+/** Reused helper for classify Compaction Reason behavior in src/agents/embedded-agent-runner. */
 export function classifyCompactionReason(reason?: string): string {
   const text = normalizeLowercaseStringOrEmpty(reason);
   if (!text) {
@@ -71,6 +75,7 @@ export function classifyCompactionReason(reason?: string): string {
   return "unknown";
 }
 
+/** Reused helper for format Unknown Compaction Reason Detail behavior in src/agents/embedded-agent-runner. */
 export function formatUnknownCompactionReasonDetail(reason?: string): string | undefined {
   const sanitized = sanitizeForLog((reason ?? "").replace(/\s+/g, " "))
     .trim()

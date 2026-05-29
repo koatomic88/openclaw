@@ -1,3 +1,4 @@
+/** Main CLI entrypoint orchestration for profile setup, respawn, and program run. */
 import { existsSync } from "node:fs";
 import path from "node:path";
 import process from "node:process";
@@ -43,6 +44,7 @@ import {
 } from "./run-main-policy.js";
 import { normalizeWindowsArgv } from "./windows-argv.js";
 
+/** Re-exported API for src/cli. */
 export {
   resolvePrecomputedSubcommandHelpFastPath,
   rewriteUpdateFlagArgv,
@@ -101,6 +103,7 @@ function createGatewayCliMainStartupTrace(argv: string[]) {
   };
 }
 
+/** Reused helper for is Gateway Run Fast Path Argv behavior in src/cli. */
 export function isGatewayRunFastPathArgv(argv: string[]): boolean {
   const invocation = resolveCliArgvInvocation(argv);
   if (invocation.hasHelpOrVersion) {
@@ -246,6 +249,7 @@ function isUnconfiguredConfigSnapshot(
   );
 }
 
+/** Reused helper for should Start Onboarding For Fresh Install behavior in src/cli. */
 export async function shouldStartOnboardingForFreshInstall(argv: string[]): Promise<boolean> {
   if (!shouldStartCrestodianForBareRoot(argv)) {
     return false;
@@ -267,6 +271,7 @@ function pauseNonTtyStdinForCliExit(): void {
   }
 }
 
+/** Reused helper for resolve Missing Plugin Command Message behavior in src/cli. */
 export function resolveMissingPluginCommandMessage(
   pluginId: string,
   config?: OpenClawConfig,
@@ -457,6 +462,7 @@ async function bootstrapCliProxyCaptureAndDispatcher(
   maybeWarnAboutDebugProxyCoverage();
 }
 
+/** Reused helper for run Cli behavior in src/cli. */
 export async function runCli(argv: string[] = process.argv) {
   const originalArgv = normalizeWindowsArgv(argv);
   const startupTrace = createGatewayCliMainStartupTrace(originalArgv);
@@ -903,6 +909,7 @@ export async function runCli(argv: string[] = process.argv) {
   }
 }
 
+/** Reused helper for is Cli Main Module behavior in src/cli. */
 export function isCliMainModule(): boolean {
   return isMainModule({ currentFile: fileURLToPath(import.meta.url) });
 }

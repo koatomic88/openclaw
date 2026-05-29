@@ -1,3 +1,4 @@
+// extensions/google-meet/src config helpers and runtime behavior.
 import {
   REALTIME_VOICE_AGENT_CONSULT_TOOL_NAME,
   resolveRealtimeVoiceAgentConsultToolPolicy,

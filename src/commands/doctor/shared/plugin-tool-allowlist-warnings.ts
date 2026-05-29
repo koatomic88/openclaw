@@ -1,3 +1,4 @@
+/** Collects doctor warnings for plugin tools excluded by allowlist config. */
 import { sanitizeServerName, TOOL_NAME_SEPARATOR } from "../../../agents/agent-bundle-mcp-names.js";
 import { DEFAULT_MODEL, DEFAULT_PROVIDER } from "../../../agents/defaults.js";
 import { compileGlobPatterns, matchesAnyGlobPattern } from "../../../agents/glob-pattern.js";
@@ -567,6 +568,7 @@ function addIssue(issues: Map<string, Set<string>>, key: string, sourceLabel: st
   issues.set(key, sources);
 }
 
+/** Reused helper for collect Plugin Tool Allowlist Warnings behavior in src/commands/doctor. */
 export function collectPluginToolAllowlistWarnings(params: {
   cfg: OpenClawConfig;
   env?: NodeJS.ProcessEnv;

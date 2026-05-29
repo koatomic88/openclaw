@@ -1,3 +1,4 @@
+// Tests extensions/codex/src/app-server run attempt turn watches test behavior.
 import path from "node:path";
 import {
   embeddedAgentLog,

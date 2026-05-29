@@ -17,6 +17,7 @@ import type {
 } from "./types.js";
 import { validateToolArguments } from "./validation.js";
 
+/** Public type describing Agent Event Sink for packages/agent-core. */
 export type AgentEventSink = (event: AgentEvent) => Promise<void> | void;
 
 const EMPTY_USAGE = {
@@ -52,11 +53,13 @@ export function agentLoop(
     signal,
     streamFn,
     runtime,
-  ).then((messages) => {
-    stream.end(messages);
-  }).catch((error) => {
-    pushLoopFailure(stream, config, error, signal?.aborted === true);
-  });
+  )
+    .then((messages) => {
+      stream.end(messages);
+    })
+    .catch((error) => {
+      pushLoopFailure(stream, config, error, signal?.aborted === true);
+    });
 
   return stream;
 }
@@ -95,15 +98,18 @@ export function agentLoopContinue(
     signal,
     streamFn,
     runtime,
-  ).then((messages) => {
-    stream.end(messages);
-  }).catch((error) => {
-    pushLoopFailure(stream, config, error, signal?.aborted === true);
-  });
+  )
+    .then((messages) => {
+      stream.end(messages);
+    })
+    .catch((error) => {
+      pushLoopFailure(stream, config, error, signal?.aborted === true);
+    });
 
   return stream;
 }
 
+/** Public helper for run Agent Loop behavior in packages/agent-core. */
 export async function runAgentLoop(
   prompts: AgentMessage[],
   context: AgentContext,
@@ -130,6 +136,7 @@ export async function runAgentLoop(
   return newMessages;
 }
 
+/** Public helper for run Agent Loop Continue behavior in packages/agent-core. */
 export async function runAgentLoopContinue(
   context: AgentContext,
   config: AgentLoopConfig,

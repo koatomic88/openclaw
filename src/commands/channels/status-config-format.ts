@@ -1,3 +1,4 @@
+/** Formats config-only channel status lines. */
 import {
   hasConfiguredUnavailableCredentialStatus,
   hasResolvedCredentialValue,
@@ -31,6 +32,7 @@ type ChannelStatusPluginLabel = {
   meta: { label?: string };
 };
 
+/** Reused helper for format Config Channels Status Lines behavior in src/commands/channels. */
 export async function formatConfigChannelsStatusLines(
   cfg: OpenClawConfig,
   meta: { path?: string; mode?: "local" | "remote" },

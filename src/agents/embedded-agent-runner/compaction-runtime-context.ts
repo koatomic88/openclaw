@@ -1,3 +1,4 @@
+/** Builds runtime context for embedded-agent compaction targets. */
 import type { SourceReplyDeliveryMode } from "../../auto-reply/get-reply-options.types.js";
 import type { ReasoningLevel, ThinkLevel } from "../../auto-reply/thinking.js";
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
@@ -9,6 +10,7 @@ import {
 import type { ExecElevatedDefaults } from "../bash-tools.js";
 import { resolveSelectedOpenAIRuntimeProvider } from "../openai-codex-routing.js";
 
+/** Shared type for Embedded Compaction Runtime Context in src/agents/embedded-agent-runner. */
 export type EmbeddedCompactionRuntimeContext = {
   sessionKey?: string;
   messageChannel?: string;
@@ -108,6 +110,7 @@ export function resolveEmbeddedCompactionTarget(params: {
   };
 }
 
+/** Reused helper for build Embedded Compaction Runtime Context behavior in src/agents/embedded-agent-runner. */
 export function buildEmbeddedCompactionRuntimeContext(params: {
   sessionKey?: string | null;
   messageChannel?: string | null;

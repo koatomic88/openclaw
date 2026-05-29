@@ -1,3 +1,4 @@
+// infra heartbeat runner helpers and runtime behavior.
 import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -145,6 +146,7 @@ import {
   type SystemEvent,
 } from "./system-events.js";
 
+/** Shared type for Heartbeat Deps in src/infra. */
 export type HeartbeatDeps = OutboundSendDeps &
   ChannelHeartbeatDeps & {
     getReplyFromConfig?: typeof import("./heartbeat-runner.runtime.js").getReplyFromConfig;
@@ -244,7 +246,9 @@ function resolveHeartbeatChannelPlugin(channel: string): ChannelPlugin | undefin
   return activePlugin ?? getChannelPlugin(channel as ChannelId);
 }
 
+/** Re-exported API for src/infra, starting with are Heartbeats Enabled. */
 export { areHeartbeatsEnabled, setHeartbeatsEnabled };
+/** Re-exported API for src/infra. */
 export {
   isHeartbeatEnabledForAgent,
   resolveHeartbeatIntervalMs,
@@ -258,6 +262,7 @@ type HeartbeatAgent = {
   heartbeat?: HeartbeatConfig;
 };
 
+/** Re-exported API for src/infra, starting with is Cron System Event. */
 export { isCronSystemEvent };
 
 function canHeartbeatDeliverCommitments(heartbeat?: HeartbeatConfig): boolean {
@@ -310,6 +315,7 @@ function activeHoursConfigMatch(a?: ActiveHoursSchedule, b?: ActiveHoursSchedule
   return a.start === b.start && a.end === b.end && a.timezone === b.timezone;
 }
 
+/** Shared type for Heartbeat Runner in src/infra. */
 export type HeartbeatRunner = {
   stop: () => void;
   updateConfig: (cfg: OpenClawConfig) => void;
@@ -404,6 +410,7 @@ function resolveHeartbeatPromptRaw(cfg: OpenClawConfig, heartbeat?: HeartbeatCon
   return heartbeat?.prompt ?? cfg.agents?.defaults?.heartbeat?.prompt;
 }
 
+/** Reused helper for resolve Heartbeat Prompt behavior in src/infra. */
 export function resolveHeartbeatPrompt(cfg: OpenClawConfig, heartbeat?: HeartbeatConfig) {
   return resolveHeartbeatPromptText(resolveHeartbeatPromptRaw(cfg, heartbeat));
 }
@@ -1269,6 +1276,7 @@ function selectSystemEventsConsumedByHeartbeat(params: {
   return preflight.pendingEventEntries;
 }
 
+/** Reused helper for run Heartbeat Once behavior in src/infra. */
 export async function runHeartbeatOnce(opts: {
   cfg?: OpenClawConfig;
   agentId?: string;
@@ -2089,6 +2097,7 @@ export async function runHeartbeatOnce(opts: {
   }
 }
 
+/** Reused helper for start Heartbeat Runner behavior in src/infra. */
 export function startHeartbeatRunner(opts: {
   cfg?: OpenClawConfig;
   runtime?: RuntimeEnv;

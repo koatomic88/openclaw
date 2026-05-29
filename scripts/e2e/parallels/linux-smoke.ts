@@ -1,4 +1,5 @@
 #!/usr/bin/env -S pnpm tsx
+// scripts/e2e/parallels linux smoke helpers and runtime behavior.
 import { mkdir, readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { posixAgentWorkspaceScript } from "./agent-workspace.ts";

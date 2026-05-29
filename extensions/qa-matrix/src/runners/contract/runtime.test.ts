@@ -1,3 +1,4 @@
+// Tests extensions/qa-matrix/src/runners/contract runtime test behavior.
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
 import { renderQaMarkdownReport } from "openclaw/plugin-sdk/qa-runtime";
 import { afterEach, describe, expect, it, vi } from "vitest";

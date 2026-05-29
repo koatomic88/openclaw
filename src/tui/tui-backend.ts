@@ -1,3 +1,4 @@
+// tui tui backend helpers and runtime behavior.
 import type {
   CommandEntry,
   CommandsListParams,
@@ -7,6 +8,7 @@ import type {
 } from "../../packages/gateway-protocol/src/index.js";
 import type { ResponseUsageMode, SessionInfo, SessionScope } from "./tui-types.js";
 
+/** Shared type for Chat Send Options in src/tui. */
 export type ChatSendOptions = {
   sessionKey: string;
   sessionId?: string | null;
@@ -17,12 +19,14 @@ export type ChatSendOptions = {
   runId?: string;
 };
 
+/** Shared type for Tui Event in src/tui. */
 export type TuiEvent = {
   event: string;
   payload?: unknown;
   seq?: number;
 };
 
+/** Shared type for Tui Session List in src/tui. */
 export type TuiSessionList = {
   ts: number;
   path: string;
@@ -79,6 +83,7 @@ export type TuiSessionList = {
   >;
 };
 
+/** Shared type for Tui Agents List in src/tui. */
 export type TuiAgentsList = {
   defaultId: string;
   mainKey: string;
@@ -89,6 +94,7 @@ export type TuiAgentsList = {
   }>;
 };
 
+/** Shared type for Tui Model Choice in src/tui. */
 export type TuiModelChoice = {
   id: string;
   name: string;
@@ -97,6 +103,7 @@ export type TuiModelChoice = {
   reasoning?: boolean;
 };
 
+/** Shared type for Tui Backend in src/tui. */
 export type TuiBackend = {
   connection: {
     url: string;

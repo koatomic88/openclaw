@@ -1,3 +1,4 @@
+/** Registers nodes pairing approval and listing commands. */
 import type { Command } from "commander";
 import type { OperatorScope } from "../../gateway/method-scopes.js";
 import { resolveNodePairApprovalScopes } from "../../infra/node-pairing-authz.js";
@@ -63,6 +64,7 @@ async function resolveApproveScopesForRequest(
   }
 }
 
+/** Reused helper for register Nodes Pairing Commands behavior in src/cli/nodes-cli. */
 export function registerNodesPairingCommands(nodes: Command) {
   nodesCallOpts(
     nodes

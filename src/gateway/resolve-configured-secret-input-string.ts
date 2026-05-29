@@ -1,9 +1,11 @@
+// gateway resolve configured secret input string helpers and runtime behavior.
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { resolveSecretInputRef } from "../config/types.secrets.js";
 import { secretRefKey } from "../secrets/ref-contract.js";
 import { resolveSecretRefValues } from "../secrets/resolve.js";
 import { normalizeOptionalString } from "../shared/string-coerce.js";
 
+/** Shared type for Secret Input Unresolved Reason Style in src/gateway. */
 export type SecretInputUnresolvedReasonStyle = "generic" | "detailed"; // pragma: allowlist secret
 type ConfiguredSecretInputSource =
   | "config"
@@ -28,6 +30,7 @@ function buildUnresolvedReason(params: {
   return `${params.path} SecretRef is unresolved (${params.refLabel}).`;
 }
 
+/** Reused helper for resolve Configured Secret Input String behavior in src/gateway. */
 export async function resolveConfiguredSecretInputString(params: {
   config: OpenClawConfig;
   env: NodeJS.ProcessEnv;
@@ -85,6 +88,7 @@ export async function resolveConfiguredSecretInputString(params: {
   }
 }
 
+/** Reused helper for resolve Configured Secret Input With Fallback behavior in src/gateway. */
 export async function resolveConfiguredSecretInputWithFallback(params: {
   config: OpenClawConfig;
   env: NodeJS.ProcessEnv;
@@ -152,6 +156,7 @@ export async function resolveConfiguredSecretInputWithFallback(params: {
   };
 }
 
+/** Reused helper for resolve Required Configured Secret Ref Input String behavior in src/gateway. */
 export async function resolveRequiredConfiguredSecretRefInputString(params: {
   config: OpenClawConfig;
   env: NodeJS.ProcessEnv;

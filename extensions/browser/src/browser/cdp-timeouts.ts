@@ -1,3 +1,4 @@
+// extensions/browser/src/browser cdp timeouts helpers and runtime behavior.
 import { DEFAULT_BROWSER_LOCAL_LAUNCH_TIMEOUT_MS } from "./constants.js";
 
 export const CDP_HTTP_REQUEST_TIMEOUT_MS = 1500;

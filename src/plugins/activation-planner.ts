@@ -1,3 +1,4 @@
+// plugins activation planner helpers and runtime behavior.
 import { normalizeProviderId } from "../agents/provider-id.js";
 import type { OpenClawConfig } from "../config/types.js";
 import { normalizeOptionalLowercaseString } from "../shared/string-coerce.js";
@@ -11,6 +12,7 @@ import type { PluginOrigin } from "./plugin-origin.types.js";
 import { loadPluginManifestRegistryForPluginRegistry } from "./plugin-registry-contributions.js";
 import { createPluginIdScopeSet, normalizePluginIdScope } from "./plugin-scope.js";
 
+/** Shared type for Plugin Activation Planner Trigger in src/plugins. */
 export type PluginActivationPlannerTrigger =
   | { kind: "command"; command: string }
   | { kind: "provider"; provider: string }
@@ -19,6 +21,7 @@ export type PluginActivationPlannerTrigger =
   | { kind: "route"; route: string }
   | { kind: "capability"; capability: PluginManifestActivationCapability };
 
+/** Shared type for Plugin Activation Planner Hint Reason in src/plugins. */
 export type PluginActivationPlannerHintReason =
   | "activation-agent-harness-hint"
   | "activation-capability-hint"
@@ -27,6 +30,7 @@ export type PluginActivationPlannerHintReason =
   | "activation-provider-hint"
   | "activation-route-hint";
 
+/** Shared type for Plugin Activation Planner Manifest Reason in src/plugins. */
 export type PluginActivationPlannerManifestReason =
   | "manifest-channel-owner"
   | "manifest-command-alias"
@@ -35,16 +39,19 @@ export type PluginActivationPlannerManifestReason =
   | "manifest-setup-provider-owner"
   | "manifest-tool-contract";
 
+/** Shared type for Plugin Activation Planner Reason in src/plugins. */
 export type PluginActivationPlannerReason =
   | PluginActivationPlannerHintReason
   | PluginActivationPlannerManifestReason;
 
+/** Shared type for Plugin Activation Plan Entry in src/plugins. */
 export type PluginActivationPlanEntry = {
   pluginId: string;
   origin: PluginOrigin;
   reasons: readonly PluginActivationPlannerReason[];
 };
 
+/** Shared type for Plugin Activation Plan in src/plugins. */
 export type PluginActivationPlan = {
   trigger: PluginActivationPlannerTrigger;
   pluginIds: readonly string[];
@@ -63,6 +70,7 @@ type ResolveManifestActivationPlanParams = {
   allowRestrictiveAllowlistBypass?: boolean;
 };
 
+/** Reused helper for resolve Manifest Activation Plan behavior in src/plugins. */
 export function resolveManifestActivationPlan(
   params: ResolveManifestActivationPlanParams,
 ): PluginActivationPlan {
@@ -115,6 +123,7 @@ export function resolveManifestActivationPlan(
   };
 }
 
+/** Reused helper for resolve Manifest Activation Plugin Ids behavior in src/plugins. */
 export function resolveManifestActivationPluginIds(
   params: ResolveManifestActivationPlanParams,
 ): string[] {

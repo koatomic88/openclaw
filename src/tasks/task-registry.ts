@@ -1,3 +1,4 @@
+// tasks task registry helpers and runtime behavior.
 import crypto from "node:crypto";
 import { createRequire } from "node:module";
 import { shouldRouteCompletionThroughRequesterSession } from "../auto-reply/reply/completion-delivery-policy.js";
@@ -96,6 +97,7 @@ type TaskDeliveryOwner = {
   flowId?: string;
 };
 
+/** Shared type for Parent Flow Link Error Code in src/tasks. */
 export type ParentFlowLinkErrorCode =
   | "scope_kind_not_session"
   | "parent_flow_not_found"
@@ -103,6 +105,7 @@ export type ParentFlowLinkErrorCode =
   | "cancel_requested"
   | "terminal";
 
+/** Reused class for Parent Flow Link Error behavior in src/tasks. */
 export class ParentFlowLinkError extends Error {
   constructor(
     public readonly code: ParentFlowLinkErrorCode,
@@ -117,6 +120,7 @@ export class ParentFlowLinkError extends Error {
   }
 }
 
+/** Reused helper for is Parent Flow Link Error behavior in src/tasks. */
 export function isParentFlowLinkError(error: unknown): error is ParentFlowLinkError {
   return error instanceof ParentFlowLinkError;
 }
@@ -966,11 +970,13 @@ function restoreTaskRegistryOnce() {
   }
 }
 
+/** Reused helper for ensure Task Registry Ready behavior in src/tasks. */
 export function ensureTaskRegistryReady() {
   restoreTaskRegistryOnce();
   ensureListener();
 }
 
+/** Reused helper for reload Task Registry From Store behavior in src/tasks. */
 export function reloadTaskRegistryFromStore(): void {
   clearTaskRegistryMemory();
   restoreAttempted = false;
@@ -1118,6 +1124,7 @@ function queueBlockedTaskFollowup(task: TaskRecord) {
   return true;
 }
 
+/** Reused helper for maybe Deliver Task Terminal Update behavior in src/tasks. */
 export async function maybeDeliverTaskTerminalUpdate(taskId: string): Promise<TaskRecord | null> {
   ensureTaskRegistryReady();
   const current = tasks.get(taskId);
@@ -1236,6 +1243,7 @@ export async function maybeDeliverTaskTerminalUpdate(taskId: string): Promise<Ta
   }
 }
 
+/** Reused helper for maybe Deliver Task State Change Update behavior in src/tasks. */
 export async function maybeDeliverTaskStateChangeUpdate(
   taskId: string,
   latestEvent?: TaskEventRecord,
@@ -1312,6 +1320,7 @@ export async function maybeDeliverTaskStateChangeUpdate(
   }
 }
 
+/** Reused helper for set Task Progress By Id behavior in src/tasks. */
 export function setTaskProgressById(params: {
   taskId: string;
   progressSummary?: string | null;
@@ -1328,6 +1337,7 @@ export function setTaskProgressById(params: {
   return updateTask(params.taskId, patch);
 }
 
+/** Reused helper for set Task Timing By Id behavior in src/tasks. */
 export function setTaskTimingById(params: {
   taskId: string;
   startedAt?: number;
@@ -1348,6 +1358,7 @@ export function setTaskTimingById(params: {
   return updateTask(params.taskId, patch);
 }
 
+/** Reused helper for set Task Cleanup After By Id behavior in src/tasks. */
 export function setTaskCleanupAfterById(params: {
   taskId: string;
   cleanupAfter: number;
@@ -1358,6 +1369,7 @@ export function setTaskCleanupAfterById(params: {
   });
 }
 
+/** Reused helper for mark Task Terminal By Id behavior in src/tasks. */
 export function markTaskTerminalById(params: {
   taskId: string;
   status: Extract<TaskStatus, "succeeded" | "failed" | "timed_out" | "cancelled">;
@@ -1387,6 +1399,7 @@ export function markTaskTerminalById(params: {
   });
 }
 
+/** Reused helper for mark Task Lost By Id behavior in src/tasks. */
 export function markTaskLostById(params: {
   taskId: string;
   endedAt: number;
@@ -1489,6 +1502,7 @@ function ensureListener() {
   });
 }
 
+/** Reused helper for create Task Record behavior in src/tasks. */
 export function createTaskRecord(params: {
   runtime: TaskRuntime;
   taskKind?: string;
@@ -1741,6 +1755,7 @@ function updateTaskDeliveryByRunId(params: {
   });
 }
 
+/** Reused helper for mark Task Running By Run Id behavior in src/tasks. */
 export function markTaskRunningByRunId(params: {
   runId: string;
   runtime?: TaskRuntime;
@@ -1762,6 +1777,7 @@ export function markTaskRunningByRunId(params: {
   });
 }
 
+/** Reused helper for record Task Progress By Run Id behavior in src/tasks. */
 export function recordTaskProgressByRunId(params: {
   runId: string;
   runtime?: TaskRuntime;
@@ -1780,6 +1796,7 @@ export function recordTaskProgressByRunId(params: {
   });
 }
 
+/** Reused helper for mark Task Terminal By Run Id behavior in src/tasks. */
 export function markTaskTerminalByRunId(params: {
   runId: string;
   runtime?: TaskRuntime;
@@ -1796,6 +1813,7 @@ export function markTaskTerminalByRunId(params: {
   return finalizeTaskRunByRunId(params);
 }
 
+/** Reused helper for finalize Task Run By Run Id behavior in src/tasks. */
 export function finalizeTaskRunByRunId(params: {
   runId: string;
   runtime?: TaskRuntime;
@@ -1824,6 +1842,7 @@ export function finalizeTaskRunByRunId(params: {
   });
 }
 
+/** Reused helper for set Task Run Delivery Status By Run Id behavior in src/tasks. */
 export function setTaskRunDeliveryStatusByRunId(params: {
   runId: string;
   runtime?: TaskRuntime;
@@ -1834,6 +1853,7 @@ export function setTaskRunDeliveryStatusByRunId(params: {
   return updateTaskDeliveryByRunId(params);
 }
 
+/** Reused helper for update Task Notify Policy By Id behavior in src/tasks. */
 export function updateTaskNotifyPolicyById(params: {
   taskId: string;
   notifyPolicy: TaskNotifyPolicy;
@@ -1845,6 +1865,7 @@ export function updateTaskNotifyPolicyById(params: {
   });
 }
 
+/** Reused helper for link Task To Flow By Id behavior in src/tasks. */
 export function linkTaskToFlowById(params: { taskId: string; flowId: string }): TaskRecord | null {
   ensureTaskRegistryReady();
   const flowId = params.flowId.trim();
@@ -1868,6 +1889,7 @@ export function linkTaskToFlowById(params: { taskId: string; flowId: string }): 
   });
 }
 
+/** Reused helper for cancel Task By Id behavior in src/tasks. */
 export async function cancelTaskById(params: {
   cfg: OpenClawConfig;
   taskId: string;
@@ -1963,6 +1985,7 @@ export async function cancelTaskById(params: {
   }
 }
 
+/** Reused helper for list Task Records behavior in src/tasks. */
 export function listTaskRecords(): TaskRecord[] {
   ensureTaskRegistryReady();
   return [...tasks.values()]
@@ -1971,6 +1994,7 @@ export function listTaskRecords(): TaskRecord[] {
     .map(({ insertionIndex: _, ...task }) => task);
 }
 
+/** Reused helper for has Active Task For Child Session Key behavior in src/tasks. */
 export function hasActiveTaskForChildSessionKey(params: {
   sessionKey: string;
   excludeTaskId?: string;
@@ -2000,11 +2024,13 @@ export function hasActiveTaskForChildSessionKey(params: {
   return false;
 }
 
+/** Reused helper for get Task Registry Summary behavior in src/tasks. */
 export function getTaskRegistrySummary(): TaskRegistrySummary {
   ensureTaskRegistryReady();
   return summarizeTaskRecords(tasks.values());
 }
 
+/** Reused helper for get Task Registry Snapshot behavior in src/tasks. */
 export function getTaskRegistrySnapshot(): TaskRegistrySnapshot {
   return {
     tasks: listTaskRecords(),
@@ -2012,12 +2038,14 @@ export function getTaskRegistrySnapshot(): TaskRegistrySnapshot {
   };
 }
 
+/** Reused helper for get Task By Id behavior in src/tasks. */
 export function getTaskById(taskId: string): TaskRecord | undefined {
   ensureTaskRegistryReady();
   const task = tasks.get(taskId.trim());
   return task ? cloneTaskRecord(task) : undefined;
 }
 
+/** Reused helper for find Task By Run Id behavior in src/tasks. */
 export function findTaskByRunId(runId: string): TaskRecord | undefined {
   ensureTaskRegistryReady();
   const task = pickPreferredRunIdTask(getTasksByRunId(runId));
@@ -2045,11 +2073,13 @@ function listTasksFromIndex(index: Map<string, Set<string>>, key: string): TaskR
     .map(({ insertionIndex: _, ...task }) => task);
 }
 
+/** Reused helper for find Latest Task For Session Key behavior in src/tasks. */
 export function findLatestTaskForSessionKey(sessionKey: string): TaskRecord | undefined {
   const task = listTasksForSessionKey(sessionKey)[0];
   return task ? cloneTaskRecord(task) : undefined;
 }
 
+/** Reused helper for list Tasks For Session Key behavior in src/tasks. */
 export function listTasksForSessionKey(sessionKey: string): TaskRecord[] {
   ensureTaskRegistryReady();
   const key = normalizeOptionalString(sessionKey);
@@ -2059,6 +2089,7 @@ export function listTasksForSessionKey(sessionKey: string): TaskRecord[] {
   return listTasksFromIndex(taskIdsByRelatedSessionKey, key);
 }
 
+/** Reused helper for list Tasks For Agent Id behavior in src/tasks. */
 export function listTasksForAgentId(agentId: string): TaskRecord[] {
   ensureTaskRegistryReady();
   const lookup = agentId.trim();
@@ -2070,16 +2101,19 @@ export function listTasksForAgentId(agentId: string): TaskRecord[] {
     .toSorted(compareTasksNewestFirst);
 }
 
+/** Reused helper for find Latest Task For Owner Key behavior in src/tasks. */
 export function findLatestTaskForOwnerKey(ownerKey: string): TaskRecord | undefined {
   const task = listTasksForOwnerKey(ownerKey)[0];
   return task ? cloneTaskRecord(task) : undefined;
 }
 
+/** Reused helper for find Latest Task For Flow Id behavior in src/tasks. */
 export function findLatestTaskForFlowId(flowId: string): TaskRecord | undefined {
   const task = listTasksForFlowId(flowId)[0];
   return task ? cloneTaskRecord(task) : undefined;
 }
 
+/** Reused helper for list Tasks For Owner Key behavior in src/tasks. */
 export function listTasksForOwnerKey(ownerKey: string): TaskRecord[] {
   ensureTaskRegistryReady();
   const key = normalizeOptionalString(ownerKey);
@@ -2089,6 +2123,7 @@ export function listTasksForOwnerKey(ownerKey: string): TaskRecord[] {
   return listTasksFromIndex(taskIdsByOwnerKey, key);
 }
 
+/** Reused helper for list Fresh Tasks For Owner Key behavior in src/tasks. */
 export function listFreshTasksForOwnerKey(ownerKey: string): TaskRecord[] {
   ensureTaskRegistryReady();
   const key = normalizeOptionalString(ownerKey);
@@ -2117,6 +2152,7 @@ export function listFreshTasksForOwnerKey(ownerKey: string): TaskRecord[] {
   return listTasksFromIndex(taskIdsByOwnerKey, key);
 }
 
+/** Reused helper for list Tasks For Flow Id behavior in src/tasks. */
 export function listTasksForFlowId(flowId: string): TaskRecord[] {
   ensureTaskRegistryReady();
   const key = flowId.trim();
@@ -2126,11 +2162,13 @@ export function listTasksForFlowId(flowId: string): TaskRecord[] {
   return listTasksFromIndex(taskIdsByParentFlowId, key);
 }
 
+/** Reused helper for find Latest Task For Related Session Key behavior in src/tasks. */
 export function findLatestTaskForRelatedSessionKey(sessionKey: string): TaskRecord | undefined {
   const task = listTasksForRelatedSessionKey(sessionKey)[0];
   return task ? cloneTaskRecord(task) : undefined;
 }
 
+/** Reused helper for list Tasks For Related Session Key behavior in src/tasks. */
 export function listTasksForRelatedSessionKey(sessionKey: string): TaskRecord[] {
   ensureTaskRegistryReady();
   const key = normalizeOptionalString(sessionKey);
@@ -2140,6 +2178,7 @@ export function listTasksForRelatedSessionKey(sessionKey: string): TaskRecord[] 
   return listTasksFromIndex(taskIdsByRelatedSessionKey, key);
 }
 
+/** Reused helper for resolve Task For Lookup Token behavior in src/tasks. */
 export function resolveTaskForLookupToken(token: string): TaskRecord | undefined {
   const lookup = token.trim();
   if (!lookup) {
@@ -2150,6 +2189,7 @@ export function resolveTaskForLookupToken(token: string): TaskRecord | undefined
   );
 }
 
+/** Reused helper for delete Task Record By Id behavior in src/tasks. */
 export function deleteTaskRecordById(taskId: string): boolean {
   ensureTaskRegistryReady();
   const current = tasks.get(taskId);
@@ -2172,6 +2212,7 @@ export function deleteTaskRecordById(taskId: string): boolean {
   return true;
 }
 
+/** Reused helper for reset Task Registry For Tests behavior in src/tasks. */
 export function resetTaskRegistryForTests(opts?: { persist?: boolean }) {
   clearTaskRegistryMemory();
   restoreAttempted = false;
@@ -2191,6 +2232,7 @@ export function resetTaskRegistryForTests(opts?: { persist?: boolean }) {
   getTaskRegistryStore().close?.();
 }
 
+/** Reused helper for reset Task Registry Delivery Runtime For Tests behavior in src/tasks. */
 export function resetTaskRegistryDeliveryRuntimeForTests() {
   (globalThis as TaskRegistryGlobalWithRuntimeOverrides)[
     TASK_REGISTRY_DELIVERY_RUNTIME_OVERRIDE_KEY
@@ -2198,6 +2240,7 @@ export function resetTaskRegistryDeliveryRuntimeForTests() {
   deliveryRuntimePromise = null;
 }
 
+/** Reused helper for set Task Registry Delivery Runtime For Tests behavior in src/tasks. */
 export function setTaskRegistryDeliveryRuntimeForTests(runtime: TaskRegistryDeliveryRuntime): void {
   (globalThis as TaskRegistryGlobalWithRuntimeOverrides)[
     TASK_REGISTRY_DELIVERY_RUNTIME_OVERRIDE_KEY
@@ -2205,6 +2248,7 @@ export function setTaskRegistryDeliveryRuntimeForTests(runtime: TaskRegistryDeli
   deliveryRuntimePromise = null;
 }
 
+/** Reused helper for reset Task Registry Control Runtime For Tests behavior in src/tasks. */
 export function resetTaskRegistryControlRuntimeForTests() {
   (globalThis as TaskRegistryGlobalWithRuntimeOverrides)[
     TASK_REGISTRY_CONTROL_RUNTIME_OVERRIDE_KEY
@@ -2212,6 +2256,7 @@ export function resetTaskRegistryControlRuntimeForTests() {
   controlRuntimePromise = null;
 }
 
+/** Reused helper for set Task Registry Control Runtime For Tests behavior in src/tasks. */
 export function setTaskRegistryControlRuntimeForTests(runtime: TaskRegistryControlRuntime): void {
   (globalThis as TaskRegistryGlobalWithRuntimeOverrides)[
     TASK_REGISTRY_CONTROL_RUNTIME_OVERRIDE_KEY

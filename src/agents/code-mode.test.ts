@@ -1,3 +1,4 @@
+/** Tests code-mode config, catalog compaction, exec/wait tools, and worker results. */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { setPluginToolMeta } from "../plugins/tools.js";
 import {

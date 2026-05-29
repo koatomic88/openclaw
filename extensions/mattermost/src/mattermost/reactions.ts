@@ -1,3 +1,4 @@
+// extensions/mattermost/src/mattermost reactions helpers and runtime behavior.
 import { isPrivateNetworkOptInEnabled } from "openclaw/plugin-sdk/ssrf-runtime";
 import { resolveMattermostAccount } from "./accounts.js";
 import {

@@ -1,3 +1,4 @@
+// Model override helpers used during session reset.
 import type { ModelCatalogEntry } from "../../agents/model-catalog.types.js";
 import { isModelKeyAllowedBySet } from "../../agents/model-selection-shared.js";
 import { normalizeProviderId } from "../../agents/provider-id.js";
@@ -135,6 +136,7 @@ function applySelectionToSession(params: {
   }
 }
 
+/** Reused helper for apply Reset Model Override behavior in src/auto-reply/reply. */
 export async function applyResetModelOverride(params: {
   cfg: OpenClawConfig;
   agentId?: string;

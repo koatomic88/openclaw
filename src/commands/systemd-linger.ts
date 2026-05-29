@@ -1,3 +1,4 @@
+/** Systemd linger checks and repair helpers for service installs. */
 import {
   enableSystemdUserLinger,
   isSystemdUserServiceAvailable,
@@ -6,11 +7,13 @@ import {
 import type { RuntimeEnv } from "../runtime.js";
 import { note } from "../terminal/note.js";
 
+/** Shared type for Linger Prompter in src/commands. */
 export type LingerPrompter = {
   confirm?: (params: { message: string; initialValue?: boolean }) => Promise<boolean>;
   note: (message: string, title?: string) => Promise<void> | void;
 };
 
+/** Reused helper for ensure Systemd User Linger Interactive behavior in src/commands. */
 export async function ensureSystemdUserLingerInteractive(params: {
   runtime: RuntimeEnv;
   prompter?: LingerPrompter;
@@ -89,6 +92,7 @@ export async function ensureSystemdUserLingerInteractive(params: {
   await prompter.note(`Run manually: sudo loginctl enable-linger ${status.user}`, title);
 }
 
+/** Reused helper for ensure Systemd User Linger Non Interactive behavior in src/commands. */
 export async function ensureSystemdUserLingerNonInteractive(params: {
   runtime: RuntimeEnv;
   env?: NodeJS.ProcessEnv;

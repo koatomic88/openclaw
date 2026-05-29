@@ -1,3 +1,4 @@
+/** Doctor helpers for auth profile store inspection and repair messaging. */
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
 import { buildProviderAuthDoctorHintWithPlugin } from "../../plugins/provider-runtime.runtime.js";
 import { normalizeProviderId } from "../provider-id.js";
@@ -12,6 +13,7 @@ const DEPRECATED_PROVIDER_MIGRATION_HINTS: Record<string, string> = {
     "Qwen OAuth via portal.qwen.ai has been deprecated. Please migrate to Qwen Cloud Coding Plan. Run: openclaw onboard --auth-choice qwen-api-key (or qwen-api-key-cn for the China endpoint). Legacy modelstudio auth-choice ids still work.",
 };
 
+/** Reused helper for format Auth Doctor Hint behavior in src/agents/auth-profiles. */
 export async function formatAuthDoctorHint(params: {
   cfg?: OpenClawConfig;
   store: AuthProfileStore;

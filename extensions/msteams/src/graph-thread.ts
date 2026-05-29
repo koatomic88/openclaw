@@ -1,3 +1,4 @@
+// extensions/msteams/src graph thread helpers and runtime behavior.
 import { fetchGraphJson, type GraphResponse } from "./graph.js";
 
 export type GraphThreadMessage = {

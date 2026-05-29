@@ -1,3 +1,4 @@
+// Tests test/scripts check gateway cpu scenarios test behavior.
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -27,12 +28,12 @@ describe("gateway CPU scenario guard", () => {
   });
 
   it("rejects non-decimal numeric options", () => {
-    expect(() =>
-      testing.parseArgs(["--output-dir", makeTempRoot(), "--runs", "1e3"]),
-    ).toThrow("--runs must be a positive integer");
-    expect(() =>
-      testing.parseArgs(["--output-dir", makeTempRoot(), "--warmup", "0x10"]),
-    ).toThrow("--warmup must be a non-negative integer");
+    expect(() => testing.parseArgs(["--output-dir", makeTempRoot(), "--runs", "1e3"])).toThrow(
+      "--runs must be a positive integer",
+    );
+    expect(() => testing.parseArgs(["--output-dir", makeTempRoot(), "--warmup", "0x10"])).toThrow(
+      "--warmup must be a non-negative integer",
+    );
     expect(() =>
       testing.parseArgs(["--output-dir", makeTempRoot(), "--cpu-core-warn", "1e3"]),
     ).toThrow("--cpu-core-warn must be a positive number");

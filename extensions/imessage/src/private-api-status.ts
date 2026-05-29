@@ -1,3 +1,4 @@
+// extensions/imessage/src private api status helpers and runtime behavior.
 export type IMessagePrivateApiStatus = {
   available: boolean;
   v2Ready: boolean;

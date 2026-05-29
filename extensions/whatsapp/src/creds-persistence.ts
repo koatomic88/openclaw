@@ -1,3 +1,4 @@
+// extensions/whatsapp/src creds persistence helpers and runtime behavior.
 import { replaceFileAtomic } from "openclaw/plugin-sdk/security-runtime";
 import { assertWebCredsPathRegularFileOrMissing, resolveWebCredsPath } from "./creds-files.js";
 

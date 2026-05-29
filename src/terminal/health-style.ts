@@ -1,6 +1,8 @@
+// terminal health style helpers and runtime behavior.
 import { normalizeLowercaseStringOrEmpty } from "../shared/string-coerce.js";
 import { theme } from "./theme.js";
 
+/** Reused helper for style Health Channel Line behavior in src/terminal. */
 export function styleHealthChannelLine(line: string, rich: boolean): string {
   if (!rich) {
     return line;

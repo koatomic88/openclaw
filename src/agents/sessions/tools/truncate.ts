@@ -9,9 +9,12 @@
  */
 
 export const DEFAULT_MAX_LINES = 2000;
+/** Reused constant for DEFAULT MAX BYTES behavior in src/agents/sessions. */
 export const DEFAULT_MAX_BYTES = 50 * 1024; // 50KB
+/** Reused constant for GREP MAX LINE LENGTH behavior in src/agents/sessions. */
 export const GREP_MAX_LINE_LENGTH = 500; // Max chars per grep match line
 
+/** Shared type for Truncation Result in src/agents/sessions. */
 export interface TruncationResult {
   /** The truncated content */
   content: string;
@@ -37,6 +40,7 @@ export interface TruncationResult {
   maxBytes: number;
 }
 
+/** Shared type for Truncation Options in src/agents/sessions. */
 export interface TruncationOptions {
   /** Maximum number of lines (default: 2000) */
   maxLines?: number;
