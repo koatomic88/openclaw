@@ -391,6 +391,52 @@ describe("wrapStreamFnWithDiagnosticModelCallEvents", () => {
     expect(serializedPartial).not.toHaveBeenCalled();
   });
 
+  it("keeps streams alive when diagnostic byte inspection cannot read a chunk", async () => {
+    const opaqueChunk = new Proxy(
+      {},
+      {
+        get(_target, property) {
+          if (property === "then") {
+            return undefined;
+          }
+          throw new Error("chunk should not be inspected");
+        },
+      },
+    );
+    async function* stream() {
+      yield opaqueChunk;
+      yield { type: "text_delta", delta: "ok" };
+    }
+    const wrapped = wrapStreamFnWithDiagnosticModelCallEvents(
+      (() => stream()) as unknown as StreamFn,
+      {
+        runId: "run-1",
+        provider: "openai",
+        model: "gpt-5.4",
+        trace: createDiagnosticTraceContext(),
+        nextCallId: () => "call-opaque-chunk",
+      },
+    );
+
+    const chunks: unknown[] = [];
+    const events = await collectModelCallEvents(async () => {
+      for await (const chunk of wrapped(
+        {} as never,
+        {} as never,
+        {} as never,
+      ) as AsyncIterable<unknown>) {
+        chunks.push(chunk);
+      }
+    });
+
+    expect(chunks).toHaveLength(2);
+    expect(chunks[0]).toBe(opaqueChunk);
+    expect(chunks[1]).toEqual({ type: "text_delta", delta: "ok" });
+    const completedEvent = getEvent(events, 1);
+    expect(completedEvent.type).toBe("model.call.completed");
+    expect(completedEvent.responseStreamBytes).toBe(Buffer.byteLength("ok", "utf8"));
+  });
+
   it("captures model input, tools, and output only when content capture is enabled", async () => {
     const assistant = {
       role: "assistant",

@@ -121,7 +121,7 @@ function streamDeltaByteLength(chunk: Record<string, unknown>): number | undefin
   return undefined;
 }
 
-function responseStreamChunkByteLength(chunk: unknown): number | undefined {
+function responseStreamChunkByteLengthUnchecked(chunk: unknown): number | undefined {
   if (!isRecord(chunk)) {
     return utf8JsonByteLength(chunk);
   }
@@ -134,6 +134,14 @@ function responseStreamChunkByteLength(chunk: unknown): number | undefined {
   }
   const { partial: _partial, ...snapshotlessChunk } = chunk;
   return utf8JsonByteLength(snapshotlessChunk);
+}
+
+function responseStreamChunkByteLength(chunk: unknown): number | undefined {
+  try {
+    return responseStreamChunkByteLengthUnchecked(chunk);
+  } catch {
+    return undefined;
+  }
 }
 
 function cloneDiagnosticContentValue(value: unknown): unknown {
