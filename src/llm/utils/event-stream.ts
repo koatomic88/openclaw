@@ -1,8 +1,7 @@
-// llm/utils event stream helpers and runtime behavior.
+// Async iterable event stream primitives for provider response streams.
 import type { AssistantMessage, AssistantMessageEvent } from "../types.js";
 
-// Generic event stream class for async iteration
-/** Reused class for Event Stream behavior in src/llm/utils. */
+/** Queues provider events for async iteration while retaining a final result promise. */
 export class EventStream<T, R = T> implements AsyncIterable<T> {
   private queue: T[] = [];
   private waiting: ((value: IteratorResult<T>) => void)[] = [];
@@ -74,7 +73,7 @@ export class EventStream<T, R = T> implements AsyncIterable<T> {
   }
 }
 
-/** Reused class for Assistant Message Event Stream behavior in src/llm/utils. */
+/** Event stream specialization whose final result is the assistant message or error. */
 export class AssistantMessageEventStream extends EventStream<
   AssistantMessageEvent,
   AssistantMessage
