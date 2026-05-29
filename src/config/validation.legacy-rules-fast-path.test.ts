@@ -134,7 +134,6 @@ describe("config validation legacy rule loading", () => {
         },
         maintenance: { enabled: true },
         writeLock: { staleMs: 1000 },
-        parentForkMaxTokens: 1000,
       },
     });
 

@@ -156,7 +156,7 @@ function cloneSessionWithoutDeprecatedValidationKeys(
     return next;
   };
 
-  for (const key of ["store", "maintenance", "writeLock", "parentForkMaxTokens"] as const) {
+  for (const key of ["store", "maintenance", "writeLock"] as const) {
     if (Object.hasOwn(session, key)) {
       delete root()[key];
     }
