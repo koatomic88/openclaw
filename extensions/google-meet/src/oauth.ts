@@ -1,3 +1,4 @@
+// extensions/google-meet/src oauth helpers and runtime behavior.
 import { resolveExpiresAtMsFromDurationSeconds } from "openclaw/plugin-sdk/number-runtime";
 import { generateHexPkceVerifierChallenge } from "openclaw/plugin-sdk/provider-auth";
 import {

@@ -1,3 +1,4 @@
+// scripts/e2e telegram bot api helpers and runtime behavior.
 import { readBoundedResponseText } from "../lib/bounded-response.ts";
 
 type JsonObject = Record<string, unknown>;

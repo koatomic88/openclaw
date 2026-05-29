@@ -1,3 +1,4 @@
+// extensions/google oauth token helpers and runtime behavior.
 import { resolveExpiresAtMsFromDurationSeconds } from "openclaw/plugin-sdk/number-runtime";
 import { resolveOAuthClientConfig } from "./oauth.credentials.js";
 import { fetchWithTimeout } from "./oauth.http.js";

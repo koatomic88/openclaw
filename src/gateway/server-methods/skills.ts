@@ -1,3 +1,4 @@
+// src/gateway/server-methods skills helpers and runtime behavior.
 import {
   ErrorCodes,
   errorShape,
@@ -67,6 +68,7 @@ function resolveSkillsAgentWorkspace(params: unknown, context: GatewayRequestCon
   };
 }
 
+/** Reused constant for skills Handlers behavior in src/gateway/server-methods. */
 export const skillsHandlers: GatewayRequestHandlers = {
   ...skillsUploadHandlers,
   "skills.status": ({ params, respond, context }) => {

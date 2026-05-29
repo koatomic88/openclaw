@@ -1,3 +1,4 @@
+// Tests extensions/workboard/src store test behavior.
 import { describe, expect, it, vi } from "vitest";
 import { WorkboardStore, type WorkboardKeyedStore } from "./store.js";
 

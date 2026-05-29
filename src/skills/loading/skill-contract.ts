@@ -1,14 +1,19 @@
+// src/skills/loading skill contract helpers and runtime behavior.
 import type { SourceInfo } from "../../agents/sessions/source-info.js";
 import type { Skill as CanonicalSkill } from "./session.js";
 
+/** Shared type for Source Scope in src/skills/loading. */
 export type SourceScope = "user" | "project" | "temporary";
+/** Shared type for Source Origin in src/skills/loading. */
 export type SourceOrigin = "package" | "top-level";
 
+/** Shared type for Skill in src/skills/loading. */
 export type Skill = CanonicalSkill & {
   // Preserve legacy source reads while keeping the canonical upstream shape.
   source?: string;
 };
 
+/** Reused helper for create Synthetic Source Info behavior in src/skills/loading. */
 export function createSyntheticSourceInfo(
   path: string,
   options: {

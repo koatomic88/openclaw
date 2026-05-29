@@ -1,3 +1,4 @@
+// src/cli skills cli format helpers and runtime behavior.
 import type { SkillStatusEntry, SkillStatusReport } from "../skills/discovery/status.js";
 import { sanitizeForLog, stripAnsi } from "../terminal/ansi.js";
 import { decorativeEmoji, decorativePrefix } from "../terminal/decorative-emoji.js";
@@ -6,16 +7,19 @@ import { theme } from "../terminal/theme.js";
 import { shortenHomePath } from "../utils.js";
 import { formatCliCommand } from "./command-format.js";
 
+/** Shared type for Skills List Options in src/cli. */
 export type SkillsListOptions = {
   json?: boolean;
   eligible?: boolean;
   verbose?: boolean;
 };
 
+/** Shared type for Skill Info Options in src/cli. */
 export type SkillInfoOptions = {
   json?: boolean;
 };
 
+/** Shared type for Skills Check Options in src/cli. */
 export type SkillsCheckOptions = {
   json?: boolean;
   agent?: string;
@@ -156,6 +160,7 @@ function resolveSkillByName(
   return normalizedMatches[0] ?? null;
 }
 
+/** Reused helper for format Skills List behavior in src/cli. */
 export function formatSkillsList(report: SkillStatusReport, opts: SkillsListOptions): string {
   const isReadyForAgent = (skill: SkillStatusEntry) =>
     skill.eligible && !skill.blockedByAgentFilter;
@@ -231,6 +236,7 @@ export function formatSkillsList(report: SkillStatusReport, opts: SkillsListOpti
   return appendClawHubHint(lines.join("\n"), opts.json);
 }
 
+/** Reused helper for format Skill Info behavior in src/cli. */
 export function formatSkillInfo(
   report: SkillStatusReport,
   skillName: string,
@@ -374,6 +380,7 @@ export function formatSkillInfo(
   return appendClawHubHint(lines.join("\n"), opts.json);
 }
 
+/** Reused helper for format Skills Check behavior in src/cli. */
 export function formatSkillsCheck(report: SkillStatusReport, opts: SkillsCheckOptions): string {
   const eligible = report.skills.filter((s) => s.eligible);
   const modelVisible = report.skills.filter((s) => s.modelVisible);

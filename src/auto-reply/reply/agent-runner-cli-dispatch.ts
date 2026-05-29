@@ -89,6 +89,7 @@ export type CliToolEventPayload = {
   args: Record<string, unknown> | undefined;
 };
 
+/** Reused helper for keep Cli Session Binding Only When Reused behavior in src/auto-reply/reply. */
 export function keepCliSessionBindingOnlyWhenReused(params: {
   result: EmbeddedAgentRunResult;
   existingSessionId?: string;
@@ -116,6 +117,7 @@ export function keepCliSessionBindingOnlyWhenReused(params: {
   };
 }
 
+/** Reused helper for clear Dropped Cli Session Binding behavior in src/auto-reply/reply. */
 export async function clearDroppedCliSessionBinding(params: {
   provider: string;
   sessionKey?: string;
