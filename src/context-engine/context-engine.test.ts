@@ -560,7 +560,6 @@ describe("Legacy sessionKey compatibility", () => {
     const compacted = await engine.compact({
       sessionId: "s1",
       sessionKey: "agent:main:test",
-      sessionFile: "/tmp/session.json",
     });
 
     expect(firstAssembled.estimatedTokens).toBe(7);
@@ -609,7 +608,6 @@ describe("Legacy sessionKey compatibility", () => {
     await engine.maintain?.({
       sessionId: "s1",
       sessionKey: "agent:main:test",
-      sessionFile: "/tmp/session.json",
     });
 
     expect(strictEngine.maintainCalls).toHaveLength(2);
@@ -1033,7 +1031,6 @@ describe("Invalid engine fallback", () => {
     await expect(
       engine.compact({
         sessionId: "s1",
-        sessionFile: "/tmp/session.json",
       }),
     ).rejects.toThrow("plugin compaction failed");
 
@@ -1099,7 +1096,6 @@ describe("Invalid engine fallback", () => {
     await expect(
       engine.compact({
         sessionId: "s1",
-        sessionFile: "/tmp/session.json",
         abortSignal: controller.signal,
       }),
     ).rejects.toThrow("compaction aborted");
