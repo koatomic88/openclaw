@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { ChannelLegacyStateMigrationPlan } from "openclaw/plugin-sdk/channel-contract";
+import type { BundledChannelLegacyStateMigrationDetector } from "openclaw/plugin-sdk/channel-entry-contract";
 import { upsertPluginStateMigrationEntry } from "openclaw/plugin-sdk/migration-runtime";
 import { detectDiscordLegacyStateMigrations as detectDiscordModelPickerLegacyStateMigrations } from "./monitor/model-picker-preferences-migrations.js";
 import { normalizePersistedBinding } from "./monitor/thread-bindings.state.js";
@@ -102,31 +103,32 @@ function discordPluginStatePlan(params: {
   };
 }
 
-export function detectDiscordLegacyStateMigrations(params: {
-  stateDir: string;
-}): ChannelLegacyStateMigrationPlan[] {
-  const plans = [...(detectDiscordModelPickerLegacyStateMigrations(params) ?? [])];
-  const commandDeployPath = path.join(params.stateDir, "discord", "command-deploy-cache.json");
-  if (fileExists(commandDeployPath)) {
-    plans.push(
-      discordPluginStatePlan({
-        label: "Discord command deploy hashes",
-        sourcePath: commandDeployPath,
-        namespace: "command-deploy-hashes",
-        importSource: importCommandDeployHashes,
-      }),
-    );
-  }
-  const threadBindingsPath = path.join(params.stateDir, "discord", "thread-bindings.json");
-  if (fileExists(threadBindingsPath)) {
-    plans.push(
-      discordPluginStatePlan({
-        label: "Discord thread bindings",
-        sourcePath: threadBindingsPath,
-        namespace: "thread-bindings",
-        importSource: importThreadBindings,
-      }),
-    );
-  }
-  return plans;
-}
+export const detectDiscordLegacyStateMigrations: BundledChannelLegacyStateMigrationDetector =
+  async (params) => {
+    const plans: ChannelLegacyStateMigrationPlan[] = [
+      ...((await detectDiscordModelPickerLegacyStateMigrations(params)) ?? []),
+    ];
+    const commandDeployPath = path.join(params.stateDir, "discord", "command-deploy-cache.json");
+    if (fileExists(commandDeployPath)) {
+      plans.push(
+        discordPluginStatePlan({
+          label: "Discord command deploy hashes",
+          sourcePath: commandDeployPath,
+          namespace: "command-deploy-hashes",
+          importSource: importCommandDeployHashes,
+        }),
+      );
+    }
+    const threadBindingsPath = path.join(params.stateDir, "discord", "thread-bindings.json");
+    if (fileExists(threadBindingsPath)) {
+      plans.push(
+        discordPluginStatePlan({
+          label: "Discord thread bindings",
+          sourcePath: threadBindingsPath,
+          namespace: "thread-bindings",
+          importSource: importThreadBindings,
+        }),
+      );
+    }
+    return plans;
+  };

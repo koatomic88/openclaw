@@ -4,7 +4,6 @@ import path from "node:path";
 import { resetPluginStateStoreForTests } from "openclaw/plugin-sdk/plugin-state-runtime";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { detectDiscordLegacyStateMigrations } from "./doctor-legacy-state.js";
-import { readDiscordModelPickerRecentModels } from "./monitor/model-picker-preferences.js";
 import { createThreadBindingManager, __testing } from "./monitor/thread-bindings.manager.js";
 import { EMPTY_DISCORD_TEST_CONFIG } from "./test-support/config.js";
 
@@ -45,27 +44,25 @@ describe("Discord legacy state migrations", () => {
       "utf-8",
     );
 
-    const plans = detectDiscordLegacyStateMigrations({ stateDir });
+    const plans =
+      (await detectDiscordLegacyStateMigrations({
+        cfg: {},
+        env: { ...process.env, OPENCLAW_STATE_DIR: stateDir },
+        stateDir,
+        oauthDir: path.join(stateDir, "oauth"),
+      })) ?? [];
     expect(plans).toHaveLength(1);
     const plan = plans[0];
-    if (!plan || plan.kind !== "custom") {
+    if (!plan || plan.kind !== "plugin-state-import") {
       throw new Error("missing Discord model-picker migration plan");
     }
 
-    const result = await plan.apply({
-      cfg: {},
-      env: { ...process.env, OPENCLAW_STATE_DIR: stateDir },
-      stateDir,
-      oauthDir: path.join(stateDir, "oauth"),
-    });
-
-    expect(result.changes.join("\n")).toContain("Imported 1 Discord model-picker preferences");
-    await expect(
-      readDiscordModelPickerRecentModels({
-        scope: { userId: "123" },
-      }),
-    ).resolves.toEqual(["openai/gpt-5.5", "anthropic/claude-sonnet-4.6"]);
-    expect(fs.existsSync(preferencesPath)).toBe(false);
+    const entries = await plan.readEntries();
+    expect(entries.map((entry) => entry.value)).toEqual([
+      expect.objectContaining({ modelRef: "openai/gpt-5.5" }),
+      expect.objectContaining({ modelRef: "anthropic/claude-sonnet-4.6" }),
+    ]);
+    expect(fs.existsSync(preferencesPath)).toBe(true);
   });
 
   it("imports thread bindings into plugin state and removes the JSON file", async () => {
@@ -102,7 +99,13 @@ describe("Discord legacy state migrations", () => {
       "utf-8",
     );
 
-    const plans = detectDiscordLegacyStateMigrations({ stateDir });
+    const plans =
+      (await detectDiscordLegacyStateMigrations({
+        cfg: {},
+        env: { ...process.env, OPENCLAW_STATE_DIR: stateDir },
+        stateDir,
+        oauthDir: path.join(stateDir, "oauth"),
+      })) ?? [];
     expect(plans.map((plan) => plan.label)).toContain("Discord thread bindings");
     const plan = plans.find((entry) => entry.label === "Discord thread bindings");
     if (!plan || plan.kind !== "custom") {
