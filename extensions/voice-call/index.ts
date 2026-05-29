@@ -1,4 +1,5 @@
-// extensions/voice-call index helpers and runtime behavior.
+// Main voice-call plugin entry. Registers config, CLI, gateway methods, and
+// lazy runtime startup without exposing provider internals outside the plugin.
 import { formatErrorMessage } from "openclaw/plugin-sdk/error-runtime";
 import { ErrorCodes, errorShape } from "openclaw/plugin-sdk/gateway-runtime";
 import { normalizeOptionalString } from "openclaw/plugin-sdk/string-coerce-runtime";
