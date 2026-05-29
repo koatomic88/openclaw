@@ -55,7 +55,7 @@ function importDedupFiles(sourceDir: string, env: NodeJS.ProcessEnv): ImportResu
       const createdAt = Math.floor(seenAt);
       upsertPluginStateMigrationEntry({
         pluginId: FEISHU_PLUGIN_ID,
-        namespace: "dedup",
+        namespace: `dedup.${namespace}`,
         key: dedupeStoreKey(namespace, messageId),
         value: { namespace, messageId, seenAt: createdAt },
         createdAt,
@@ -86,7 +86,7 @@ export function detectFeishuLegacyStateMigrations(params: {
       kind: "custom",
       label: "Feishu dedupe cache",
       sourcePath: dedupDir,
-      targetTable: "plugin_state_entries:feishu/dedup",
+      targetTable: "plugin_state_entries:feishu/dedup.*",
       apply: ({ env }) => {
         const result = importDedupFiles(dedupDir, env);
         return {
