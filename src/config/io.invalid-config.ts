@@ -1,4 +1,4 @@
-// config io invalid config helpers and runtime behavior.
+// Invalid config diagnostics that sanitize terminal output and suppress duplicate logs.
 import { sanitizeTerminalText } from "../terminal/safe-text.js";
 
 type ConfigValidationIssueLike = {
@@ -6,7 +6,7 @@ type ConfigValidationIssueLike = {
   message: string;
 };
 
-/** Reused helper for format Invalid Config Details behavior in src/config. */
+/** Format validation issues as sanitized terminal-safe bullet lines. */
 export function formatInvalidConfigDetails(issues: ConfigValidationIssueLike[]): string {
   return issues
     .map(
@@ -16,12 +16,12 @@ export function formatInvalidConfigDetails(issues: ConfigValidationIssueLike[]):
     .join("\n");
 }
 
-/** Reused helper for format Invalid Config Log Message behavior in src/config. */
+/** Build the one-line invalid-config log prefix plus formatted issue details. */
 export function formatInvalidConfigLogMessage(configPath: string, details: string): string {
   return `Invalid config at ${configPath}:\\n${details}`;
 }
 
-/** Reused helper for log Invalid Config Once behavior in src/config. */
+/** Log invalid config details once per path to avoid repeated startup noise. */
 export function logInvalidConfigOnce(params: {
   configPath: string;
   details: string;
@@ -35,7 +35,7 @@ export function logInvalidConfigOnce(params: {
   params.logger.error(formatInvalidConfigLogMessage(params.configPath, params.details));
 }
 
-/** Reused helper for create Invalid Config Error behavior in src/config. */
+/** Create the thrown invalid-config error with stable code and details metadata. */
 export function createInvalidConfigError(configPath: string, details: string): Error {
   const error = new Error(`Invalid config at ${configPath}:\n${details}`);
   (error as { code?: string; details?: string }).code = "INVALID_CONFIG";
@@ -43,7 +43,7 @@ export function createInvalidConfigError(configPath: string, details: string): E
   return error;
 }
 
-/** Reused helper for throw Invalid Config behavior in src/config. */
+/** Format, log, and throw a validation error for an invalid config file. */
 export function throwInvalidConfig(params: {
   configPath: string;
   issues: ConfigValidationIssueLike[];
