@@ -1,4 +1,6 @@
-// packages/speech-core/src tts helpers and runtime behavior.
+// Public TTS runtime surface for speech providers, user preferences, synthesis
+// fallbacks, and reply-payload attachment. This module keeps channel-facing
+// helpers provider-agnostic while provider plugins own concrete audio backends.
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { resolveChannelTtsVoiceDelivery } from "openclaw/plugin-sdk/channel-targets";
@@ -109,7 +111,7 @@ type TtsUserPrefs = {
   };
 };
 
-/** Public type describing Tts Attempt Reason Code for packages/speech-core. */
+/** Stable reason codes recorded for each provider tried during TTS synthesis. */
 export type TtsAttemptReasonCode =
   | "success"
   | "no_provider_registered"
@@ -119,7 +121,7 @@ export type TtsAttemptReasonCode =
   | "timeout"
   | "provider_error";
 
-/** Public type describing Tts Provider Attempt for packages/speech-core. */
+/** Per-provider attempt metadata returned with TTS success and failure results. */
 export type TtsProviderAttempt = {
   provider: string;
   outcome: "success" | "skipped" | "failed";
@@ -130,7 +132,7 @@ export type TtsProviderAttempt = {
   error?: string;
 };
 
-/** Public type describing Tts Result for packages/speech-core. */
+/** File-backed TTS result used by channel senders that need a local audio path. */
 export type TtsResult = {
   success: boolean;
   audioPath?: string;
@@ -147,7 +149,7 @@ export type TtsResult = {
   target?: "audio-file" | "voice-note";
 };
 
-/** Public type describing Tts Synthesis Result for packages/speech-core. */
+/** Buffer-backed synthesis result before the audio is written to a temp file. */
 export type TtsSynthesisResult = {
   success: boolean;
   audioBuffer?: Buffer;
@@ -166,7 +168,7 @@ export type TtsSynthesisResult = {
   target?: "audio-file" | "voice-note";
 };
 
-/** Public type describing Tts Stream Result for packages/speech-core. */
+/** Streaming synthesis result for providers that can return audio incrementally. */
 export type TtsStreamResult = {
   success: boolean;
   audioStream?: ReadableStream<Uint8Array>;
@@ -186,10 +188,10 @@ export type TtsStreamResult = {
   release?: () => Promise<void>;
 };
 
-/** Public type describing Tts Synthesis Stream Result for packages/speech-core. */
+/** Backward-compatible alias for the streaming synthesis result contract. */
 export type TtsSynthesisStreamResult = TtsStreamResult;
 
-/** Public type describing Tts Telephony Result for packages/speech-core. */
+/** Telephony synthesis result with provider output normalized for call audio. */
 export type TtsTelephonyResult = {
   success: boolean;
   audioBuffer?: Buffer;
@@ -575,7 +577,7 @@ function collectDirectProviderConfigEntries(raw: TtsConfig): Record<string, Spee
   return entries;
 }
 
-/** Public helper for get Resolved Speech Provider Config behavior in packages/speech-core. */
+/** Resolve the effective provider config after aliases, personas, and lazy defaults. */
 export function getResolvedSpeechProviderConfig(
   config: ResolvedTtsConfig,
   providerId: string,
@@ -606,7 +608,7 @@ function getResolvedSpeechProviderConfigForVoiceModel(params: {
   return resolveLazyProviderConfig(params.config, canonical, effectiveCfg, params.voiceModel);
 }
 
-/** Public helper for resolve Tts Config behavior in packages/speech-core. */
+/** Resolve TTS config for an agent/channel/account context with defaults applied. */
 export function resolveTtsConfig(
   cfg: OpenClawConfig,
   contextOrAgentId?: string | TtsConfigResolutionContext,
@@ -639,7 +641,7 @@ export function resolveTtsConfig(
   };
 }
 
-/** Public helper for resolve Tts Prefs Path behavior in packages/speech-core. */
+/** Resolve the private per-user preference file path for TTS settings. */
 export function resolveTtsPrefsPath(config: ResolvedTtsConfig): string {
   return resolveTtsPrefsPathValue(config.prefsPath);
 }
@@ -655,7 +657,7 @@ function resolveTtsAutoModeFromPrefs(prefs: TtsUserPrefs): TtsAutoMode | undefin
   return undefined;
 }
 
-/** Public helper for resolve Tts Auto Mode behavior in packages/speech-core. */
+/** Resolve session, persisted preference, and config TTS auto-mode precedence. */
 export function resolveTtsAutoMode(params: {
   config: ResolvedTtsConfig;
   prefsPath: string;
@@ -702,7 +704,7 @@ function resolveEffectiveTtsAutoState(params: {
   };
 }
 
-/** Public helper for build Tts System Prompt Hint behavior in packages/speech-core. */
+/** Build the agent prompt hint that explains the active TTS directive contract. */
 export function buildTtsSystemPromptHint(
   cfg: OpenClawConfig,
   agentId?: string,
@@ -757,7 +759,7 @@ function updatePrefs(prefsPath: string, update: (prefs: TtsUserPrefs) => void): 
   atomicWriteFileSync(prefsPath, JSON.stringify(prefs, null, 2));
 }
 
-/** Public helper for is Tts Enabled behavior in packages/speech-core. */
+/** Check whether TTS auto mode is enabled after session and prefs overrides. */
 export function isTtsEnabled(
   config: ResolvedTtsConfig,
   prefsPath: string,
@@ -766,7 +768,7 @@ export function isTtsEnabled(
   return resolveTtsAutoMode({ config, prefsPath, sessionAuto }) !== "off";
 }
 
-/** Public helper for set Tts Auto Mode behavior in packages/speech-core. */
+/** Persist the user's TTS auto-mode preference. */
 export function setTtsAutoMode(prefsPath: string, mode: TtsAutoMode): void {
   updatePrefs(prefsPath, (prefs) => {
     const next = { ...prefs.tts };
@@ -776,12 +778,12 @@ export function setTtsAutoMode(prefsPath: string, mode: TtsAutoMode): void {
   });
 }
 
-/** Public helper for set Tts Enabled behavior in packages/speech-core. */
+/** Persist the legacy boolean TTS preference by mapping it onto auto mode. */
 export function setTtsEnabled(prefsPath: string, enabled: boolean): void {
   setTtsAutoMode(prefsPath, enabled ? "always" : "off");
 }
 
-/** Public helper for get Tts Provider behavior in packages/speech-core. */
+/** Resolve the active provider from prefs, persona, config, voice model, or auto-pick. */
 export function getTtsProvider(config: ResolvedTtsConfig, prefsPath: string): TtsProvider {
   const prefs = readPrefs(prefsPath);
   const prefsProvider =
@@ -833,7 +835,7 @@ function resolveTtsPersonaFromPrefs(
   return configPersona ? config.personas[configPersona] : undefined;
 }
 
-/** Public helper for get Tts Persona behavior in packages/speech-core. */
+/** Resolve the active persona from user prefs, then config default. */
 export function getTtsPersona(
   config: ResolvedTtsConfig,
   prefsPath: string,
@@ -841,12 +843,12 @@ export function getTtsPersona(
   return resolveTtsPersonaFromPrefs(config, readPrefs(prefsPath));
 }
 
-/** Public helper for list Tts Personas behavior in packages/speech-core. */
+/** List configured personas in deterministic id order for UI/CLI callers. */
 export function listTtsPersonas(config: ResolvedTtsConfig): ResolvedTtsPersona[] {
   return Object.values(config.personas).toSorted((left, right) => left.id.localeCompare(right.id));
 }
 
-/** Public helper for set Tts Persona behavior in packages/speech-core. */
+/** Persist the selected TTS persona, or clear the persona override with null. */
 export function setTtsPersona(prefsPath: string, persona: string | null | undefined): void {
   updatePrefs(prefsPath, (prefs) => {
     const next = { ...prefs.tts };
@@ -856,14 +858,14 @@ export function setTtsPersona(prefsPath: string, persona: string | null | undefi
   });
 }
 
-/** Public helper for set Tts Provider behavior in packages/speech-core. */
+/** Persist the selected provider after canonicalizing known provider aliases. */
 export function setTtsProvider(prefsPath: string, provider: TtsProvider): void {
   updatePrefs(prefsPath, (prefs) => {
     prefs.tts = { ...prefs.tts, provider: canonicalizeSpeechProviderId(provider) ?? provider };
   });
 }
 
-/** Public helper for resolve Explicit Tts Overrides behavior in packages/speech-core. */
+/** Convert explicit provider/model/voice controls into provider override payloads. */
 export function resolveExplicitTtsOverrides(params: {
   cfg: OpenClawConfig;
   prefsPath?: string;
@@ -932,38 +934,38 @@ export function resolveExplicitTtsOverrides(params: {
   };
 }
 
-/** Public helper for get Tts Max Length behavior in packages/speech-core. */
+/** Read the spoken-text soft limit used before summarization/truncation. */
 export function getTtsMaxLength(prefsPath: string): number {
   const prefs = readPrefs(prefsPath);
   return prefs.tts?.maxLength ?? DEFAULT_TTS_MAX_LENGTH;
 }
 
-/** Public helper for set Tts Max Length behavior in packages/speech-core. */
+/** Persist the spoken-text soft limit. */
 export function setTtsMaxLength(prefsPath: string, maxLength: number): void {
   updatePrefs(prefsPath, (prefs) => {
     prefs.tts = { ...prefs.tts, maxLength };
   });
 }
 
-/** Public helper for is Summarization Enabled behavior in packages/speech-core. */
+/** Read whether long TTS text should summarize instead of only truncating. */
 export function isSummarizationEnabled(prefsPath: string): boolean {
   const prefs = readPrefs(prefsPath);
   return prefs.tts?.summarize ?? DEFAULT_TTS_SUMMARIZE;
 }
 
-/** Public helper for set Summarization Enabled behavior in packages/speech-core. */
+/** Persist the long-text summarization preference. */
 export function setSummarizationEnabled(prefsPath: string, enabled: boolean): void {
   updatePrefs(prefsPath, (prefs) => {
     prefs.tts = { ...prefs.tts, summarize: enabled };
   });
 }
 
-/** Public helper for get Last Tts Attempt behavior in packages/speech-core. */
+/** Return the last auto-TTS attempt for status/debug surfaces. */
 export function getLastTtsAttempt(): TtsStatusEntry | undefined {
   return lastTtsAttempt;
 }
 
-/** Public helper for set Last Tts Attempt behavior in packages/speech-core. */
+/** Override the last-attempt status snapshot for tests or integration hooks. */
 export function setLastTtsAttempt(entry: TtsStatusEntry | undefined): void {
   lastTtsAttempt = entry;
 }
@@ -1025,7 +1027,7 @@ function shouldDeliverTtsAsVoice(params: {
   return params.voiceCompatible === true || delivery.transcodesAudio === true;
 }
 
-/** Public helper for resolve Tts Provider Order behavior in packages/speech-core. */
+/** Resolve fallback provider order from primary provider, voice model refs, and registry. */
 export function resolveTtsProviderOrder(primary: TtsProvider, cfg?: OpenClawConfig): TtsProvider[] {
   const effectiveCfg = cfg ? resolveTtsRuntimeConfig(cfg) : undefined;
   const normalizedPrimary = canonicalizeSpeechProviderId(primary, effectiveCfg) ?? primary;
@@ -1070,7 +1072,7 @@ function resolvePrimaryTtsProviderCandidate(
   });
 }
 
-/** Public helper for is Tts Provider Configured behavior in packages/speech-core. */
+/** Ask the provider plugin whether its effective config is ready to synthesize. */
 export function isTtsProviderConfigured(
   config: ResolvedTtsConfig,
   provider: TtsProvider,
@@ -1332,7 +1334,7 @@ function resolveTtsResultVoice(
   );
 }
 
-/** Public helper for text To Speech behavior in packages/speech-core. */
+/** Synthesize text to a temp audio file for channel delivery. */
 export async function textToSpeech(params: {
   text: string;
   cfg: OpenClawConfig;
@@ -1445,7 +1447,7 @@ async function maybePreTranscodeForVoiceDelivery(params: {
   };
 }
 
-/** Public helper for synthesize Speech behavior in packages/speech-core. */
+/** Synthesize text to an in-memory audio buffer using provider fallback order. */
 export async function synthesizeSpeech(params: {
   text: string;
   cfg: OpenClawConfig;
@@ -1596,7 +1598,7 @@ export async function synthesizeSpeech(params: {
   return buildTtsFailureResult(errors, attemptedProviders, attempts, persona?.id);
 }
 
-/** Public helper for stream Speech behavior in packages/speech-core. */
+/** Stream synthesized speech from the first configured provider that supports it. */
 export async function streamSpeech(params: {
   text: string;
   cfg: OpenClawConfig;
@@ -1761,7 +1763,7 @@ export async function streamSpeech(params: {
   return buildTtsFailureResult(errors, attemptedProviders, attempts, persona?.id);
 }
 
-/** Public helper for text To Speech Stream behavior in packages/speech-core. */
+/** Public stream wrapper that preserves the legacy text-to-speech naming. */
 export async function textToSpeechStream(params: {
   text: string;
   cfg: OpenClawConfig;
@@ -1786,7 +1788,7 @@ export async function textToSpeechStream(params: {
   return synthesis;
 }
 
-/** Public helper for text To Speech Telephony behavior in packages/speech-core. */
+/** Synthesize telephony-ready audio using providers with call-audio support. */
 export async function textToSpeechTelephony(params: {
   text: string;
   cfg: OpenClawConfig;
@@ -1929,7 +1931,7 @@ export async function textToSpeechTelephony(params: {
   return buildTtsFailureResult(errors, attemptedProviders, attempts, persona?.id);
 }
 
-/** Public helper for list Speech Voices behavior in packages/speech-core. */
+/** List provider voices through the provider plugin's optional discovery API. */
 export async function listSpeechVoices(params: {
   provider: string;
   cfg?: OpenClawConfig;
@@ -1961,7 +1963,7 @@ export async function listSpeechVoices(params: {
   });
 }
 
-/** Public helper for maybe Apply Tts To Payload behavior in packages/speech-core. */
+/** Attach synthesized audio to an outbound reply when auto-TTS rules match. */
 export async function maybeApplyTtsToPayload(params: {
   payload: ReplyPayload;
   cfg: OpenClawConfig;
@@ -2148,7 +2150,7 @@ export async function maybeApplyTtsToPayload(params: {
   return nextPayload;
 }
 
-/** Public constant for test Api behavior in packages/speech-core. */
+/** Test-only hooks for parser, provider config, delivery, and error helpers. */
 export const testApi = {
   parseTtsDirectives,
   resolveModelOverridePolicy,
