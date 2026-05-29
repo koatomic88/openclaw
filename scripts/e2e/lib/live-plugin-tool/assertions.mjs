@@ -21,10 +21,7 @@ const agentTurnTimeoutSeconds = readPositiveIntEnv(
   "OPENCLAW_LIVE_PLUGIN_TOOL_TIMEOUT_SECONDS",
   300,
 );
-const SCAN_CHUNK_BYTES = 64 * 1024;
-const SCAN_CARRY_CHARS = 256;
 const ERROR_DETAIL_TAIL_BYTES = 16 * 1024;
-const SESSION_FILE_LIST_LIMIT = 20;
 
 function requireEnv(name) {
   const value = process.env[name];
@@ -40,6 +37,14 @@ function stateDir() {
 
 function configPath() {
   return process.env.OPENCLAW_CONFIG_PATH || path.join(stateDir(), "openclaw.json");
+}
+
+function agentOutputPath() {
+  return process.env.OPENCLAW_LIVE_PLUGIN_TOOL_AGENT_OUTPUT_PATH || "/tmp/openclaw-agent.json";
+}
+
+function agentErrorPath() {
+  return process.env.OPENCLAW_LIVE_PLUGIN_TOOL_AGENT_ERROR_PATH || "/tmp/openclaw-agent.err";
 }
 
 function agentDatabasePath(agentId = "main") {
@@ -62,14 +67,48 @@ function withSqliteDatabase(dbPath, callback) {
   }
 }
 
-function readMainAgentTranscriptText() {
-  return withSqliteDatabase(agentDatabasePath("main"), (db) =>
-    db
+function readMainAgentTranscript() {
+  return withSqliteDatabase(agentDatabasePath("main"), (db) => {
+    const rows = db
       .prepare("SELECT event_json FROM transcript_events ORDER BY session_id, seq")
-      .all()
-      .map((row) => String(row.event_json ?? ""))
-      .join("\n"),
-  );
+      .all();
+    const text = rows.map((row) => String(row.event_json ?? "")).join("\n");
+    return { eventCount: rows.length, text };
+  });
+}
+
+function textByteLength(text) {
+  return Buffer.byteLength(text, "utf8");
+}
+
+function tailText(text, maxBytes = ERROR_DETAIL_TAIL_BYTES) {
+  if (textByteLength(text) <= maxBytes) {
+    return text;
+  }
+  return Buffer.from(text, "utf8").subarray(-maxBytes).toString("utf8");
+}
+
+function readTextFileTail(file, maxBytes = ERROR_DETAIL_TAIL_BYTES) {
+  let stat;
+  try {
+    stat = fs.statSync(file);
+  } catch {
+    return "";
+  }
+  if (!stat.isFile() || stat.size <= 0) {
+    return "";
+  }
+
+  const length = Math.min(maxBytes, stat.size);
+  const start = stat.size - length;
+  const fd = fs.openSync(file, "r");
+  try {
+    const buffer = Buffer.alloc(length);
+    const bytesRead = fs.readSync(fd, buffer, 0, length, start);
+    return buffer.subarray(0, bytesRead).toString("utf8");
+  } finally {
+    fs.closeSync(fd);
+  }
 }
 
 function realPathMaybe(filePath) {
@@ -306,9 +345,11 @@ function assertAgentTurn() {
       `live agent reply did not contain tool slug ${expected}:\nstdout tail=${tailText(stdout)}\nstderr tail=${stderrTail}`,
     );
   }
-  const transcript = readMainAgentTranscriptText();
-  if (!transcript.includes(toolName) || !transcript.includes(expected)) {
-    throw new Error(`SQLite session transcript did not show ${toolName} returning ${expected}`);
+  const transcript = readMainAgentTranscript();
+  if (!transcript.text.includes(toolName) || !transcript.text.includes(expected)) {
+    throw new Error(
+      `SQLite session transcript did not show ${toolName} returning ${expected} after checking ${transcript.eventCount} event(s)`,
+    );
   }
 }
 

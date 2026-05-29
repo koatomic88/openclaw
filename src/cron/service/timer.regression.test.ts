@@ -467,7 +467,7 @@ describe("cron service timer regressions", () => {
   });
 
   it("retries recurring jobs after transient model rate limits before the next scheduled slot", async () => {
-    const store = timerRegressionFixtures.makeStorePath();
+    const store = timerRegressionFixtures.makeStoreKey();
     const scheduledAt = Date.parse("2026-05-29T02:28:00.000Z");
     const everySixHoursMs = 6 * 60 * 60 * 1_000;
 
@@ -479,7 +479,7 @@ describe("cron service timer regressions", () => {
       payload: { kind: "agentTurn", message: "closure report" },
       state: { nextRunAtMs: scheduledAt },
     });
-    await writeCronJobs(store.storePath, [cronJob]);
+    await writeCronJobs(store.storeKey, [cronJob]);
 
     let now = scheduledAt;
     const runIsolatedAgentJob = vi
@@ -492,7 +492,7 @@ describe("cron service timer regressions", () => {
       .mockResolvedValueOnce({ status: "ok", summary: "done" });
     const state = createCronServiceState({
       cronEnabled: true,
-      storePath: store.storePath,
+      storeKey: store.storeKey,
       log: noopLogger,
       nowMs: () => now,
       enqueueSystemEvent: vi.fn(),
@@ -522,7 +522,7 @@ describe("cron service timer regressions", () => {
   });
 
   it("uses the normal recurring schedule after transient retry attempts are exhausted", async () => {
-    const store = timerRegressionFixtures.makeStorePath();
+    const store = timerRegressionFixtures.makeStoreKey();
     const scheduledAt = Date.parse("2026-05-29T02:28:00.000Z");
     const everySixHoursMs = 6 * 60 * 60 * 1_000;
 
@@ -534,7 +534,7 @@ describe("cron service timer regressions", () => {
       payload: { kind: "agentTurn", message: "closure report" },
       state: { nextRunAtMs: scheduledAt },
     });
-    await writeCronJobs(store.storePath, [cronJob]);
+    await writeCronJobs(store.storeKey, [cronJob]);
 
     let now = scheduledAt;
     const runIsolatedAgentJob = vi.fn().mockResolvedValue({
@@ -543,7 +543,7 @@ describe("cron service timer regressions", () => {
     });
     const state = createCronServiceState({
       cronEnabled: true,
-      storePath: store.storePath,
+      storeKey: store.storeKey,
       log: noopLogger,
       nowMs: () => now,
       enqueueSystemEvent: vi.fn(),
