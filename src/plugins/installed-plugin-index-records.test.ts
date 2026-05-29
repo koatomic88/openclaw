@@ -85,6 +85,7 @@ function createDeferred<T>() {
 
 afterEach(() => {
   vi.doUnmock("../infra/json-files.js");
+  vi.doUnmock("./installed-plugin-index-persisted-read.js");
   closeOpenClawStateDatabaseForTest();
   for (const dir of tempDirs.splice(0)) {
     fs.rmSync(dir, { recursive: true, force: true });
@@ -425,11 +426,12 @@ describe("plugin index install records store", () => {
     const firstRead = createDeferred<unknown>();
     const firstReadStarted = createDeferred<void>();
     let reads = 0;
-    vi.doMock("../infra/json-files.js", async (importOriginal) => {
-      const actual = await importOriginal<typeof import("../infra/json-files.js")>();
+    vi.doMock("./installed-plugin-index-persisted-read.js", async (importOriginal) => {
+      const actual =
+        await importOriginal<typeof import("./installed-plugin-index-persisted-read.js")>();
       return {
         ...actual,
-        tryReadJson: vi.fn(async () => {
+        readPersistedInstalledPluginIndex: vi.fn(async () => {
           reads += 1;
           if (reads === 1) {
             firstReadStarted.resolve();
@@ -444,7 +446,7 @@ describe("plugin index install records store", () => {
             },
           };
         }),
-        tryReadJsonSync: vi.fn(() => null),
+        readPersistedInstalledPluginIndexSync: vi.fn(() => null),
       };
     });
     const reader = (await import(

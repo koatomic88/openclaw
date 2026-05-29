@@ -9,8 +9,8 @@ import { getCurrentPluginMetadataSnapshot } from "./current-plugin-metadata-snap
 import type { PluginDiscoveryResult } from "./discovery.js";
 import { fileSignatureMatches, hashJson } from "./installed-plugin-index-hash.js";
 import { hasOptionalMissingPluginManifestFile } from "./installed-plugin-index-manifest.js";
+import { readPersistedInstalledPluginIndexFingerprintSync } from "./installed-plugin-index-persisted-read.js";
 import { loadInstalledPluginIndexInstallRecordsSync } from "./installed-plugin-index-record-reader.js";
-import { resolveInstalledPluginIndexStorePath } from "./installed-plugin-index-store-path.js";
 import {
   inspectPersistedInstalledPluginIndex,
   readPersistedInstalledPluginIndexSync,
@@ -142,12 +142,10 @@ function resolvePluginRegistrySnapshotMemoKey(
     preferPersisted: params.preferPersisted ?? null,
     // Plugin manifests are process-stable inside the Gateway, while the persisted
     // registry envelope can change through explicit refresh/install flows.
-    registryFile: fileFingerprint(
-      resolveInstalledPluginIndexStorePath({
-        env,
-        ...(params.stateDir ? { stateDir: params.stateDir } : {}),
-      }),
-    ),
+    registryIndex: readPersistedInstalledPluginIndexFingerprintSync({
+      env,
+      ...(params.stateDir ? { stateDir: params.stateDir } : {}),
+    }),
     pluginRoots: fingerprintPluginSourceRoots(params, env),
     stateDir: params.stateDir ? resolveUserPath(params.stateDir, env) : null,
     workspaceDir: params.workspaceDir ? resolveUserPath(params.workspaceDir, env) : null,

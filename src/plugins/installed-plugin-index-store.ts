@@ -1,6 +1,5 @@
 import { resolveCompatibilityHostVersion } from "../version.js";
 import { normalizePluginsConfig, resolveEffectiveEnableState } from "./config-state.js";
-import { clearCurrentPluginMetadataSnapshotState } from "./current-plugin-metadata-state.js";
 import { isPluginEnabledByDefaultForPlatform } from "./default-enablement.js";
 import { buildInstalledPluginIndex } from "./installed-plugin-index-build.js";
 import { hashJson } from "./installed-plugin-index-hash.js";
@@ -26,7 +25,7 @@ import {
   type LoadInstalledPluginIndexParams,
   type RefreshInstalledPluginIndexParams,
 } from "./installed-plugin-index-types.js";
-import { clearRegisteredPluginMetadataSnapshotMemo } from "./plugin-metadata-snapshot-memo.js";
+import { clearPluginMetadataLifecycleCaches } from "./plugin-metadata-lifecycle.js";
 export {
   readPersistedInstalledPluginIndex,
   readPersistedInstalledPluginIndexSync,
@@ -49,8 +48,7 @@ function withInstalledPluginIndexWarning(index: InstalledPluginIndex): Installed
 }
 
 function clearInstalledPluginMetadataCaches(): void {
-  clearCurrentPluginMetadataSnapshotState();
-  clearRegisteredPluginMetadataSnapshotMemo();
+  clearPluginMetadataLifecycleCaches();
 }
 
 export async function writePersistedInstalledPluginIndex(
