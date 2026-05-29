@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WebSocket } from "ws";
+import { ConnectErrorDetailCodes } from "../../packages/gateway-protocol/src/connect-error-details.js";
 import { resolveMainSessionKeyFromConfig } from "../config/sessions.js";
 import { drainSystemEvents } from "../infra/system-events.js";
 import { withEnvAsync } from "../test-utils/env.js";
@@ -10,7 +11,6 @@ import {
   TALK_TEST_PROVIDER_ID,
 } from "../test-utils/talk-test-provider.js";
 import { openTrackedWs } from "./device-authz.test-helpers.js";
-import { ConnectErrorDetailCodes } from "./protocol/connect-error-details.js";
 import {
   connectReq,
   connectOk,
@@ -60,6 +60,7 @@ const hoisted = vi.hoisted(() => {
   const resetModelCatalogCache = vi.fn();
   const clearCurrentProviderAuthState = vi.fn();
   const warmCurrentProviderAuthState = vi.fn(async (_cfg: unknown) => {});
+  const warmCurrentProviderAuthStateOffMainThread = vi.fn(async (_cfg: unknown) => {});
   const disposeAllSessionMcpRuntimes = vi.fn(async () => {});
   const resolveOpenClawPackageRootSync = vi.fn((_params: unknown) => "/package");
 
@@ -166,6 +167,7 @@ const hoisted = vi.hoisted(() => {
     resetModelCatalogCache,
     clearCurrentProviderAuthState,
     warmCurrentProviderAuthState,
+    warmCurrentProviderAuthStateOffMainThread,
     disposeAllSessionMcpRuntimes,
     resolveOpenClawPackageRootSync,
     providerManager,
@@ -210,6 +212,7 @@ vi.mock("../agents/model-catalog.js", async () => {
 vi.mock("../agents/model-provider-auth.js", () => ({
   clearCurrentProviderAuthState: hoisted.clearCurrentProviderAuthState,
   warmCurrentProviderAuthState: hoisted.warmCurrentProviderAuthState,
+  warmCurrentProviderAuthStateOffMainThread: hoisted.warmCurrentProviderAuthStateOffMainThread,
 }));
 
 vi.mock("../agents/agent-bundle-mcp-tools.js", async () => {
@@ -346,6 +349,8 @@ describe("gateway hot reload", () => {
     hoisted.clearCurrentProviderAuthState.mockReset();
     hoisted.warmCurrentProviderAuthState.mockReset();
     hoisted.warmCurrentProviderAuthState.mockResolvedValue(undefined);
+    hoisted.warmCurrentProviderAuthStateOffMainThread.mockReset();
+    hoisted.warmCurrentProviderAuthStateOffMainThread.mockResolvedValue(undefined);
     hoisted.disposeAllSessionMcpRuntimes.mockReset();
     hoisted.disposeAllSessionMcpRuntimes.mockResolvedValue(undefined);
     hoisted.resolveOpenClawPackageRootSync.mockClear();
