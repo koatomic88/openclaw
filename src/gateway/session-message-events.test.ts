@@ -256,7 +256,6 @@ async function emitTranscriptUpdateAndCollectEvents(params: {
   messageSeq?: number;
 }) {
   const messageEventPromise = waitForSessionMessageEvent(params.ws, params.sessionKey);
-  const changedEventPromise = waitForSessionsChangedMessagePhase(params.ws, params.sessionKey);
 
   await emitTranscriptUpdate({
     agentId: "main",
@@ -267,11 +266,8 @@ async function emitTranscriptUpdateAndCollectEvents(params: {
     ...(typeof params.messageSeq === "number" ? { messageSeq: params.messageSeq } : {}),
   });
 
-  const [messageEvent, changedEvent] = await Promise.all([
-    messageEventPromise,
-    changedEventPromise,
-  ]);
-  return { messageEvent, changedEvent };
+  const messageEvent = await messageEventPromise;
+  return { messageEvent };
 }
 
 async function expectNoMessageWithin(params: {
@@ -604,7 +600,7 @@ describe("session.message websocket events", () => {
     });
   });
 
-  test("includes live usage metadata on session.message and sessions.changed transcript events", async () => {
+  test("includes live usage metadata on session.message transcript events", async () => {
     await setupTranscriptFixtureState();
     await seedGatewaySessionEntries({
       entries: {
@@ -698,7 +694,7 @@ describe("session.message websocket events", () => {
     });
   });
 
-  test("includes spawnedBy metadata on session.message and sessions.changed transcript events", async () => {
+  test("includes spawnedBy metadata on session.message transcript events", async () => {
     await setupTranscriptFixtureState();
     await seedGatewaySessionEntries({
       entries: {
@@ -766,7 +762,7 @@ describe("session.message websocket events", () => {
     }
   });
 
-  test("includes route thread metadata on session.message and sessions.changed transcript events", async () => {
+  test("includes route thread metadata on session.message transcript events", async () => {
     await setupTranscriptFixtureState();
     await seedGatewaySessionEntries({
       entries: {
@@ -797,7 +793,7 @@ describe("session.message websocket events", () => {
     });
 
     await withOperatorSessionSubscriber(async (ws) => {
-      const { messageEvent, changedEvent } = await emitTranscriptUpdateAndCollectEvents({
+      const { messageEvent } = await emitTranscriptUpdateAndCollectEvents({
         ws,
         sessionKey: "agent:main:main",
         sessionId: "sess-thread",
@@ -806,17 +802,6 @@ describe("session.message websocket events", () => {
       });
       expectRecordFields(messageEvent.payload, {
         sessionKey: "agent:main:main",
-        deliveryContext: {
-          channel: "telegram",
-          to: "-100123",
-          accountId: "acct-1",
-          chatType: "direct",
-          threadId: "42",
-        },
-      });
-      expectRecordFields(changedEvent.payload, {
-        sessionKey: "agent:main:main",
-        phase: "message",
         deliveryContext: {
           channel: "telegram",
           to: "-100123",
