@@ -1,4 +1,4 @@
-// packages/agent-core/src validation helpers and runtime behavior.
+// Tool-call argument validation and JSON-schema coercion for agent-core.
 import { Compile } from "typebox/compile";
 import type { TLocalizedValidationError } from "typebox/error";
 import { Value } from "typebox/value";
@@ -282,7 +282,7 @@ function formatValidationPath(error: TLocalizedValidationError): string {
   return path || "root";
 }
 
-/** Public helper for validate Tool Call behavior in packages/agent-core. */
+/** Locate the requested tool and validate/coerce its model-supplied arguments. */
 export function validateToolCall(tools: Tool[], toolCall: ToolCall): unknown {
   const tool = tools.find((t) => t.name === toolCall.name);
   if (!tool) {
@@ -291,7 +291,7 @@ export function validateToolCall(tools: Tool[], toolCall: ToolCall): unknown {
   return validateToolArguments(tool, toolCall);
 }
 
-/** Public helper for validate Tool Arguments behavior in packages/agent-core. */
+/** Validate and coerce tool-call arguments against a TypeBox or JSON schema. */
 export function validateToolArguments(tool: Tool, toolCall: ToolCall): unknown {
   const args = structuredClone(toolCall.arguments);
   Value.Convert(tool.parameters, args);
