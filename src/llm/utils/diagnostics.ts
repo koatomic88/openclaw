@@ -1,5 +1,6 @@
-// llm/utils diagnostics helpers and runtime behavior.
-/** Shared type for Diagnostic Error Info in src/llm/utils. */
+// Diagnostic payload helpers for attaching provider/runtime failures to
+// assistant messages without throwing away original error details.
+/** Serializable error facts captured for assistant-message diagnostics. */
 export interface DiagnosticErrorInfo {
   name?: string;
   message: string;
@@ -7,7 +8,7 @@ export interface DiagnosticErrorInfo {
   code?: string | number;
 }
 
-/** Shared type for Assistant Message Diagnostic in src/llm/utils. */
+/** Diagnostic entry stored on assistant messages for later debugging. */
 export interface AssistantMessageDiagnostic {
   type: string;
   timestamp: number;
@@ -15,7 +16,7 @@ export interface AssistantMessageDiagnostic {
   details?: Record<string, unknown>;
 }
 
-/** Reused helper for format Thrown Value behavior in src/llm/utils. */
+/** Convert any thrown value into a human-readable diagnostic message. */
 export function formatThrownValue(value: unknown): string {
   if (value instanceof Error) {
     return value.message || value.name;
@@ -26,7 +27,7 @@ export function formatThrownValue(value: unknown): string {
   return String(value);
 }
 
-/** Reused helper for extract Diagnostic Error behavior in src/llm/utils. */
+/** Extract serializable diagnostic facts from an Error or arbitrary throw value. */
 export function extractDiagnosticError(error: unknown): DiagnosticErrorInfo {
   if (!(error instanceof Error)) {
     return { name: "ThrownValue", message: formatThrownValue(error) };
@@ -40,7 +41,7 @@ export function extractDiagnosticError(error: unknown): DiagnosticErrorInfo {
   };
 }
 
-/** Reused helper for create Assistant Message Diagnostic behavior in src/llm/utils. */
+/** Build a timestamped diagnostic entry for an assistant message. */
 export function createAssistantMessageDiagnostic(
   type: string,
   error: unknown,
@@ -49,7 +50,7 @@ export function createAssistantMessageDiagnostic(
   return { type, timestamp: Date.now(), error: extractDiagnosticError(error), details };
 }
 
-/** Reused helper for append Assistant Message Diagnostic behavior in src/llm/utils. */
+/** Append a diagnostic without mutating an existing diagnostics array instance. */
 export function appendAssistantMessageDiagnostic(
   message: { diagnostics?: AssistantMessageDiagnostic[] },
   diagnostic: AssistantMessageDiagnostic,

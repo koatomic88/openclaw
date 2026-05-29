@@ -1,7 +1,8 @@
-// Shared types for llm/utils/oauth types behavior.
+// Public OAuth provider and callback contracts used by built-in and custom LLM
+// authentication flows.
 import type { Model } from "../../types.js";
 
-/** Shared type for OAuth Credentials in src/llm/utils. */
+/** Persisted OAuth token bundle for provider API access. */
 export type OAuthCredentials = {
   refresh: string;
   access: string;
@@ -9,38 +10,38 @@ export type OAuthCredentials = {
   [key: string]: unknown;
 };
 
-/** Shared type for OAuth Provider Id in src/llm/utils. */
+/** Provider id used as the OAuth registry key. */
 export type OAuthProviderId = string;
 
 /** @deprecated Use OAuthProviderId instead */
 export type OAuthProvider = OAuthProviderId;
 
-/** Shared type for OAuth Prompt in src/llm/utils. */
+/** Text prompt shown during an OAuth login flow. */
 export type OAuthPrompt = {
   message: string;
   placeholder?: string;
   allowEmpty?: boolean;
 };
 
-/** Shared type for OAuth Auth Info in src/llm/utils. */
+/** Browser authentication URL plus optional user-facing instructions. */
 export type OAuthAuthInfo = {
   url: string;
   instructions?: string;
 };
 
-/** Shared type for OAuth Select Option in src/llm/utils. */
+/** Selectable login/account option. */
 export type OAuthSelectOption = {
   id: string;
   label: string;
 };
 
-/** Shared type for OAuth Select Prompt in src/llm/utils. */
+/** Interactive selection prompt used by providers with multiple choices. */
 export type OAuthSelectPrompt = {
   message: string;
   options: OAuthSelectOption[];
 };
 
-/** Shared type for OAuth Login Callbacks in src/llm/utils. */
+/** UI/runtime callbacks a provider uses while performing OAuth login. */
 export interface OAuthLoginCallbacks {
   onAuth: (info: OAuthAuthInfo) => void;
   onPrompt: (prompt: OAuthPrompt) => Promise<string>;
@@ -51,7 +52,7 @@ export interface OAuthLoginCallbacks {
   signal?: AbortSignal;
 }
 
-/** Shared type for OAuth Provider Interface in src/llm/utils. */
+/** Provider implementation contract for login, refresh, and API-key extraction. */
 export interface OAuthProviderInterface {
   readonly id: OAuthProviderId;
   readonly name: string;
