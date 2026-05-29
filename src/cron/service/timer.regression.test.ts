@@ -585,7 +585,7 @@ describe("cron service timer regressions", () => {
       },
     });
     const state = createRunningCronServiceState({
-      storePath: "/tmp/cron-recurring-rate-limit-edited.json",
+      storeKey: "cron-recurring-rate-limit-edited",
       log: noopLogger,
       nowMs: () => retryStartedAt,
       jobs: [cronJob],
@@ -2081,7 +2081,7 @@ describe("cron service timer regressions", () => {
       },
     };
     const state = createRunningCronServiceState({
-      storePath: "/tmp/cron-force-run-transient-anchor-test.json",
+      storeKey: "cron-force-run-transient-anchor-test",
       log: noopLogger,
       nowMs: () => nowMs,
       jobs: [job],
