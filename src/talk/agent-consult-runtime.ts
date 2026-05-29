@@ -235,7 +235,7 @@ export async function consultRealtimeVoiceAgent(params: {
   const consultDeliveryContext = resolvedDeliveryContext;
   const sessionId = sessionEntry.sessionId;
 
-  const result = await params.agentRuntime.runEmbeddedPiAgent({
+  const result = await params.agentRuntime.runEmbeddedAgent({
     sessionId,
     sessionKey: params.sessionKey,
     sandboxSessionKey: resolveRealtimeVoiceAgentSandboxSessionKey(agentId, params.sessionKey),

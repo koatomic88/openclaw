@@ -265,7 +265,7 @@ export function createLlmTaskTool(api: OpenClawPluginApi) {
       const sessionId = `llm-task-${randomUUID()}`;
       const agentId = api.config ? resolveDefaultAgentId(api.config) : undefined;
 
-      const result = await api.runtime.agent.runEmbeddedPiAgent({
+      const result = await api.runtime.agent.runEmbeddedAgent({
         sessionId,
         agentId,
         workspaceDir: api.config?.agents?.defaults?.workspace ?? process.cwd(),
