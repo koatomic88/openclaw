@@ -1,7 +1,7 @@
-// video-generation model ref helpers and runtime behavior.
+// Video-generation wrapper around the shared provider/model reference parser.
 import { parseGenerationModelRef } from "../media-generation/model-ref.js";
 
-/** Reused helper for parse Video Generation Model Ref behavior in src/video-generation. */
+/** Parses `provider/model` refs for video generation using the shared media-generation rules. */
 export function parseVideoGenerationModelRef(
   raw: string | undefined,
 ): { provider: string; model: string } | null {
