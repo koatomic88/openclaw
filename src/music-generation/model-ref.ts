@@ -1,7 +1,7 @@
-// music-generation model ref helpers and runtime behavior.
+// Music-generation wrapper around the shared provider/model reference parser.
 import { parseGenerationModelRef } from "../media-generation/model-ref.js";
 
-/** Reused helper for parse Music Generation Model Ref behavior in src/music-generation. */
+/** Parses `provider/model` refs for music generation using the shared media-generation rules. */
 export function parseMusicGenerationModelRef(
   raw: string | undefined,
 ): { provider: string; model: string } | null {
