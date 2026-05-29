@@ -11,6 +11,7 @@ import {
   registerMemoryPromptSection,
 } from "../../../plugins/memory-state.js";
 import { listTrajectoryRuntimeEvents } from "../../../trajectory/runtime-store.sqlite.js";
+import type { StreamFn } from "../../agent-core-contract.js";
 import {
   type AttemptContextEngine,
   buildLoopPromptCacheInfo,
@@ -2097,7 +2098,10 @@ describe("runEmbeddedAttempt tool-result guard budget wiring", () => {
       },
       createSession: () => {
         const session = createDefaultEmbeddedSession({ initialMessages: sessionMessages });
-        session.agent.streamFn = async (_model, context) => {
+        const streamFn = async (
+          _model: Parameters<StreamFn>[0],
+          context: Parameters<StreamFn>[1],
+        ) => {
           const providerMessages = (context as { messages?: AgentMessage[] } | undefined)?.messages;
           submittedMessages = providerMessages ?? [];
           return {
@@ -2109,10 +2113,12 @@ describe("runEmbeddedAttempt tool-result guard budget wiring", () => {
             },
           };
         };
+        session.agent.streamFn = streamFn;
         session.prompt = async (_prompt, options) => {
           promptHandlerMessages = session.messages.map((message) => message as AgentMessage);
           options?.preflightResult?.(true);
-          await session.agent.streamFn?.({} as never, { messages: session.messages } as never, {});
+          const wrappedStreamFn = session.agent.streamFn as StreamFn | undefined;
+          await wrappedStreamFn?.({} as never, { messages: session.messages } as never, {});
           session.messages = [...session.messages, doneMessage];
         };
         return session;
