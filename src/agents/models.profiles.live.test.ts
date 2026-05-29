@@ -86,6 +86,19 @@ const LIVE_MODELS_JSON_TIMEOUT_MS = resolveLiveModelsJsonTimeoutMs(
 );
 const LIVE_FILE_PROBE_ENABLED = isLiveModelProbeEnabled(process.env, LIVE_MODEL_FILE_PROBE_ENV);
 const LIVE_IMAGE_PROBE_ENABLED = isLiveModelProbeEnabled(process.env, LIVE_MODEL_IMAGE_PROBE_ENV);
+const OLLAMA_DEFAULT_BASE_URL = "http://127.0.0.1:11434";
+const OLLAMA_LOCAL_API_KEY_MARKER = "ollama-local";
+const OLLAMA_REMOTE_API_KEY_ENV = "OLLAMA_API_KEY";
+const LOCAL_OLLAMA_HOSTNAMES = new Set([
+  "localhost",
+  "127.0.0.1",
+  "0.0.0.0",
+  "::1",
+  "::",
+  "docker.orb.internal",
+  "host.docker.internal",
+  "host.orb.internal",
+]);
 let activeLiveCompletionConfig: OpenClawConfig | undefined;
 
 const describeLive = LIVE ? describe : describe.skip;
@@ -135,6 +148,19 @@ function formatExplicitLiveModelRef(ref: { provider: string; id: string }): stri
   return `${ref.provider}/${ref.id}`;
 }
 
+function filterLiveModelRefsByProvider(
+  refs: readonly { provider: string; id: string }[],
+  providerFilter: Set<string> | null,
+): Array<{ provider: string; id: string }> {
+  if (!providerFilter) {
+    return [...refs];
+  }
+  const normalizedProviders = new Set(
+    [...providerFilter].map((provider) => normalizeProviderId(provider)).filter(Boolean),
+  );
+  return refs.filter((ref) => normalizedProviders.has(normalizeProviderId(ref.provider)));
+}
+
 function findUnmatchedExplicitLiveModelRefs(params: {
   refs: readonly { provider: string; id: string }[];
   models: readonly Pick<Model, "provider" | "id">[];
@@ -160,6 +186,7 @@ function findUnmatchedExplicitLiveModelRefs(params: {
 function resolveLiveProviderDiscoveryProviderIds(params: {
   providerFilter: Set<string> | null;
   explicitRefs: readonly { provider: string; id: string }[];
+  priorityRefs?: readonly { provider: string; id: string }[];
 }): string[] | undefined {
   const providers = new Set<string>();
   for (const provider of params.providerFilter ?? []) {
@@ -169,6 +196,9 @@ function resolveLiveProviderDiscoveryProviderIds(params: {
     }
   }
   for (const ref of params.explicitRefs) {
+    providers.add(ref.provider);
+  }
+  for (const ref of params.priorityRefs ?? []) {
     providers.add(ref.provider);
   }
   return providers.size > 0
@@ -206,12 +236,100 @@ function applyLiveProviderDiscoveryPluginCompat(params: {
   env?: NodeJS.ProcessEnv;
 }): OpenClawConfig {
   const pluginIds = resolveLiveProviderDiscoveryPluginIds(params);
-  return pluginIds.length > 0
-    ? (withBundledPluginEnablementCompat({
-        config: params.config,
-        pluginIds,
-      }) ?? params.config)
-    : params.config;
+  const pluginConfig =
+    pluginIds.length > 0
+      ? (withBundledPluginEnablementCompat({
+          config: params.config,
+          pluginIds,
+        }) ?? params.config)
+      : params.config;
+  return applyLiveOllamaProviderEnvCompat({
+    config: pluginConfig,
+    providers: params.providers,
+    env: params.env,
+  });
+}
+
+function applyLiveOllamaProviderEnvCompat(params: {
+  config: OpenClawConfig;
+  providers: readonly string[] | undefined;
+  env?: NodeJS.ProcessEnv;
+}): OpenClawConfig {
+  if (!params.providers?.some((provider) => normalizeProviderId(provider) === "ollama")) {
+    return params.config;
+  }
+  const existingProvider = params.config.models?.providers?.ollama;
+  const configuredBaseUrl = readConfiguredOllamaBaseUrl(existingProvider);
+  const baseUrl =
+    params.env?.OPENCLAW_LIVE_OLLAMA_BASE_URL?.trim() ||
+    configuredBaseUrl ||
+    OLLAMA_DEFAULT_BASE_URL;
+  const apiKey = isLocalOllamaBaseUrl(baseUrl)
+    ? OLLAMA_LOCAL_API_KEY_MARKER
+    : OLLAMA_REMOTE_API_KEY_ENV;
+  return {
+    ...params.config,
+    models: {
+      ...params.config.models,
+      providers: {
+        ...params.config.models?.providers,
+        ollama: {
+          ...existingProvider,
+          api: "ollama",
+          baseUrl,
+          apiKey: existingProvider?.apiKey ?? apiKey,
+          models: existingProvider?.models ?? [],
+        },
+      },
+    },
+  };
+}
+
+function readConfiguredOllamaBaseUrl(provider: unknown): string {
+  return readStringProperty(provider, "baseUrl") || readStringProperty(provider, "baseURL");
+}
+
+function readStringProperty(value: unknown, key: string): string {
+  if (!value || typeof value !== "object" || !(key in value)) {
+    return "";
+  }
+  const raw = (value as Record<string, unknown>)[key];
+  return typeof raw === "string" ? raw.trim() : "";
+}
+
+function isLocalOllamaBaseUrl(baseUrl: string): boolean {
+  try {
+    let host = new URL(baseUrl).hostname.toLowerCase();
+    if (host.startsWith("[") && host.endsWith("]")) {
+      host = host.slice(1, -1);
+    }
+    return (
+      LOCAL_OLLAMA_HOSTNAMES.has(host) ||
+      host.endsWith(".local") ||
+      isIpv4PrivateRange(host) ||
+      isIpv6LocalRange(host) ||
+      (!host.includes(".") && !host.includes(":"))
+    );
+  } catch {
+    return false;
+  }
+}
+
+function isIpv4PrivateRange(host: string): boolean {
+  if (!/^\d+\.\d+\.\d+\.\d+$/.test(host)) {
+    return false;
+  }
+  const octets = host.split(".").map((part) => Number.parseInt(part, 10));
+  if (octets.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) {
+    return false;
+  }
+  const [a, b] = octets;
+  return a === 10 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168);
+}
+
+function isIpv6LocalRange(host: string): boolean {
+  const lower = host.toLowerCase();
+  return /^fe[89ab][0-9a-f]:/.test(lower) || /^f[cd][0-9a-f]{2}:/.test(lower);
 }
 
 function logProgress(message: string): void {
@@ -503,6 +621,25 @@ describe("explicit live model discovery scope", () => {
     ).toEqual(["deepseek", "together", "zai"]);
   });
 
+  it("includes curated small-model providers in discovery scope", () => {
+    expect(
+      resolveLiveProviderDiscoveryProviderIds({
+        providerFilter: null,
+        explicitRefs: [],
+        priorityRefs: listPrioritizedSmallLiveModelRefs(),
+      }),
+    ).toContain("ollama");
+  });
+
+  it("respects provider filters for curated small-model refs", () => {
+    expect(
+      filterLiveModelRefsByProvider(
+        listPrioritizedSmallLiveModelRefs(),
+        parseProviderFilter("openrouter"),
+      ).map((ref) => ref.provider),
+    ).toEqual(["openrouter", "openrouter", "openrouter"]);
+  });
+
   it("activates bundled provider plugins for explicit live discovery", () => {
     const cfg = {
       plugins: {
@@ -521,6 +658,143 @@ describe("explicit live model discovery scope", () => {
         env: {},
       }).plugins?.entries?.deepseek,
     ).toEqual({ enabled: true });
+  });
+
+  it("hydrates Ollama Cloud provider settings from live env when Ollama is in scope", () => {
+    const cfg = {
+      plugins: {
+        bundledDiscovery: "compat",
+      },
+    } satisfies OpenClawConfig;
+
+    const result = applyLiveProviderDiscoveryPluginCompat({
+      config: cfg,
+      providers: ["ollama"],
+      env: {
+        OPENCLAW_LIVE_OLLAMA_BASE_URL: "https://ollama.com",
+      },
+    });
+
+    expect(result.plugins?.entries?.ollama).toEqual({ enabled: true });
+    expect(result.models?.providers?.ollama).toEqual({
+      api: "ollama",
+      baseUrl: "https://ollama.com",
+      apiKey: OLLAMA_REMOTE_API_KEY_ENV,
+      models: [],
+    });
+  });
+
+  it("defaults Ollama live provider settings to the local endpoint", () => {
+    const cfg = {
+      plugins: {
+        bundledDiscovery: "compat",
+      },
+    } satisfies OpenClawConfig;
+
+    const result = applyLiveProviderDiscoveryPluginCompat({
+      config: cfg,
+      providers: ["ollama"],
+      env: {},
+    });
+
+    expect(result.plugins?.entries?.ollama).toEqual({ enabled: true });
+    expect(result.models?.providers?.ollama).toEqual({
+      api: "ollama",
+      baseUrl: OLLAMA_DEFAULT_BASE_URL,
+      apiKey: OLLAMA_LOCAL_API_KEY_MARKER,
+      models: [],
+    });
+  });
+
+  it("preserves configured Ollama provider endpoints when live env is absent", () => {
+    const cfg = {
+      plugins: {
+        bundledDiscovery: "compat",
+      },
+      models: {
+        providers: {
+          ollama: {
+            api: "ollama",
+            baseUrl: "http://192.168.1.10:11434",
+            models: [],
+          },
+        },
+      },
+    } satisfies OpenClawConfig;
+
+    const result = applyLiveProviderDiscoveryPluginCompat({
+      config: cfg,
+      providers: ["ollama"],
+      env: {},
+    });
+
+    expect(result.models?.providers?.ollama).toEqual({
+      api: "ollama",
+      baseUrl: "http://192.168.1.10:11434",
+      apiKey: OLLAMA_LOCAL_API_KEY_MARKER,
+      models: [],
+    });
+  });
+
+  it("honors the documented Ollama baseURL alias when live env is absent", () => {
+    const cfg = {
+      plugins: {
+        bundledDiscovery: "compat",
+      },
+      models: {
+        providers: {
+          ollama: {
+            api: "ollama",
+            baseURL: "http://ollama.local:11434",
+            models: [],
+          },
+        },
+      },
+    } as unknown as OpenClawConfig;
+
+    const result = applyLiveProviderDiscoveryPluginCompat({
+      config: cfg,
+      providers: ["ollama"],
+      env: {},
+    });
+
+    expect(result.models?.providers?.ollama).toEqual({
+      api: "ollama",
+      baseURL: "http://ollama.local:11434",
+      baseUrl: "http://ollama.local:11434",
+      apiKey: OLLAMA_LOCAL_API_KEY_MARKER,
+      models: [],
+    });
+  });
+
+  it("uses the local Ollama auth marker for self-hosted live env URLs", () => {
+    const cfg = {
+      plugins: {
+        bundledDiscovery: "compat",
+      },
+    } satisfies OpenClawConfig;
+
+    for (const baseUrl of [
+      "http://127.0.0.1:11434",
+      "http://192.168.1.10:11434",
+      "http://ollama.local:11434",
+      "http://ollama-host:11434",
+    ]) {
+      const result = applyLiveProviderDiscoveryPluginCompat({
+        config: cfg,
+        providers: ["ollama"],
+        env: {
+          OPENCLAW_LIVE_OLLAMA_BASE_URL: baseUrl,
+        },
+      });
+
+      expect(result.models?.providers?.ollama).toEqual({
+        api: "ollama",
+        baseUrl,
+        apiKey: OLLAMA_LOCAL_API_KEY_MARKER,
+        models: [],
+      });
+    }
   });
 
   it("reports explicit refs that never become runnable candidates", () => {
@@ -914,9 +1188,13 @@ describeLive("live models (profile keys)", () => {
       const filter = useExplicit ? parseModelFilter(rawModels) : null;
       const explicitRefs = useExplicit ? parseExplicitLiveModelRefs(filter) : [];
       const providers = parseProviderFilter(process.env.OPENCLAW_LIVE_PROVIDERS);
+      const priorityRefs = useSmall
+        ? filterLiveModelRefsByProvider(listPrioritizedSmallLiveModelRefs(), providers)
+        : [];
       const providerList = resolveLiveProviderDiscoveryProviderIds({
         providerFilter: providers,
         explicitRefs,
+        priorityRefs,
       });
       const cfg = applyLiveProviderDiscoveryPluginCompat({
         config: loadedCfg,
@@ -992,7 +1270,7 @@ describeLive("live models (profile keys)", () => {
           ...(explicitRefs.length > 0
             ? { refs: explicitRefs }
             : useSmall
-              ? { refs: listPrioritizedSmallLiveModelRefs() }
+              ? { refs: priorityRefs }
               : {}),
         });
         if (augmented.added.length > 0) {
