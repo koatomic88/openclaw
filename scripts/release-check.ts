@@ -36,7 +36,10 @@ import {
 } from "./lib/bundled-plugin-build-entries.mjs";
 import { collectPackUnpackedSizeErrors as collectNpmPackUnpackedSizeErrors } from "./lib/npm-pack-budget.mjs";
 import { collectBundledPluginPackageDependencySpecs } from "./lib/plugin-package-dependencies.mjs";
-import { listPluginSdkDistArtifacts } from "./lib/plugin-sdk-entries.mjs";
+import {
+  listPluginSdkDistArtifacts,
+  listPrivateLocalOnlyPluginSdkDistArtifacts,
+} from "./lib/plugin-sdk-entries.mjs";
 import {
   runInstalledWorkspaceBootstrapSmoke,
   WORKSPACE_TEMPLATE_PACK_PATHS,
@@ -107,10 +110,12 @@ const forbiddenPrefixes = [
   "dist/plugin-sdk/qa-channel-protocol.",
   "dist/plugin-sdk/qa-lab.",
   "dist/plugin-sdk/qa-runtime.",
+  "dist/plugin-sdk/src/",
   "dist/plugin-sdk/src/plugin-sdk/qa-channel.d.ts",
   "dist/plugin-sdk/src/plugin-sdk/qa-channel-protocol.d.ts",
   "dist/plugin-sdk/src/plugin-sdk/qa-lab.d.ts",
   "dist/plugin-sdk/src/plugin-sdk/qa-runtime.d.ts",
+  ...listPrivateLocalOnlyPluginSdkDistArtifacts(),
   "dist/qa-runtime-",
   "dist/plugin-sdk/.tsbuildinfo",
   "docs/.generated/",
@@ -124,6 +129,12 @@ const forbiddenPrivateQaContentMarkers = [
   "qa-channel-protocol.js",
   "qa-lab/cli.js",
   "qa-lab/runtime-api.js",
+] as const;
+const forbiddenPrivatePluginSdkDeclarationMarkers = [
+  "//#region src/agents/test-helpers/",
+  "//#region src/plugin-sdk/test-helpers/",
+  "//#region src/test-helpers/",
+  "//#region src/test-utils/",
 ] as const;
 const forbiddenPrivateQaContentScanPrefixes = ["dist/"] as const;
 const forbiddenPluginSdkRootAliasMinifiedExportPattern = /\bmod\.[A-Za-z_$]\b/u;
@@ -908,7 +919,10 @@ export function collectForbiddenPackContentPaths(
       } catch {
         return false;
       }
-      return forbiddenPrivateQaContentMarkers.some((marker) => content.includes(marker));
+      return (
+        forbiddenPrivateQaContentMarkers.some((marker) => content.includes(marker)) ||
+        forbiddenPrivatePluginSdkDeclarationMarkers.some((marker) => content.includes(marker))
+      );
     })
     .toSorted((left, right) => left.localeCompare(right));
 }
