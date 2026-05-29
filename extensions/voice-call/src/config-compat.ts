@@ -212,7 +212,7 @@ export function migrateVoiceCallLegacyConfigInput(params: {
       }
     : undefined;
 
-  const config = {
+  const config: Record<string, unknown> = {
     ...raw,
     provider: raw.provider === "log" ? "mock" : raw.provider,
     fromNumber: raw.fromNumber ?? (typeof twilio?.from === "string" ? twilio.from : undefined),
