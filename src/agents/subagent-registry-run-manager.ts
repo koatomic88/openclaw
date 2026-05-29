@@ -40,10 +40,6 @@ const log = createSubsystemLogger("agents/subagent-registry");
 const RECOVERABLE_WAIT_RETRY_DELAY_MS = process.env.OPENCLAW_TEST_FAST === "1" ? 25 : 5_000;
 const WAIT_TIMEOUT_DEADLINE_SKEW_MS = 250;
 
-function shouldDeleteAttachments(entry: SubagentRunRecord) {
-  return entry.cleanup === "delete" || !entry.retainAttachmentsOnKeep;
-}
-
 function resolveSubagentRunDeadlineMs(
   entry: SubagentRunRecord,
   observedStartedAt?: number,

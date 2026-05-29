@@ -17,7 +17,6 @@ import { normalizeOptionalString } from "../../shared/string-coerce.js";
 import {
   applyFinalEffectiveToolPolicy,
   buildBundleMcpToolsFromCatalog,
-  deliveryContextFromSession,
   getActivePluginChannelRegistryVersion,
   getActivePluginRegistryVersion,
   listAgentIds,

@@ -42,7 +42,7 @@ function resolveDisplayStatus(
   return status === "error" ? "failed" : status;
 }
 
-function loadSubagentSessionEntry(params: SubagentsCommandContext["params"], childKey: string) {
+function loadSubagentSessionEntry(childKey: string) {
   const parsed = parseAgentSessionKey(childKey);
   const agentId = parsed?.agentId;
   if (!agentId) {
@@ -69,7 +69,7 @@ export function handleSubagentsInfoAction(ctx: SubagentsCommandContext): Command
   }
 
   const run = targetResolution.entry;
-  const { entry: sessionEntry } = loadSubagentSessionEntry(ctx.params, run.childSessionKey);
+  const { entry: sessionEntry } = loadSubagentSessionEntry(run.childSessionKey);
   const runtime =
     run.startedAt && Number.isFinite(run.startedAt)
       ? (formatDurationCompact((run.endedAt ?? Date.now()) - run.startedAt) ?? "n/a")

@@ -536,13 +536,17 @@ async function bindConversation(
   const bindingIdentity = resolveCodexCommandBindingIdentity(ctx);
   const existingBinding = await deps.readCodexAppServerBinding(bindingIdentity);
   const authProfileId = existingBinding?.authProfileId;
+  const { sessionAgentId } = resolveSessionAgentIds({
+    sessionKey: ctx.sessionKey,
+    config: ctx.config,
+  });
   const startParams: Parameters<CodexCommandDeps["startCodexConversationThread"]>[0] = {
     pluginConfig,
     config: ctx.config,
     sessionKey: ctx.sessionKey,
     sessionId: ctx.sessionId,
     workspaceDir,
-    agentDir: scope.agentDir,
+    agentDir: resolveAgentDir(ctx.config, sessionAgentId),
     threadId: parsed.threadId,
     model: parsed.model,
     modelProvider: parsed.provider,
