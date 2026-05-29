@@ -1,8 +1,9 @@
-// media-understanding openai compatible video helpers and runtime behavior.
+// OpenAI-compatible video request/response adapters for media-understanding
+// providers that accept data URL video inputs.
 import { normalizeOptionalString } from "../shared/string-coerce.js";
 import { normalizeTrimmedStringList } from "../shared/string-normalization.js";
 
-/** Shared type for Open Ai Compatible Video Payload in src/media-understanding. */
+/** Minimal OpenAI-compatible chat completion payload shape for video text. */
 export type OpenAiCompatibleVideoPayload = {
   choices?: Array<{
     message?: {
@@ -12,7 +13,7 @@ export type OpenAiCompatibleVideoPayload = {
   }>;
 };
 
-/** Reused helper for resolve Media Understanding String behavior in src/media-understanding. */
+/** Resolve a trimmed media-understanding string with a fallback. */
 export function resolveMediaUnderstandingString(
   value: string | undefined,
   fallback: string,
@@ -21,7 +22,7 @@ export function resolveMediaUnderstandingString(
   return trimmed || fallback;
 }
 
-/** Reused helper for coerce Open Ai Compatible Video Text behavior in src/media-understanding. */
+/** Extract text from OpenAI-compatible video response content shapes. */
 export function coerceOpenAiCompatibleVideoText(
   payload: OpenAiCompatibleVideoPayload,
 ): string | null {
@@ -44,7 +45,7 @@ export function coerceOpenAiCompatibleVideoText(
   return null;
 }
 
-/** Reused helper for build Open Ai Compatible Video Request Body behavior in src/media-understanding. */
+/** Build a chat-completions body containing a base64 data URL video input. */
 export function buildOpenAiCompatibleVideoRequestBody(params: {
   model: string;
   prompt: string;
