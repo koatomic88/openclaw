@@ -276,6 +276,10 @@ export abstract class MemoryManagerSyncOps {
         : this.settings.provider === "none"
           ? null
           : { id: this.settings.provider, model: this.settings.model };
+    const vectorReady =
+      params && "vectorReady" in params
+        ? Boolean(params.vectorReady)
+        : this.vector.available === true;
     return resolveMemoryIndexIdentityState({
       meta: params && "meta" in params ? params.meta! : this.readMeta(),
       provider,
@@ -293,7 +297,7 @@ export abstract class MemoryManagerSyncOps {
       }),
       chunkTokens: this.settings.chunking.tokens,
       chunkOverlap: this.settings.chunking.overlap,
-      vectorReady: Boolean(params?.vectorReady),
+      vectorReady,
       ftsTokenizer: this.settings.store.fts.tokenizer,
     });
   }
