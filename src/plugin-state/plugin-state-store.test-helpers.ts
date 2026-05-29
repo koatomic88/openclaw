@@ -1,7 +1,7 @@
-// plugin-state plugin state store test helpers helpers and runtime behavior.
+// Test helpers for seeding plugin-state storage.
 import { seedPluginStateSqliteEntriesForTests } from "./plugin-state-store.sqlite.js";
 
-/** Shared type for Plugin State Seed Entry in src/plugin-state. */
+/** Raw entry shape accepted by plugin-state seed helpers. */
 export type PluginStateSeedEntry = {
   pluginId: string;
   namespace: string;
@@ -11,7 +11,7 @@ export type PluginStateSeedEntry = {
   expiresAt?: number | null;
 };
 
-/** Reused helper for seed Plugin State Entries For Tests behavior in src/plugin-state. */
+/** Seeds JSON-serializable plugin-state entries directly into SQLite for tests. */
 export function seedPluginStateEntriesForTests(entries: PluginStateSeedEntry[]): void {
   if (entries.length === 0) {
     return;
