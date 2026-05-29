@@ -163,7 +163,7 @@ async function withFeedbackHandler(params: {
   process.env.OPENCLAW_STATE_DIR = tmpDir;
   try {
     if (params.sessionKey && params.sessionId) {
-      await upsertSessionEntry({
+      upsertSessionEntry({
         agentId: "default",
         env: { ...process.env, OPENCLAW_STATE_DIR: tmpDir },
         sessionKey: params.sessionKey,
