@@ -8,6 +8,7 @@ describe("provider auth profile helpers", () => {
     vi.doUnmock("../agents/auth-profiles/oauth.js");
     vi.doUnmock("../agents/auth-profiles/order.js");
     vi.doUnmock("../agents/auth-profiles/store.js");
+    vi.doUnmock("../plugin-state/plugin-state-store.js");
     vi.resetModules();
   });
 
@@ -172,14 +173,18 @@ describe("provider auth profile helpers", () => {
         ),
     );
 
+    vi.doMock("../plugin-state/plugin-state-store.js", () => ({
+      createPluginStateSyncKeyedStore: () => ({
+        lookup: () => undefined,
+        register: (_key: string, value: unknown) => saved.push(value),
+      }),
+    }));
+
     const { resolveCopilotApiToken } = await import("./provider-auth.js");
 
     const result = await resolveCopilotApiToken({
       githubToken: "github-token",
       fetchImpl,
-      cachePath: "/tmp/copilot-token.json",
-      loadJsonFileImpl: () => undefined,
-      saveJsonFileImpl: (_path, value) => saved.push(value),
     });
 
     expect(result.expiresAt).toBe(2_000_000_000_000);

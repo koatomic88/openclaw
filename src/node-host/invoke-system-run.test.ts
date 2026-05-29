@@ -19,11 +19,7 @@ import {
   setRuntimeConfigSnapshot,
 } from "../config/runtime-snapshot.js";
 import type { SystemRunApprovalPlan } from "../infra/exec-approvals.js";
-import {
-  loadExecApprovals,
-  resolveExecApprovalsPath,
-  saveExecApprovals,
-} from "../infra/exec-approvals.js";
+import { loadExecApprovals, saveExecApprovals } from "../infra/exec-approvals.js";
 import type { ExecAutoReviewer } from "../infra/exec-auto-review.js";
 import type { ExecHostResponse } from "../infra/exec-host.js";
 import { executeSqliteQuerySync, getNodeSqliteKysely } from "../infra/kysely-sync.js";

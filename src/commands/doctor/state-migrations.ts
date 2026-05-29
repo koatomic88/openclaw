@@ -47,6 +47,10 @@ import type { SessionBindingRecord } from "../../infra/outbound/session-binding.
 import { isWithinDir } from "../../infra/path-safety.js";
 import { createPluginStateKeyedStore } from "../../plugin-state/plugin-state-store.js";
 import {
+  countLivePluginStateEntriesForPlugin,
+  MAX_PLUGIN_STATE_ENTRIES_PER_PLUGIN,
+} from "../../plugin-state/plugin-state-store.sqlite.js";
+import {
   buildAgentMainSessionKey,
   DEFAULT_AGENT_ID,
   DEFAULT_MAIN_KEY,
@@ -391,10 +395,45 @@ async function runLegacyPluginStateImportPlan(
     maxEntries: plan.maxEntries,
     env,
   });
-  let imported = 0;
+  const entriesByKey = new Map<
+    string,
+    {
+      value: unknown;
+      ttlMs?: number;
+    }
+  >();
   for (const entry of entries) {
     const key = plan.scopeKey ? `${plan.scopeKey}:${entry.key}` : entry.key;
-    if (await store.registerIfAbsent(key, entry.value)) {
+    if (!entriesByKey.has(key) && (await store.lookup(key)) === undefined) {
+      entriesByKey.set(key, {
+        value: entry.value,
+        ...(entry.ttlMs != null ? { ttlMs: entry.ttlMs } : {}),
+      });
+    }
+  }
+  const pluginRoom =
+    MAX_PLUGIN_STATE_ENTRIES_PER_PLUGIN -
+    countLivePluginStateEntriesForPlugin({ pluginId: plan.pluginId, env });
+  if (entriesByKey.size > pluginRoom) {
+    return {
+      changes: [],
+      warnings: [
+        `Skipped migrating ${plan.label} because plugin state has room for ${Math.max(
+          0,
+          pluginRoom,
+        )} of ${entriesByKey.size} missing entries; left legacy source in place`,
+      ],
+    };
+  }
+  let imported = 0;
+  for (const [key, entry] of entriesByKey) {
+    if (
+      await store.registerIfAbsent(
+        key,
+        entry.value,
+        entry.ttlMs != null ? { ttlMs: entry.ttlMs } : undefined,
+      )
+    ) {
       imported += 1;
     }
   }

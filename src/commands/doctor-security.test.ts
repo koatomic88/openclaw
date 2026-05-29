@@ -474,7 +474,7 @@ describe("noteSecurityWarnings gateway exposure", () => {
   });
 
   it("warns when normalized tools.exec mode is broader than host exec defaults", async () => {
-    await withExecApprovalsFile(
+    await withExecApprovalsState(
       {
         version: 1,
         defaults: {

@@ -7,10 +7,10 @@ import { loadSqliteSessionEntries } from "../../config/sessions/session-entries.
 import { loadSqliteSessionTranscriptEvents } from "../../config/sessions/transcript-store.sqlite.js";
 import {
   createCorePluginStateKeyedStore,
-  MAX_PLUGIN_STATE_ENTRIES_PER_PLUGIN,
   createPluginStateKeyedStore,
   resetPluginStateStoreForTests,
 } from "../../plugin-state/plugin-state-store.js";
+import { MAX_PLUGIN_STATE_ENTRIES_PER_PLUGIN } from "../../plugin-state/plugin-state-store.sqlite.js";
 import { seedPluginStateEntriesForTests } from "../../plugin-state/plugin-state-store.test-helpers.js";
 import { closeOpenClawAgentDatabasesForTest } from "../../state/openclaw-agent-db.js";
 import { closeOpenClawStateDatabaseForTest } from "../../state/openclaw-state-db.js";
@@ -75,6 +75,10 @@ vi.mock("../../channels/plugins/bundled.js", async () => {
       },
     ]),
     listBundledChannelDoctorLegacyStateDetectors: vi.fn(() => [
+      ({ oauthDir }: { oauthDir: string }) => detectWhatsAppLegacyStateMigrations({ oauthDir }),
+      () => mockedChannelMigrationPlans.plans,
+    ]),
+    listBundledChannelLegacyStateMigrationDetectors: vi.fn(() => [
       ({ oauthDir }: { oauthDir: string }) => detectWhatsAppLegacyStateMigrations({ oauthDir }),
       () => mockedChannelMigrationPlans.plans,
     ]),

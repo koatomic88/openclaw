@@ -270,6 +270,18 @@ function countLivePluginStateEntries(
   return countRow(row);
 }
 
+/** Count live rows for one plugin across all namespaces in the shared state DB. */
+export function countLivePluginStateEntriesForPlugin(params: {
+  pluginId: string;
+  env?: NodeJS.ProcessEnv;
+}): number {
+  const { db } = openPluginStateDatabase("probe", envOptions(params.env));
+  return countLivePluginStateEntries(db, {
+    pluginId: params.pluginId,
+    now: Date.now(),
+  });
+}
+
 function deleteOldestPluginStateNamespaceEntries(
   db: DatabaseSync,
   params: { pluginId: string; namespace: string; protectedKey: string; now: number; limit: number },
