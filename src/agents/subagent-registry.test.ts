@@ -196,7 +196,7 @@ describe("subagent registry seam flow", () => {
     });
     mocks.scheduleOrphanRecovery.mockReset();
     mocks.resolveAgentTimeoutMs.mockReturnValue(1_000);
-    mocks.restoreSubagentRunsFromDisk.mockReturnValue(0);
+    mocks.restoreSubagentRunsFromState.mockReturnValue(0);
     mocks.callGateway.mockImplementation(async (request: { method?: string }) => {
       if (request.method === "agent.wait") {
         return {
@@ -411,7 +411,7 @@ describe("subagent registry seam flow", () => {
       }
       return {};
     });
-    mocks.loadSessionStore.mockReturnValue({
+    mocks.sessionRows.mockReturnValue({
       "agent:main:subagent:child": {
         sessionId: "sess-child",
         updatedAt: startedAt,
@@ -470,7 +470,7 @@ describe("subagent registry seam flow", () => {
       }
       return {};
     });
-    mocks.loadSessionStore.mockReturnValue({
+    mocks.sessionRows.mockReturnValue({
       "agent:main:subagent:child": {
         sessionId: "sess-child",
         updatedAt: startedAt,
@@ -543,7 +543,7 @@ describe("subagent registry seam flow", () => {
       }
       return {};
     });
-    mocks.loadSessionStore.mockReturnValue({
+    mocks.sessionRows.mockReturnValue({
       "agent:main:subagent:child": {
         sessionId: "sess-child",
         updatedAt: startedAt,
@@ -1070,7 +1070,7 @@ describe("subagent registry seam flow", () => {
       }
       return {};
     });
-    mocks.loadSessionStore.mockReturnValue({
+    mocks.sessionRows.mockReturnValue({
       "agent:main:subagent:child": {
         sessionId: "sess-child",
         updatedAt: startedAt,
@@ -1147,7 +1147,7 @@ describe("subagent registry seam flow", () => {
       }
       return {};
     });
-    mocks.loadSessionStore.mockReturnValue({
+    mocks.sessionRows.mockReturnValue({
       "agent:main:subagent:child": {
         sessionId: "sess-child",
         updatedAt: startedAt,
@@ -1189,7 +1189,7 @@ describe("subagent registry seam flow", () => {
     const startedAt = Date.parse("2026-03-24T11:59:00Z");
     vi.setSystemTime(startedAt + 61_000);
     mocks.resolveAgentTimeoutMs.mockReturnValue(60_000);
-    mocks.restoreSubagentRunsFromDisk.mockImplementation(((params: {
+    mocks.restoreSubagentRunsFromState.mockImplementation(((params: {
       runs: Map<string, unknown>;
       mergeOnly?: boolean;
     }) => {
@@ -1244,7 +1244,7 @@ describe("subagent registry seam flow", () => {
     const observedStartedAt = createdAt + 10_000;
     vi.setSystemTime(createdAt + 65_000);
     mocks.resolveAgentTimeoutMs.mockReturnValue(60_000);
-    mocks.restoreSubagentRunsFromDisk.mockImplementation(((params: {
+    mocks.restoreSubagentRunsFromState.mockImplementation(((params: {
       runs: Map<string, unknown>;
       mergeOnly?: boolean;
     }) => {
@@ -1308,7 +1308,7 @@ describe("subagent registry seam flow", () => {
       }
       return {};
     });
-    mocks.loadSessionStore.mockReturnValue({
+    mocks.sessionRows.mockReturnValue({
       "agent:main:subagent:child": {
         sessionId: "sess-child",
         status: "done",
@@ -1362,7 +1362,7 @@ describe("subagent registry seam flow", () => {
       }
       return {};
     });
-    mocks.loadSessionStore.mockReturnValue({
+    mocks.sessionRows.mockReturnValue({
       "agent:main:subagent:child": {
         sessionId: "sess-child",
         updatedAt: createdAt,
@@ -1430,7 +1430,7 @@ describe("subagent registry seam flow", () => {
       }
       return {};
     });
-    mocks.loadSessionStore.mockReturnValue({
+    mocks.sessionRows.mockReturnValue({
       "agent:main:subagent:child": {
         sessionId: "sess-child",
         updatedAt: createdAt + 61_000,
@@ -1494,7 +1494,7 @@ describe("subagent registry seam flow", () => {
       }
       return {};
     });
-    mocks.loadSessionStore.mockReturnValue({
+    mocks.sessionRows.mockReturnValue({
       "agent:main:subagent:child": {
         sessionId: "sess-child",
         status: "done",
@@ -1544,7 +1544,7 @@ describe("subagent registry seam flow", () => {
       }
       return {};
     });
-    mocks.loadSessionStore.mockReturnValue({
+    mocks.sessionRows.mockReturnValue({
       "agent:main:subagent:child": {
         sessionId: "sess-child",
         status: "done",
@@ -1594,7 +1594,7 @@ describe("subagent registry seam flow", () => {
       }
       return {};
     });
-    mocks.loadSessionStore.mockReturnValue({
+    mocks.sessionRows.mockReturnValue({
       "agent:main:subagent:child": {
         sessionId: "sess-child",
         status: "done",
@@ -1643,7 +1643,7 @@ describe("subagent registry seam flow", () => {
       }
       return {};
     });
-    mocks.loadSessionStore.mockReturnValue({
+    mocks.sessionRows.mockReturnValue({
       "agent:main:subagent:child": {
         sessionId: "sess-child",
         status: "done",
@@ -1686,7 +1686,7 @@ describe("subagent registry seam flow", () => {
     const runTimeoutSeconds = 60;
     vi.setSystemTime(startedAt + 59_000);
     mocks.resolveAgentTimeoutMs.mockReturnValue(60_000);
-    mocks.restoreSubagentRunsFromDisk.mockImplementation(((params: {
+    mocks.restoreSubagentRunsFromState.mockImplementation(((params: {
       runs: Map<string, unknown>;
       mergeOnly?: boolean;
     }) => {
@@ -1790,7 +1790,7 @@ describe("subagent registry seam flow", () => {
       }
       return {};
     });
-    mocks.loadSessionStore.mockReturnValue({
+    mocks.sessionRows.mockReturnValue({
       "agent:main:subagent:child": {
         sessionId: "sess-child",
         updatedAt: startedAt,
@@ -1842,7 +1842,7 @@ describe("subagent registry seam flow", () => {
       }
       return {};
     });
-    mocks.loadSessionStore.mockReturnValue({
+    mocks.sessionRows.mockReturnValue({
       "agent:main:subagent:child": {
         sessionId: "sess-child",
         updatedAt: createdAt,
@@ -2170,7 +2170,7 @@ describe("subagent registry seam flow", () => {
     const createdAt = Date.parse("2026-03-24T11:59:00Z");
     const sessionStartedAt = createdAt + 10_000;
     const sessionEndedAt = createdAt + 65_000;
-    mocks.loadSessionStore.mockReturnValue({
+    mocks.sessionRows.mockReturnValue({
       "agent:main:subagent:child": {
         sessionId: "sess-child",
         updatedAt: sessionEndedAt,
@@ -3409,7 +3409,7 @@ describe("subagent registry seam flow", () => {
     expect(stillSuspended).toHaveLength(10);
     expect(discarded[0]?.runId).toBe("run-suspended-pressure-0");
     expect(runs[40]?.delivery?.discardReason).toBe("pressure-pruned");
-    expect(runs[41]?.pendingFinalDelivery).toBe(true);
+    expect(runs[41]?.delivery?.status).toBe("suspended");
     expect(mocks.persistSubagentRunsToState).toHaveBeenCalled();
   });
 });
