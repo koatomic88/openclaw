@@ -1,16 +1,17 @@
-// ui/src/ui/views overview event log helpers and runtime behavior.
+// Overview event-log panel renderer. It shows the newest buffered UI/gateway
+// events without expanding the full Debug view.
 import { html, nothing } from "lit";
 import { t } from "../../i18n/index.ts";
 import type { EventLogEntry } from "../app-events.ts";
 import { icons } from "../icons.ts";
 import { formatEventPayload } from "../presenter.ts";
 
-/** Shared type for Overview Event Log Props in ui/src/ui/views. */
+/** Event-log entries available to the Overview panel. */
 export type OverviewEventLogProps = {
   events: EventLogEntry[];
 };
 
-/** Reused helper for render Overview Event Log behavior in ui/src/ui/views. */
+/** Render the compact Overview event-log card when events exist. */
 export function renderOverviewEventLog(props: OverviewEventLogProps) {
   if (props.events.length === 0) {
     return nothing;
