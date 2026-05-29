@@ -124,9 +124,9 @@ async function writeForeignNativeHookRelayBridgeRecordForTests(
     expiresAtMs: number;
   },
 ): Promise<string> {
-  const bridgeDir = testing.getNativeHookRelayBridgeDirForTests();
+  const bridgeDir = __testing.getNativeHookRelayBridgeDirForTests();
   await fs.mkdir(bridgeDir, { recursive: true, mode: 0o700 });
-  const registryPath = testing.getNativeHookRelayBridgeRegistryPathForTests(relayId);
+  const registryPath = __testing.getNativeHookRelayBridgeRegistryPathForTests(relayId);
   writeFileSync(
     registryPath,
     `${JSON.stringify({
@@ -1938,7 +1938,7 @@ describe("native hook relay registry", () => {
           },
         ),
     );
-    testing.setNativeHookRelayDeferredToolApprovalRequesterForTests(approvalRequester);
+    __testing.setNativeHookRelayDeferredToolApprovalRequesterForTests(approvalRequester);
 
     const firstApproval = resolveNativeHookRelayDeferredToolApproval({
       relayId: relay.relayId,

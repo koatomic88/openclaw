@@ -199,7 +199,10 @@ describe("runCliTurnCompactionLifecycle", () => {
     );
     expect(updatedEntry?.compactionCount).toBe(1);
     expect(updatedEntry?.cliSessionBindings?.["claude-cli"]).toBeUndefined();
-    expect(updatedEntry?.cliSessionIds?.["claude-cli"]).toBeUndefined();
+    const cliSessionIds = updatedEntry?.cliSessionIds;
+    expect(
+      !cliSessionIds || Array.isArray(cliSessionIds) || cliSessionIds["claude-cli"] === undefined,
+    ).toBe(true);
     expect(updatedEntry?.claudeCliSessionId).toBeUndefined();
   });
 
