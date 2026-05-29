@@ -1,4 +1,5 @@
-// proxy-capture proxy server helpers and runtime behavior.
+// Local debug proxy server that records HTTP requests, responses, CONNECT
+// tunnels, and local forwarding errors.
 import { randomUUID } from "node:crypto";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { request as httpRequest } from "node:http";
@@ -25,7 +26,7 @@ function allowsDirectConnectWithManagedProxy(env: NodeJS.ProcessEnv = process.en
   return isTruthyEnvValue(env[DEBUG_PROXY_DIRECT_CONNECT_OVERRIDE]);
 }
 
-/** Reused helper for assert Debug Proxy Direct Upstream Allowed behavior in src/proxy-capture. */
+/** Block direct upstream forwarding when managed proxy mode owns egress. */
 export function assertDebugProxyDirectUpstreamAllowed(env: NodeJS.ProcessEnv = process.env): void {
   if (!isManagedProxyActive(env) || allowsDirectConnectWithManagedProxy(env)) {
     return;
@@ -41,7 +42,7 @@ type DebugProxyServerHandle = {
   stop: () => Promise<void>;
 };
 
-/** Reused helper for parse Connect Target behavior in src/proxy-capture. */
+/** Parse an HTTP CONNECT authority into hostname and port. */
 export function parseConnectTarget(rawTarget: string | undefined): {
   hostname: string;
   port: number;
@@ -93,7 +94,7 @@ async function readBody(req: IncomingMessage): Promise<Buffer> {
   return Buffer.concat(chunks);
 }
 
-/** Reused helper for start Debug Proxy Server behavior in src/proxy-capture. */
+/** Start the local debug proxy server and return its URL plus shutdown hook. */
 export async function startDebugProxyServer(params: {
   host?: string;
   port?: number;
