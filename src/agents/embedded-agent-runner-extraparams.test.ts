@@ -5,6 +5,7 @@ import { createAssistantMessageEventStream } from "./pi-ai-contract.js";
 import type { Context, Model, SimpleStreamOptions } from "./pi-ai-contract.js";
 
 vi.mock("../plugins/provider-hook-runtime.js", () => ({
+  clearProviderRuntimePluginCacheForTest: vi.fn(),
   __testing: {
     buildHookProviderCacheKey: () => "test-provider-hook-cache-key",
     clearProviderRuntimePluginCacheForTest: vi.fn(),

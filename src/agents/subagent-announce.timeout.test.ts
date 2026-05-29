@@ -194,6 +194,7 @@ vi.mock("./subagent-announce.runtime.js", () => ({
   getSessionEntry: (params: { sessionKey: string }) => sessionStore[params.sessionKey],
   resolveAgentIdFromSessionKey: () => "main",
   resolveMainSessionKey: () => "agent:main:main",
+  readSessionMessagesAsync: async () => [],
   isEmbeddedAgentRunActive: (sessionId: string) => isEmbeddedAgentRunActiveMock(sessionId),
   waitForEmbeddedAgentRunEnd: (sessionId: string, timeoutMs?: number) =>
     waitForEmbeddedAgentRunEndMock(sessionId, timeoutMs),

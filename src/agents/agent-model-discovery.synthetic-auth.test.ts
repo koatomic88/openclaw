@@ -34,6 +34,7 @@ vi.mock("./auth-profiles/store.js", () => ({
 }));
 
 vi.mock("./agent-auth-discovery-core.js", () => ({
+  addEnvBackedAgentCredentials: (credentials: Record<string, unknown>) => ({ ...credentials }),
   addEnvBackedPiCredentials: (credentials: Record<string, unknown>) => ({ ...credentials }),
 }));
 

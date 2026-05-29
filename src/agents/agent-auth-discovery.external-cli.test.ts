@@ -14,6 +14,7 @@ const credentialMocks = vi.hoisted(() => ({
 }));
 
 const discoveryCoreMocks = vi.hoisted(() => ({
+  addEnvBackedAgentCredentials: vi.fn((credentials: unknown) => credentials),
   addEnvBackedPiCredentials: vi.fn((credentials: unknown) => credentials),
 }));
 

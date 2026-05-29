@@ -74,6 +74,14 @@ vi.mock("./run-wait.js", () => {
   };
 
   return {
+    readLatestAssistantReply: async (params: {
+      sessionKey: string;
+      limit?: number;
+      callGateway?: (request: CallGatewayOptions) => Promise<{ messages?: unknown[] }>;
+    }) => {
+      const latestReply = await readLatestAssistantReplySnapshot(params);
+      return latestReply.text;
+    },
     readLatestAssistantReplySnapshot,
     waitForAgentRunAndReadUpdatedAssistantReply: async (params: {
       runId: string;
