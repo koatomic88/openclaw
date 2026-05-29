@@ -34,6 +34,10 @@ import {
   resolveEmbeddedCompactionTarget,
 } from "./compaction-runtime-context.js";
 import {
+  compactContextEngineWithSafetyTimeout,
+  resolveCompactionTimeoutMs,
+} from "./compaction-safety-timeout.js";
+import {
   rotateSqliteTranscriptAfterCompaction,
   shouldRotateCompactionTranscript,
 } from "./compaction-successor-transcript.js";
@@ -304,17 +308,36 @@ export async function compactEmbeddedAgentSession(
             });
           }
         }
-        const result = await contextEngine.compact({
-          sessionId: params.sessionId,
-          sessionKey: params.sessionKey,
-          transcriptScope,
-          tokenBudget: contextTokenBudget,
-          currentTokenCount: params.currentTokenCount,
-          compactionTarget: params.trigger === "manual" ? "threshold" : "budget",
-          customInstructions: params.customInstructions,
-          force: params.trigger === "manual",
-          runtimeContext,
-        });
+        let result: Awaited<ReturnType<ContextEngine["compact"]>>;
+        try {
+          result = await compactContextEngineWithSafetyTimeout(
+            contextEngine,
+            {
+              sessionId: params.sessionId,
+              sessionKey: params.sessionKey,
+              transcriptScope,
+              tokenBudget: contextTokenBudget,
+              currentTokenCount: params.currentTokenCount,
+              compactionTarget: params.trigger === "manual" ? "threshold" : "budget",
+              customInstructions: params.customInstructions,
+              force: params.trigger === "manual",
+              runtimeContext,
+            },
+            resolveCompactionTimeoutMs(params.config),
+            params.abortSignal,
+          );
+        } catch (err) {
+          const reason = formatErrorMessage(err);
+          log.warn("context-engine compaction failed", {
+            errorMessage: reason,
+          });
+          return {
+            ok: false,
+            compacted: false,
+            reason,
+            failure: { reason: "context_engine_compaction_failed" },
+          };
+        }
         const delegatedSessionId = result.result?.sessionId;
         const delegatedRotatedTranscript =
           typeof delegatedSessionId === "string" && delegatedSessionId !== params.sessionId;
