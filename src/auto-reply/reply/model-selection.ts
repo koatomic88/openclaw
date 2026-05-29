@@ -309,7 +309,7 @@ export async function createModelSelectionState(params: {
       model = primaryModel;
     }
   }
-  if (staleAutoRuntimeAuthProfileSelection) {
+  if (staleAutoRuntimeAuthProfileSelection && !params.hasModelDirective) {
     provider = primaryProvider;
     model = primaryModel;
   }
