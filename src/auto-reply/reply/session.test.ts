@@ -3148,10 +3148,9 @@ describe("persistSessionUsageUpdate", () => {
   });
 
   it("prefers fresh final usage over zero compactionTokensAfter", async () => {
-    const storePath = await createStorePath("openclaw-usage-compaction-reset-");
+    const sessionRowsTarget = await createSessionRowsTarget("openclaw-usage-compaction-reset-");
     const sessionKey = "main";
     await seedSessionStore({
-      storePath,
       sessionKey,
       entry: {
         sessionId: "s1",
@@ -3166,7 +3165,6 @@ describe("persistSessionUsageUpdate", () => {
     });
 
     await persistSessionUsageUpdate({
-      storePath,
       sessionKey,
       usage: { input: 20, output: 10_855, cacheRead: 1_761_324, cacheWrite: 33_047 },
       lastCallUsage: { input: 20, output: 10_855, cacheRead: 1_761_324, cacheWrite: 33_047 },
@@ -3176,7 +3174,7 @@ describe("persistSessionUsageUpdate", () => {
       compactionTokensAfter: 0,
     });
 
-    const stored = JSON.parse(await fs.readFile(storePath, "utf-8"));
+    const stored = readSessionRowsForFixtureTarget(sessionRowsTarget);
     expect(stored[sessionKey].totalTokens).toBe(1_794_391);
     expect(stored[sessionKey].totalTokensFresh).toBe(true);
     expect(stored[sessionKey].inputTokens).toBe(20);
@@ -3186,10 +3184,9 @@ describe("persistSessionUsageUpdate", () => {
   });
 
   it("prefers fresh lastCallUsage over positive compactionTokensAfter", async () => {
-    const storePath = await createStorePath("openclaw-usage-compaction-positive-");
+    const sessionRowsTarget = await createSessionRowsTarget("openclaw-usage-compaction-positive-");
     const sessionKey = "main";
     await seedSessionStore({
-      storePath,
       sessionKey,
       entry: {
         sessionId: "s1",
@@ -3200,7 +3197,6 @@ describe("persistSessionUsageUpdate", () => {
     });
 
     await persistSessionUsageUpdate({
-      storePath,
       sessionKey,
       usage: { input: 100_000, output: 3_000, cacheRead: 20_000 },
       lastCallUsage: { input: 91_000, output: 1_000, cacheRead: 4_000 },
@@ -3209,7 +3205,7 @@ describe("persistSessionUsageUpdate", () => {
       compactionTokensAfter: 80_000,
     });
 
-    const stored = JSON.parse(await fs.readFile(storePath, "utf-8"));
+    const stored = readSessionRowsForFixtureTarget(sessionRowsTarget);
     expect(stored[sessionKey].totalTokens).toBe(95_000);
     expect(stored[sessionKey].totalTokensFresh).toBe(true);
     expect(stored[sessionKey].inputTokens).toBe(100_000);
@@ -3218,10 +3214,9 @@ describe("persistSessionUsageUpdate", () => {
   });
 
   it("uses positive compactionTokensAfter when final usage has no prompt total", async () => {
-    const storePath = await createStorePath("openclaw-usage-compaction-fallback-");
+    const sessionRowsTarget = await createSessionRowsTarget("openclaw-usage-compaction-fallback-");
     const sessionKey = "main";
     await seedSessionStore({
-      storePath,
       sessionKey,
       entry: {
         sessionId: "s1",
@@ -3254,7 +3249,6 @@ describe("persistSessionUsageUpdate", () => {
     });
 
     await persistSessionUsageUpdate({
-      storePath,
       sessionKey,
       usage: { output: 125 },
       lastCallUsage: { output: 125 },
@@ -3262,7 +3256,7 @@ describe("persistSessionUsageUpdate", () => {
       compactionTokensAfter: 80_000,
     });
 
-    const stored = JSON.parse(await fs.readFile(storePath, "utf-8"));
+    const stored = readSessionRowsForFixtureTarget(sessionRowsTarget);
     expect(stored[sessionKey].totalTokens).toBe(80_000);
     expect(stored[sessionKey].totalTokensFresh).toBe(true);
     expect(stored[sessionKey].inputTokens).toBeUndefined();

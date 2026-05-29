@@ -955,7 +955,6 @@ describe("runMemoryFlushIfNeeded", () => {
       cfg: { agents: { defaults: { compaction: { memoryFlush: {} } } } },
       followupRun: createTestFollowupRun({
         sessionId: "session",
-        sessionFile,
         sessionKey: "agent:main:telegram:group:redacted",
       }),
       defaultModel: "anthropic/claude-opus-4-6",
