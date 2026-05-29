@@ -1,4 +1,4 @@
-// status agent runtime label helpers and runtime behavior.
+// Agent runtime label formatter for status text.
 import { isCliProvider } from "../agents/model-selection.js";
 import type { SessionEntry } from "../config/sessions/types.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
@@ -16,7 +16,7 @@ const AGENT_RUNTIME_LABELS: Readonly<Record<string, string>> = {
   "google-gemini-cli": "Gemini CLI",
 };
 
-/** Reused helper for resolve Agent Runtime Label behavior in src/status. */
+/** Resolves a human-readable runtime label from ACP, harness, or CLI provider state. */
 export function resolveAgentRuntimeLabel(args: {
   config?: OpenClawConfig;
   sessionEntry?: Pick<
