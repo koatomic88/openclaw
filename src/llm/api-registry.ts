@@ -1,4 +1,4 @@
-// llm api registry helpers and runtime behavior.
+// Process-local registry for LLM API stream implementations.
 import type {
   Api,
   AssistantMessageEventStreamContract,
@@ -9,21 +9,21 @@ import type {
   StreamOptions,
 } from "./types.js";
 
-/** Shared type for Api Stream Function in src/llm. */
+/** Normalized stream function invoked after model/api compatibility checks. */
 export type ApiStreamFunction = (
   model: Model,
   context: Context,
   options?: StreamOptions,
 ) => AssistantMessageEventStreamContract;
 
-/** Shared type for Api Stream Simple Function in src/llm. */
+/** Stream function shape for providers that accept simplified options. */
 export type ApiStreamSimpleFunction = (
   model: Model,
   context: Context,
   options?: SimpleStreamOptions,
 ) => AssistantMessageEventStreamContract;
 
-/** Shared type for Api Provider in src/llm. */
+/** Provider registration shape for a concrete API family and stream handlers. */
 export interface ApiProvider<
   TApi extends Api = Api,
   TOptions extends StreamOptions = StreamOptions,
@@ -70,7 +70,7 @@ function wrapStreamSimple<TApi extends Api>(
   };
 }
 
-/** Reused helper for register Api Provider behavior in src/llm. */
+/** Registers a provider stream implementation under its API id. */
 export function registerApiProvider<TApi extends Api, TOptions extends StreamOptions>(
   provider: ApiProvider<TApi, TOptions>,
   sourceId?: string,
@@ -85,17 +85,17 @@ export function registerApiProvider<TApi extends Api, TOptions extends StreamOpt
   });
 }
 
-/** Reused helper for get Api Provider behavior in src/llm. */
+/** Returns a registered provider implementation for an API id. */
 export function getApiProvider(api: Api): ApiProviderInternal | undefined {
   return apiProviderRegistry.get(api)?.provider;
 }
 
-/** Reused helper for get Api Providers behavior in src/llm. */
+/** Lists all registered provider implementations. */
 export function getApiProviders(): ApiProviderInternal[] {
   return Array.from(apiProviderRegistry.values(), (entry) => entry.provider);
 }
 
-/** Reused helper for unregister Api Providers behavior in src/llm. */
+/** Removes provider registrations contributed by one plugin/source id. */
 export function unregisterApiProviders(sourceId: string): void {
   for (const [api, entry] of apiProviderRegistry.entries()) {
     if (entry.sourceId === sourceId) {
@@ -104,7 +104,7 @@ export function unregisterApiProviders(sourceId: string): void {
   }
 }
 
-/** Reused helper for clear Api Providers behavior in src/llm. */
+/** Clears all provider registrations for test isolation. */
 export function clearApiProviders(): void {
   apiProviderRegistry.clear();
 }
