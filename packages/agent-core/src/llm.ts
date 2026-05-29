@@ -1,26 +1,26 @@
-// packages/agent-core/src llm helpers and runtime behavior.
+// Public LLM contracts shared by agent-core loops, providers, and harness code.
 import type { TSchema } from "typebox";
 
-/** Public type describing Api for packages/agent-core. */
+/** Provider API family identifier carried on models and assistant messages. */
 export type Api = string;
-/** Public type describing Cache Retention for packages/agent-core. */
+/** Prompt-cache retention policy requested from providers that support caching. */
 export type CacheRetention = "none" | "short" | "long";
-/** Public type describing Transport for packages/agent-core. */
+/** Streaming transport preference understood by provider adapters. */
 export type Transport = "sse" | "websocket" | "websocket-cached" | "auto";
-/** Public type describing Thinking Level for packages/agent-core. */
+/** User-facing reasoning effort levels for models that expose thinking controls. */
 export type ThinkingLevel = "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
-/** Public type describing Model Thinking Level for packages/agent-core. */
+/** Model-specific reasoning level including an explicit disabled state. */
 export type ModelThinkingLevel = "off" | ThinkingLevel;
-/** Public type describing Maybe Promise for packages/agent-core. */
+/** Helper for hooks that can run synchronously or asynchronously. */
 export type MaybePromise<T> = T | Promise<T>;
 
-/** Public type describing Provider Response for packages/agent-core. */
+/** Minimal HTTP response metadata surfaced from provider adapters. */
 export interface ProviderResponse {
   status: number;
   headers: Record<string, string>;
 }
 
-/** Public type describing Thinking Budgets for packages/agent-core. */
+/** Optional token budgets mapped to reasoning effort levels. */
 export interface ThinkingBudgets {
   minimal?: number;
   low?: number;
@@ -29,7 +29,7 @@ export interface ThinkingBudgets {
   max?: number;
 }
 
-/** Public type describing Diagnostic Error Info for packages/agent-core. */
+/** Serializable error details attached to assistant diagnostics. */
 export interface DiagnosticErrorInfo {
   name?: string;
   message: string;
@@ -37,7 +37,7 @@ export interface DiagnosticErrorInfo {
   code?: string | number;
 }
 
-/** Public type describing Assistant Message Diagnostic for packages/agent-core. */
+/** Provider/runtime diagnostic attached to an assistant message. */
 export interface AssistantMessageDiagnostic {
   type: string;
   timestamp: number;
@@ -45,7 +45,7 @@ export interface AssistantMessageDiagnostic {
   details?: Record<string, unknown>;
 }
 
-/** Public type describing Simple Stream Options for packages/agent-core. */
+/** Common provider options for streaming and one-shot completion calls. */
 export interface SimpleStreamOptions {
   temperature?: number;
   maxTokens?: number;
@@ -65,14 +65,14 @@ export interface SimpleStreamOptions {
   thinkingBudgets?: ThinkingBudgets;
 }
 
-/** Public type describing Text Content for packages/agent-core. */
+/** Text segment in user, assistant, or tool-result messages. */
 export interface TextContent {
   type: "text";
   text: string;
   textSignature?: string;
 }
 
-/** Public type describing Thinking Content for packages/agent-core. */
+/** Reasoning/thinking segment emitted by models that expose it. */
 export interface ThinkingContent {
   type: "thinking";
   thinking: string;
@@ -80,14 +80,14 @@ export interface ThinkingContent {
   redacted?: boolean;
 }
 
-/** Public type describing Image Content for packages/agent-core. */
+/** Base64 image segment supplied to multimodal models or tool results. */
 export interface ImageContent {
   type: "image";
   data: string;
   mimeType: string;
 }
 
-/** Public type describing Tool Call for packages/agent-core. */
+/** Structured tool call requested by an assistant message. */
 export interface ToolCall {
   type: "toolCall";
   id: string;
@@ -97,7 +97,7 @@ export interface ToolCall {
   executionMode?: "sequential" | "parallel";
 }
 
-/** Public type describing Usage for packages/agent-core. */
+/** Token and cost accounting normalized across provider adapters. */
 export interface Usage {
   input: number;
   output: number;
@@ -113,17 +113,17 @@ export interface Usage {
   };
 }
 
-/** Public type describing Stop Reason for packages/agent-core. */
+/** Normalized reason an assistant turn stopped streaming. */
 export type StopReason = "stop" | "length" | "toolUse" | "aborted" | "error";
 
-/** Public type describing User Message for packages/agent-core. */
+/** User-authored message accepted by the LLM context. */
 export interface UserMessage {
   role: "user";
   content: string | (TextContent | ImageContent)[];
   timestamp: number;
 }
 
-/** Public type describing Assistant Message for packages/agent-core. */
+/** Assistant response message with provider/model metadata and usage. */
 export interface AssistantMessage {
   role: "assistant";
   content: (TextContent | ThinkingContent | ToolCall)[];
@@ -139,7 +139,7 @@ export interface AssistantMessage {
   usage: Usage;
 }
 
-/** Public type describing Tool Result Message for packages/agent-core. */
+/** Result message returned to the model after a tool call executes. */
 export interface ToolResultMessage {
   role: "toolResult";
   toolCallId: string;
@@ -150,17 +150,17 @@ export interface ToolResultMessage {
   timestamp: number;
 }
 
-/** Public type describing Message for packages/agent-core. */
+/** Any message variant accepted in an agent context transcript. */
 export type Message = UserMessage | AssistantMessage | ToolResultMessage;
 
-/** Public type describing Context for packages/agent-core. */
+/** LLM request context: optional system prompt, transcript, and available tools. */
 export interface Context {
   systemPrompt?: string;
   messages: Message[];
   tools?: Tool[];
 }
 
-/** Public type describing Model for packages/agent-core. */
+/** Provider model descriptor used for routing, limits, costs, and capabilities. */
 export interface Model<TApi extends Api = Api> {
   id: string;
   name: string;
@@ -184,14 +184,14 @@ export interface Model<TApi extends Api = Api> {
   compat?: any;
 }
 
-/** Public type describing Tool for packages/agent-core. */
+/** Tool definition exposed to providers with a TypeBox parameter schema. */
 export interface Tool<TParameters extends TSchema = TSchema> {
   name: string;
   description: string;
   parameters: TParameters;
 }
 
-/** Public type describing Assistant Message Event for packages/agent-core. */
+/** Incremental assistant streaming event sequence emitted by provider adapters. */
 export type AssistantMessageEvent =
   | { type: "start"; partial: AssistantMessage }
   | { type: "text_start"; contentIndex: number; partial: AssistantMessage }
@@ -210,7 +210,7 @@ export type AssistantMessageEvent =
     }
   | { type: "error"; reason: Extract<StopReason, "aborted" | "error">; error: AssistantMessage };
 
-/** Public class implementing Event Stream behavior for packages/agent-core. */
+/** Async iterable stream with a separate final result promise. */
 export class EventStream<T, R = T> implements AsyncIterable<T> {
   private queue: T[] = [];
   private waiting: ((value: IteratorResult<T>) => void)[] = [];
@@ -276,24 +276,24 @@ export class EventStream<T, R = T> implements AsyncIterable<T> {
   }
 }
 
-/** Public type describing Assistant Message Event Stream for packages/agent-core. */
+/** Assistant event stream whose final result is the completed assistant message. */
 export interface AssistantMessageEventStream extends AsyncIterable<AssistantMessageEvent> {
   result(): Promise<AssistantMessage>;
 }
 
-/** Public type describing Stream Fn for packages/agent-core. */
+/** Provider streaming entrypoint used by the agent loop. */
 export type StreamFn = (
   model: Model,
   context: Context,
   options?: SimpleStreamOptions,
 ) => AssistantMessageEventStream | Promise<AssistantMessageEventStream>;
 
-/** Public type describing Complete Simple Fn for packages/agent-core. */
+/** Provider one-shot completion entrypoint for callers that do not need events. */
 export type CompleteSimpleFn = (
   model: Model,
   context: Pick<Context, "systemPrompt" | "messages">,
   options?: SimpleStreamOptions,
 ) => Promise<AssistantMessage>;
 
-/** Public type describing Validate Tool Arguments Fn for packages/agent-core. */
+/** Tool argument validator hook used before executing model-requested tools. */
 export type ValidateToolArgumentsFn = (tool: Tool, toolCall: ToolCall) => unknown;
