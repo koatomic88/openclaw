@@ -1209,6 +1209,7 @@ describe("agentCommand", () => {
       callArgs = getLastEmbeddedCall();
       expect(callArgs?.agentId).toBe("ops");
       expect(callArgs?.sessionKey).toBe("global");
+      expect(callArgs?.sessionFile).toContain(`${path.sep}agents${path.sep}ops${path.sep}sessions`);
     });
   });
 

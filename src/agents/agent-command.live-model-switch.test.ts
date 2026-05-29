@@ -1047,14 +1047,14 @@ describe("agentCommand – LiveSessionModelSwitchError retry", () => {
     });
   });
 
-  it("scopes explicit-agent global keys before command routing", () => {
+  it("preserves explicit-agent global store keys before command routing", () => {
     expect(
       agentCommandTesting.resolveExplicitAgentCommandSessionKey({
         rawExplicitSessionKey: "global",
         agentIdOverride: "work",
         cfg: {},
       }),
-    ).toBe("agent:work:global");
+    ).toBe("global");
     expect(
       agentCommandTesting.resolveExplicitAgentCommandSessionKey({
         rawExplicitSessionKey: "main",
