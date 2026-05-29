@@ -407,19 +407,22 @@ describe("loadImageFromRef", () => {
   it("hydrates managed inbound media URIs before workspace path resolution", async () => {
     const stateDir = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-native-image-uri-"));
     const workspaceDir = path.join(stateDir, "workspace-agent");
-    const inboundDir = path.join(stateDir, "media", "inbound");
-    const mediaId = "telegram-photo.png";
     await fs.mkdir(workspaceDir, { recursive: true });
-    await fs.mkdir(inboundDir, { recursive: true });
-    await fs.writeFile(path.join(inboundDir, mediaId), Buffer.from(TINY_PNG_BASE64, "base64"));
     vi.stubEnv("OPENCLAW_STATE_DIR", stateDir);
+    const saved = await saveMediaBuffer(
+      Buffer.from(TINY_PNG_BASE64, "base64"),
+      "image/png",
+      "inbound",
+      undefined,
+      "telegram-photo.png",
+    );
 
     try {
       const image = await loadImageFromRef(
         {
-          raw: `media://inbound/${mediaId}`,
+          raw: `media://inbound/${saved.id}`,
           type: "media-uri",
-          resolved: `media://inbound/${mediaId}`,
+          resolved: `media://inbound/${saved.id}`,
         },
         workspaceDir,
         { workspaceOnly: true },
@@ -429,6 +432,7 @@ describe("loadImageFromRef", () => {
       expect(image?.mimeType).toBe("image/png");
       expect(image?.data).toBe(TINY_PNG_BASE64);
     } finally {
+      closeOpenClawStateDatabaseForTest();
       vi.unstubAllEnvs();
       await fs.rm(stateDir, { recursive: true, force: true });
     }
