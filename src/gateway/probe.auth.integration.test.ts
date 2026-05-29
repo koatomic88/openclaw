@@ -41,6 +41,14 @@ function expectRecord(value: unknown, label: string): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
+function statePath(...parts: string[]): string {
+  const stateDir = process.env.OPENCLAW_STATE_DIR;
+  if (!stateDir) {
+    throw new Error("expected OPENCLAW_STATE_DIR");
+  }
+  return path.join(stateDir, ...parts);
+}
+
 async function seedCachedOperatorToken(scopes: string[]): Promise<void> {
   const identity = loadOrCreateDeviceIdentity();
   const pairing = await requestDevicePairing({

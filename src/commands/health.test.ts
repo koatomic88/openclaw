@@ -169,6 +169,7 @@ describe("healthCommand", () => {
       },
       sessions: {
         path: "/tmp/sessions.json",
+        databasePath: "/tmp/openclaw-state.db",
         count: 2,
         recent,
       },
