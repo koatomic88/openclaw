@@ -1,15 +1,19 @@
+// OAuth login abort helpers for cancellation-aware provider flows.
 import { resolveTimerTimeoutMs } from "../../../shared/number-coercion.js";
 
+/** Exported API contract used by runtime callers and tests. */
 export function createOAuthLoginCancelledError(): Error {
   return new Error("Login cancelled");
 }
 
+/** Exported API contract used by runtime callers and tests. */
 export function throwIfOAuthLoginAborted(signal?: AbortSignal): void {
   if (signal?.aborted) {
     throw createOAuthLoginCancelledError();
   }
 }
 
+/** Exported API contract used by runtime callers and tests. */
 export function withOAuthLoginAbort<T>(
   promise: Promise<T>,
   signal?: AbortSignal,
@@ -48,6 +52,7 @@ export function withOAuthLoginAbort<T>(
   });
 }
 
+/** Exported API contract used by runtime callers and tests. */
 export function buildOAuthRequestSignal(options: {
   signal?: AbortSignal;
   timeoutMs: number;

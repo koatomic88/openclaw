@@ -1,3 +1,4 @@
+// Agent command entrypoints for channel ingress and direct session execution.
 import { resolveInlineAgentImageAttachments } from "../auto-reply/reply/agent-turn-attachments.js";
 import { sanitizePendingFinalDeliveryText } from "../auto-reply/reply/pending-final-delivery.js";
 import {
@@ -1793,6 +1794,7 @@ async function agentCommandInternal(
   }
 }
 
+/** Exported API contract used by runtime callers and tests. */
 export async function agentCommand(
   opts: AgentCommandOpts,
   runtime: RuntimeEnv = defaultRuntime,
@@ -1821,6 +1823,7 @@ export async function agentCommand(
   );
 }
 
+/** Exported API contract used by runtime callers and tests. */
 export async function agentCommandFromIngress(
   opts: AgentCommandIngressOpts,
   runtime: RuntimeEnv = defaultRuntime,
@@ -1836,6 +1839,7 @@ export async function agentCommandFromIngress(
   );
 }
 
+/** Exported API contract used by runtime callers and tests. */
 export const testing = {
   resolveAgentRuntimeConfig,
   prepareAgentCommandExecution,

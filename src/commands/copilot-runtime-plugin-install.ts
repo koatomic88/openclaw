@@ -1,3 +1,4 @@
+// Copilot runtime plugin install repair helpers for model selection flows.
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { modelSelectionShouldEnsureCopilotRuntimePlugin } from "../agents/copilot-routing.js";
@@ -9,6 +10,7 @@ import type { RuntimeEnv } from "../runtime.js";
 import { resolveUserPath } from "../utils.js";
 import type { WizardPrompter } from "../wizard/prompts.js";
 
+/** Exported API contract used by runtime callers and tests. */
 export const COPILOT_RUNTIME_PLUGIN_ID = "copilot";
 const COPILOT_RUNTIME_PLUGIN_LABEL = "GitHub Copilot agent runtime";
 const COPILOT_RUNTIME_PLUGIN_NPM_SPEC = "@openclaw/copilot";
@@ -24,6 +26,7 @@ function isInstalledRecordPresentOnDisk(
   return existsSync(path.join(resolveUserPath(installPath, env), "package.json"));
 }
 
+/** Exported API contract used by runtime callers and tests. */
 export type CopilotRuntimePluginInstallResult = {
   cfg: OpenClawConfig;
   required: boolean;
@@ -31,6 +34,7 @@ export type CopilotRuntimePluginInstallResult = {
   status?: "installed" | "skipped" | "failed" | "timed_out";
 };
 
+/** Exported API contract used by runtime callers and tests. */
 export function selectedModelShouldEnsureCopilotRuntimePlugin(params: {
   cfg: OpenClawConfig;
   model?: string;
@@ -41,6 +45,7 @@ export function selectedModelShouldEnsureCopilotRuntimePlugin(params: {
   });
 }
 
+/** Exported API contract used by runtime callers and tests. */
 export async function ensureCopilotRuntimePluginForModelSelection(params: {
   cfg: OpenClawConfig;
   model?: string;
@@ -103,6 +108,7 @@ export async function ensureCopilotRuntimePluginForModelSelection(params: {
   };
 }
 
+/** Exported API contract used by runtime callers and tests. */
 export async function repairCopilotRuntimePluginInstallForModelSelection(params: {
   cfg: OpenClawConfig;
   model?: string;
