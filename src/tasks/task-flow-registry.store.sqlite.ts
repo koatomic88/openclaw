@@ -6,6 +6,7 @@ import {
   openOpenClawStateDatabase,
   runOpenClawStateWriteTransaction,
 } from "../state/openclaw-state-db.js";
+import { OPENCLAW_STATE_SCHEMA_SQL } from "../state/openclaw-state-schema.generated.js";
 import type { TaskFlowRegistryStoreSnapshot } from "./task-flow-registry.store.types.js";
 import {
   parseOptionalTaskFlowSyncMode,
@@ -36,6 +37,28 @@ type FlowRegistryDatabase = {
 };
 
 let cachedDatabase: FlowRegistryDatabase | null = null;
+
+const FLOW_RUNS_COLUMNS = [
+  "flow_id",
+  "shape",
+  "sync_mode",
+  "owner_key",
+  "requester_origin_json",
+  "controller_id",
+  "revision",
+  "status",
+  "notify_policy",
+  "goal",
+  "current_step",
+  "blocked_task_id",
+  "blocked_summary",
+  "state_json",
+  "wait_json",
+  "cancel_requested_at",
+  "created_at",
+  "updated_at",
+  "ended_at",
+] as const;
 
 function serializeJson(value: unknown): string | null {
   return value === undefined ? null : JSON.stringify(value);
@@ -105,6 +128,116 @@ function getFlowRegistryKysely(db: DatabaseSync) {
   return getNodeSqliteKysely<FlowRegistryStoreDatabase>(db);
 }
 
+function readFlowRunsColumns(db: DatabaseSync): Map<string, { notnull: number }> {
+  const rows = db.prepare(`PRAGMA table_info(flow_runs)`).all() as Array<{
+    name?: unknown;
+    notnull?: unknown;
+  }>;
+  const columns = new Map<string, { notnull: number }>();
+  for (const row of rows) {
+    if (typeof row.name === "string") {
+      columns.set(row.name, { notnull: Number(row.notnull ?? 0) });
+    }
+  }
+  return columns;
+}
+
+function flowRunsSchemaIsCurrent(columns: Map<string, { notnull: number }>): boolean {
+  return (
+    FLOW_RUNS_COLUMNS.every((column) => columns.has(column)) &&
+    !columns.has("owner_session_key") &&
+    columns.get("owner_key")?.notnull === 1
+  );
+}
+
+function selectExistingColumn(
+  columns: ReadonlyMap<string, unknown>,
+  column: string,
+  fallbackSql: string,
+): string {
+  return columns.has(column) ? column : fallbackSql;
+}
+
+function ensureFlowRunsTableSchema(db: DatabaseSync): void {
+  let columns = readFlowRunsColumns(db);
+  if (columns.size === 0) {
+    db.exec(OPENCLAW_STATE_SCHEMA_SQL);
+    columns = readFlowRunsColumns(db);
+  }
+  if (flowRunsSchemaIsCurrent(columns)) {
+    return;
+  }
+
+  // Legacy flow tables shipped briefly with owner_session_key and without the
+  // current flow metadata columns. Rebuild the table so Kysely inserts and
+  // reads can use the canonical SQLite state schema.
+  const ownerKey = columns.has("owner_key")
+    ? columns.has("owner_session_key")
+      ? "COALESCE(NULLIF(TRIM(owner_key), ''), NULLIF(TRIM(owner_session_key), ''), 'unknown')"
+      : "COALESCE(NULLIF(TRIM(owner_key), ''), 'unknown')"
+    : columns.has("owner_session_key")
+      ? "COALESCE(NULLIF(TRIM(owner_session_key), ''), 'unknown')"
+      : "'unknown'";
+  const syncMode = columns.has("sync_mode")
+    ? "COALESCE(NULLIF(TRIM(sync_mode), ''), 'managed')"
+    : "'managed'";
+  const selectedColumns = [
+    selectExistingColumn(columns, "flow_id", "lower(hex(randomblob(16)))"),
+    selectExistingColumn(columns, "shape", "NULL"),
+    syncMode,
+    ownerKey,
+    selectExistingColumn(columns, "requester_origin_json", "NULL"),
+    selectExistingColumn(columns, "controller_id", "'core/legacy-restored'"),
+    selectExistingColumn(columns, "revision", "0"),
+    selectExistingColumn(columns, "status", "'queued'"),
+    selectExistingColumn(columns, "notify_policy", "'done_only'"),
+    selectExistingColumn(columns, "goal", "''"),
+    selectExistingColumn(columns, "current_step", "NULL"),
+    selectExistingColumn(columns, "blocked_task_id", "NULL"),
+    selectExistingColumn(columns, "blocked_summary", "NULL"),
+    selectExistingColumn(columns, "state_json", "NULL"),
+    selectExistingColumn(columns, "wait_json", "NULL"),
+    selectExistingColumn(columns, "cancel_requested_at", "NULL"),
+    selectExistingColumn(columns, "created_at", "0"),
+    selectExistingColumn(columns, "updated_at", "0"),
+    selectExistingColumn(columns, "ended_at", "NULL"),
+  ].join(",\n      ");
+
+  db.exec(`
+    DROP TABLE IF EXISTS flow_runs__migration;
+    CREATE TABLE flow_runs__migration (
+      flow_id TEXT NOT NULL PRIMARY KEY,
+      shape TEXT,
+      sync_mode TEXT NOT NULL DEFAULT 'managed',
+      owner_key TEXT NOT NULL,
+      requester_origin_json TEXT,
+      controller_id TEXT,
+      revision INTEGER NOT NULL DEFAULT 0,
+      status TEXT NOT NULL,
+      notify_policy TEXT NOT NULL,
+      goal TEXT NOT NULL,
+      current_step TEXT,
+      blocked_task_id TEXT,
+      blocked_summary TEXT,
+      state_json TEXT,
+      wait_json TEXT,
+      cancel_requested_at INTEGER,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      ended_at INTEGER
+    );
+    INSERT OR REPLACE INTO flow_runs__migration (${FLOW_RUNS_COLUMNS.join(", ")})
+      SELECT
+      ${selectedColumns}
+      FROM flow_runs;
+    DROP TABLE flow_runs;
+    ALTER TABLE flow_runs__migration RENAME TO flow_runs;
+    CREATE INDEX IF NOT EXISTS idx_flow_runs_status ON flow_runs(status);
+    CREATE INDEX IF NOT EXISTS idx_flow_runs_owner_key ON flow_runs(owner_key);
+    CREATE INDEX IF NOT EXISTS idx_flow_runs_updated_at ON flow_runs(updated_at);
+  `);
+}
+
 function selectFlowRows(db: DatabaseSync): FlowRegistryRow[] {
   const query = getFlowRegistryKysely(db)
     .selectFrom("flow_runs")
@@ -168,6 +301,7 @@ function openFlowRegistryDatabase(): FlowRegistryDatabase {
   const database = openOpenClawStateDatabase();
   const pathname = database.path;
   if (cachedDatabase && cachedDatabase.path === pathname && cachedDatabase.db.isOpen) {
+    ensureFlowRunsTableSchema(cachedDatabase.db);
     return cachedDatabase;
   }
   if (cachedDatabase && !cachedDatabase.db.isOpen) {
@@ -177,6 +311,7 @@ function openFlowRegistryDatabase(): FlowRegistryDatabase {
     db: database.db,
     path: pathname,
   };
+  ensureFlowRunsTableSchema(cachedDatabase.db);
   return cachedDatabase;
 }
 

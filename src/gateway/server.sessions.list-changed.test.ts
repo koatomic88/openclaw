@@ -258,8 +258,8 @@ test("sessions.list marks sessions with active abortable runs", async () => {
 });
 
 test("sessions.list ignores terminal abortable runs kept for retry guards", async () => {
-  await createSessionStoreDir();
-  await writeSessionStore({
+  await createSessionFixtureDir();
+  await seedGatewaySessionEntries({
     entries: {
       main: sessionStoreEntry("sess-main"),
     },

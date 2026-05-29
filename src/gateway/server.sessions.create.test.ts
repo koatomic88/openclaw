@@ -71,8 +71,8 @@ test("sessions.create stores dashboard session model and parent linkage, and cre
 });
 
 test("sessions.create inherits parent runtime model selection when model is omitted", async () => {
-  const { storePath } = await createSessionStoreDir();
-  await writeSessionStore({
+  await createSessionFixtureDir();
+  await seedGatewaySessionEntries({
     entries: {
       main: sessionStoreEntry("sess-parent", {
         providerOverride: "codex",
@@ -126,18 +126,11 @@ test("sessions.create inherits parent runtime model selection when model is omit
   expect(created.payload?.entry?.authProfileOverride).toBe("codex-oauth");
   expect(created.payload?.entry?.authProfileOverrideSource).toBe("user");
 
-  const rawStore = JSON.parse(await fs.readFile(storePath, "utf-8")) as Record<
-    string,
-    {
-      providerOverride?: string;
-      modelOverride?: string;
-      parentSessionKey?: string;
-    }
-  >;
   const key = created.payload?.key as string;
-  expect(rawStore[key]?.providerOverride).toBe("codex");
-  expect(rawStore[key]?.modelOverride).toBe("gpt-5.5");
-  expect(rawStore[key]?.parentSessionKey).toBe("agent:main:main");
+  const stored = getSessionEntry({ agentId: "main", sessionKey: key });
+  expect(stored?.providerOverride).toBe("codex");
+  expect(stored?.modelOverride).toBe("gpt-5.5");
+  expect(stored?.parentSessionKey).toBe("agent:main:main");
 });
 
 test("sessions.create accepts an explicit key for persistent dashboard sessions", async () => {

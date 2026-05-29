@@ -2,6 +2,7 @@ import { statSync } from "node:fs";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { executeSqliteQuerySync, getNodeSqliteKysely } from "../infra/kysely-sync.js";
+import { requireNodeSqlite } from "../infra/node-sqlite.js";
 import type { DB as OpenClawStateKyselyDatabase } from "../state/openclaw-state-db.generated.js";
 import { openOpenClawStateDatabase } from "../state/openclaw-state-db.js";
 import { resolveOpenClawStateSqlitePath } from "../state/openclaw-state-db.paths.js";
@@ -245,7 +246,7 @@ describe("task-flow-registry store runtime", () => {
       process.env.OPENCLAW_STATE_DIR = root;
       resetTaskFlowRegistryForTests();
 
-      const sqlitePath = resolveTaskFlowRegistrySqlitePath(process.env);
+      const sqlitePath = resolveOpenClawStateSqlitePath(process.env);
       const { DatabaseSync } = requireNodeSqlite();
       const db = new DatabaseSync(sqlitePath);
       // This mirrors the live pre-migration table shape that kept owner_session_key as NOT NULL,
@@ -334,7 +335,7 @@ describe("task-flow-registry store runtime", () => {
       process.env.OPENCLAW_STATE_DIR = root;
       resetTaskFlowRegistryForTests();
 
-      const sqlitePath = resolveTaskFlowRegistrySqlitePath(process.env);
+      const sqlitePath = resolveOpenClawStateSqlitePath(process.env);
       const { DatabaseSync } = requireNodeSqlite();
       const db = new DatabaseSync(sqlitePath);
       db.exec(`
@@ -414,7 +415,7 @@ describe("task-flow-registry store runtime", () => {
         status: "running",
       });
 
-      const sqlitePath = resolveTaskFlowRegistrySqlitePath(process.env);
+      const sqlitePath = resolveOpenClawStateSqlitePath(process.env);
       const { DatabaseSync } = requireNodeSqlite();
       const db = new DatabaseSync(sqlitePath);
       db.prepare(`UPDATE flow_runs SET requester_origin_json = ? WHERE flow_id = ?`).run(
