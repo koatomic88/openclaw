@@ -1,4 +1,5 @@
-// markdown render aware chunking helpers and runtime behavior.
+// Chunk Markdown IR by rendered output size, not just source text length. This
+// accounts for escaping, link rewriting, and style marker expansion.
 import { resolveIntegerOption } from "../shared/number-coercion.js";
 import {
   chunkMarkdownIR,
@@ -8,13 +9,13 @@ import {
   type MarkdownStyleSpan,
 } from "./ir.js";
 
-/** Shared type for Rendered Markdown Chunk in src/markdown. */
+/** Rendered chunk paired with the source Markdown IR slice that produced it. */
 export type RenderedMarkdownChunk<TRendered> = {
   rendered: TRendered;
   source: MarkdownIR;
 };
 
-/** Shared type for Render Markdown IRChunks Within Limit Options in src/markdown. */
+/** Options for rendering Markdown IR chunks under a measured output limit. */
 export type RenderMarkdownIRChunksWithinLimitOptions<TRendered> = {
   ir: MarkdownIR;
   limit: number;
@@ -27,7 +28,7 @@ type RenderResolver<TRendered> = Pick<
   "measureRendered" | "renderChunk"
 >;
 
-/** Reused helper for render Markdown IRChunks Within Limit behavior in src/markdown. */
+/** Render Markdown IR into chunks that each fit the caller's rendered-size limit. */
 export function renderMarkdownIRChunksWithinLimit<TRendered>(
   options: RenderMarkdownIRChunksWithinLimitOptions<TRendered>,
 ): RenderedMarkdownChunk<TRendered>[] {
