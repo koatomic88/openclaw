@@ -68,6 +68,7 @@ import {
   resolveAgentIdFromSessionKey,
   toAgentStoreSessionKey,
 } from "../../routing/session-key.js";
+import { hasAutoRuntimeAuthProfileSelection } from "../../sessions/model-overrides.js";
 import {
   normalizeOptionalLowercaseString,
   normalizeOptionalString,
@@ -158,6 +159,7 @@ function inheritSessionRuntimeSelection(
   if (!parentEntry) {
     return {};
   }
+  const inheritRuntimeAuthSelection = !hasAutoRuntimeAuthProfileSelection(parentEntry);
   return {
     ...(parentEntry.providerOverride ? { providerOverride: parentEntry.providerOverride } : {}),
     ...(parentEntry.modelOverride ? { modelOverride: parentEntry.modelOverride } : {}),
@@ -167,9 +169,11 @@ function inheritSessionRuntimeSelection(
     ...(parentEntry.agentRuntimeOverride
       ? { agentRuntimeOverride: parentEntry.agentRuntimeOverride }
       : {}),
-    ...(parentEntry.modelProvider ? { modelProvider: parentEntry.modelProvider } : {}),
-    ...(parentEntry.model ? { model: parentEntry.model } : {}),
-    ...(typeof parentEntry.contextTokens === "number"
+    ...(inheritRuntimeAuthSelection && parentEntry.modelProvider
+      ? { modelProvider: parentEntry.modelProvider }
+      : {}),
+    ...(inheritRuntimeAuthSelection && parentEntry.model ? { model: parentEntry.model } : {}),
+    ...(inheritRuntimeAuthSelection && typeof parentEntry.contextTokens === "number"
       ? { contextTokens: parentEntry.contextTokens }
       : {}),
     ...(parentEntry.thinkingLevel ? { thinkingLevel: parentEntry.thinkingLevel } : {}),
@@ -178,10 +182,10 @@ function inheritSessionRuntimeSelection(
     ...(parentEntry.traceLevel ? { traceLevel: parentEntry.traceLevel } : {}),
     ...(parentEntry.reasoningLevel ? { reasoningLevel: parentEntry.reasoningLevel } : {}),
     ...(parentEntry.elevatedLevel ? { elevatedLevel: parentEntry.elevatedLevel } : {}),
-    ...(parentEntry.authProfileOverride
+    ...(inheritRuntimeAuthSelection && parentEntry.authProfileOverride
       ? { authProfileOverride: parentEntry.authProfileOverride }
       : {}),
-    ...(parentEntry.authProfileOverrideSource
+    ...(inheritRuntimeAuthSelection && parentEntry.authProfileOverrideSource
       ? { authProfileOverrideSource: parentEntry.authProfileOverrideSource }
       : {}),
   };

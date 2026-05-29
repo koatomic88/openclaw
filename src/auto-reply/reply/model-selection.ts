@@ -26,7 +26,11 @@ import {
 } from "../../agents/openai-codex-routing.js";
 import type { SessionEntry } from "../../config/sessions/types.js";
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
-import { applyModelOverrideToSessionEntry } from "../../sessions/model-overrides.js";
+import {
+  applyModelOverrideToSessionEntry,
+  clearAutoRuntimeAuthProfileSelection,
+  hasAutoRuntimeAuthProfileSelection,
+} from "../../sessions/model-overrides.js";
 import { createLazyImportLoader } from "../../shared/lazy-promise.js";
 import type { ThinkLevel } from "./directives.js";
 export {
@@ -216,6 +220,8 @@ export async function createModelSelectionState(params: {
       normalizeRuntimeModelRef(OPENAI_PROVIDER_ID, primaryModel).model;
   const staleDirectStoredOverride =
     staleHeartbeatAutoFallbackOverride || staleLegacyOpenAICodexAutoOverride;
+  const staleAutoRuntimeAuthProfileSelection =
+    params.skipStoredModelOverride !== true && hasAutoRuntimeAuthProfileSelection(sessionEntry);
 
   if (needsModelCatalog) {
     modelCatalog = await (await loadModelCatalogRuntime()).loadModelCatalog({ config: cfg });
@@ -298,6 +304,10 @@ export async function createModelSelectionState(params: {
       model = primaryModel;
     }
   }
+  if (staleAutoRuntimeAuthProfileSelection) {
+    provider = primaryProvider;
+    model = primaryModel;
+  }
 
   const storedOverride = resolveStoredModelOverride({
     sessionEntry,
@@ -339,6 +349,26 @@ export async function createModelSelectionState(params: {
     }
     provider = allowedInitialSelection.provider;
     model = allowedInitialSelection.model;
+  }
+
+  if (staleAutoRuntimeAuthProfileSelection && sessionEntry && sessionStore && sessionKey) {
+    const runtimeProvider = sessionEntry.modelProvider;
+    const runtimeModel = sessionEntry.model;
+    const { updated } = clearAutoRuntimeAuthProfileSelection(sessionEntry);
+    if (updated) {
+      sessionStore[sessionKey] = sessionEntry;
+      if (storePath) {
+        await (
+          await loadSessionStoreRuntime()
+        ).updateSessionStore(storePath, (store) => {
+          store[sessionKey] = sessionEntry;
+        });
+      }
+      resetModelOverride = true;
+      if (!resetModelOverrideRef && runtimeProvider && runtimeModel) {
+        resetModelOverrideRef = modelKey(runtimeProvider, runtimeModel);
+      }
+    }
   }
 
   if (
