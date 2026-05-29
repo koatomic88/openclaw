@@ -662,6 +662,24 @@ export async function loadApnsRegistration(
   return row ? rowToApnsRegistration(row) : null;
 }
 
+export async function loadApnsRegistrations(
+  nodeIds: readonly string[],
+  baseDir?: string,
+): Promise<Array<{ nodeId: string; registration: ApnsRegistration }>> {
+  const registrations: Array<{ nodeId: string; registration: ApnsRegistration }> = [];
+  for (const nodeId of nodeIds) {
+    const normalizedNodeId = normalizeNodeId(nodeId);
+    if (!normalizedNodeId) {
+      continue;
+    }
+    const registration = await loadApnsRegistration(normalizedNodeId, baseDir);
+    if (registration) {
+      registrations.push({ nodeId, registration });
+    }
+  }
+  return registrations;
+}
+
 export async function clearApnsRegistration(nodeId: string, baseDir?: string): Promise<boolean> {
   const normalizedNodeId = normalizeNodeId(nodeId);
   if (!normalizedNodeId) {

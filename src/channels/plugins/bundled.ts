@@ -4,8 +4,8 @@ import { extractErrorCode, formatErrorMessage } from "../../infra/errors.js";
 import { isPathInside } from "../../infra/path-guards.js";
 import { createSubsystemLogger } from "../../logging/subsystem.js";
 import type {
-  BundledChannelDoctorSessionMigrationSurface,
-  BundledChannelDoctorLegacyStateDetector,
+  BundledChannelLegacySessionSurface,
+  BundledChannelLegacyStateMigrationDetector,
   BundledEntryModuleLoadOptions,
 } from "../../plugin-sdk/channel-entry-contract.js";
 import {
@@ -53,22 +53,22 @@ type BundledChannelSetupEntryRuntimeContract = {
   loadSetupSecrets?: (
     options?: BundledEntryModuleLoadOptions,
   ) => ChannelPlugin["secrets"] | undefined;
-  loadDoctorLegacyStateDetector?: (
+  loadLegacyStateMigrationDetector?: (
     options?: BundledEntryModuleLoadOptions,
-  ) => BundledChannelDoctorLegacyStateDetector;
-  loadDoctorSessionMigrationSurface?: (
+  ) => BundledChannelLegacyStateMigrationDetector;
+  loadLegacySessionSurface?: (
     options?: BundledEntryModuleLoadOptions,
-  ) => BundledChannelDoctorSessionMigrationSurface;
+  ) => BundledChannelLegacySessionSurface;
   features?: {
-    doctorLegacyState?: boolean;
-    doctorSessionMigrationSurface?: boolean;
+    legacyStateMigrations?: boolean;
+    legacySessionSurfaces?: boolean;
   };
 };
 
 type BundledChannelPackageSetupFeature =
   | "configPromotion"
-  | "doctorLegacyState"
-  | "doctorSessionMigrationSurface";
+  | "legacyStateMigrations"
+  | "legacySessionSurfaces";
 
 type GeneratedBundledChannelEntry = {
   id: string;
@@ -103,6 +103,20 @@ const sourceBundledEntryLoaderCache: PluginModuleLoaderCache = new Map();
 
 function isSourceModulePath(modulePath: string): boolean {
   return /\.(?:c|m)?tsx?$/iu.test(modulePath);
+}
+
+function isPackageLocalBundledDistModulePath(params: {
+  rootScope: BundledChannelRootScope;
+  metadata: BundledChannelPluginMetadata;
+  modulePath: string;
+}): boolean {
+  const distRoots = [
+    ...(params.rootScope.pluginsDir
+      ? [path.join(params.rootScope.pluginsDir, params.metadata.dirName, "dist")]
+      : []),
+    path.join(params.rootScope.packageRoot, "extensions", params.metadata.dirName, "dist"),
+  ];
+  return distRoots.some((root) => isPathInside(root, params.modulePath));
 }
 
 function resolveChannelPluginModuleEntry(
@@ -259,7 +273,15 @@ function loadGeneratedBundledChannelModule(params: {
       boundaryRootDir: boundaryRoot,
     });
   } catch (error) {
-    if (!isSourceModulePath(modulePath)) {
+    const canRetryWithCachedLoader =
+      isSourceModulePath(modulePath) ||
+      (isPackageLocalBundledDistModulePath({
+        rootScope: params.rootScope,
+        metadata: params.metadata,
+        modulePath,
+      }) &&
+        findMissingModuleCodeInChain(error) !== undefined);
+    if (!canRetryWithCachedLoader) {
       throw error;
     }
     const loader = getCachedPluginModuleLoader({
@@ -267,7 +289,7 @@ function loadGeneratedBundledChannelModule(params: {
       modulePath,
       importerUrl: import.meta.url,
       preferBuiltDist: true,
-      cacheScopeKey: "bundled-channel-source-entry",
+      cacheScopeKey: "bundled-channel-entry",
     });
     return loader(modulePath);
   }
@@ -805,17 +827,17 @@ export function listBundledChannelSetupPluginsByFeature(
   });
 }
 
-export function listBundledChannelDoctorSessionMigrationSurfaces(
+export function listBundledChannelLegacySessionSurfaces(
   options: {
     config?: OpenClawConfig;
   } = {},
-): readonly BundledChannelDoctorSessionMigrationSurface[] {
+): readonly BundledChannelLegacySessionSurface[] {
   const { rootScope, loadContext } = resolveActiveBundledChannelLoadScope();
-  return listBundledChannelPluginIdsForSetupFeature(rootScope, "doctorSessionMigrationSurface", {
+  return listBundledChannelPluginIdsForSetupFeature(rootScope, "legacySessionSurfaces", {
     config: options.config,
   }).flatMap((id) => {
     const setupEntry = getLazyGeneratedBundledChannelSetupEntryForRoot(id, rootScope, loadContext);
-    const surface = setupEntry?.loadDoctorSessionMigrationSurface?.();
+    const surface = setupEntry?.loadLegacySessionSurface?.();
     if (surface) {
       return [surface];
     }
@@ -823,17 +845,17 @@ export function listBundledChannelDoctorSessionMigrationSurfaces(
   });
 }
 
-export function listBundledChannelDoctorLegacyStateDetectors(
+export function listBundledChannelLegacyStateMigrationDetectors(
   options: {
     config?: OpenClawConfig;
   } = {},
-): readonly BundledChannelDoctorLegacyStateDetector[] {
+): readonly BundledChannelLegacyStateMigrationDetector[] {
   const { rootScope, loadContext } = resolveActiveBundledChannelLoadScope();
-  return listBundledChannelPluginIdsForSetupFeature(rootScope, "doctorLegacyState", {
+  return listBundledChannelPluginIdsForSetupFeature(rootScope, "legacyStateMigrations", {
     config: options.config,
   }).flatMap((id) => {
     const setupEntry = getLazyGeneratedBundledChannelSetupEntryForRoot(id, rootScope, loadContext);
-    const detector = setupEntry?.loadDoctorLegacyStateDetector?.();
+    const detector = setupEntry?.loadLegacyStateMigrationDetector?.();
     if (detector) {
       return [detector];
     }

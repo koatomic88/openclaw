@@ -1,10 +1,13 @@
 import type { TSchema } from "typebox";
-import type { AgentTool, AgentToolResult } from "../../agents/agent-core-contract.js";
+import type {
+  GatewayClientMode,
+  GatewayClientName,
+} from "../../../packages/gateway-protocol/src/client-info.js";
+import type { AgentTool, AgentToolResult } from "../../agents/runtime/index.js";
 import type { ReplyPayload } from "../../auto-reply/reply-payload.js";
 import type { MsgContext } from "../../auto-reply/templating.js";
 import type { MarkdownTableMode } from "../../config/types.base.js";
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
-import type { GatewayClientMode, GatewayClientName } from "../../gateway/protocol/client-info.js";
 import type { MessagePresentation } from "../../interactive/payload.js";
 import type { OutboundMediaAccess } from "../../media/load-options.js";
 import type { PollInput } from "../../polls.js";
@@ -25,9 +28,7 @@ export type ChannelExposure = {
 export type ChannelOutboundTargetMode = "explicit" | "implicit" | "heartbeat";
 
 /** Agent tool registered by a channel plugin. */
-export type ChannelAgentTool = AgentTool & {
-  ownerOnly?: boolean;
-};
+export type ChannelAgentTool = AgentTool;
 
 /** Lazy agent-tool factory used when tool availability depends on config. */
 export type ChannelAgentToolFactory = (params: { cfg?: OpenClawConfig }) => ChannelAgentTool[];
@@ -153,26 +154,26 @@ export type ChannelHeartbeatDeps = {
   hasActiveWebListener?: (accountId?: string) => boolean;
 };
 
-export type ChannelDoctorLegacyStateMigrationApplyResult = {
+export type ChannelLegacyStateMigrationApplyResult = {
   changes: string[];
   warnings: string[];
 };
 
-export type ChannelDoctorLegacyStateMigrationApplyContext = {
+export type ChannelLegacyStateMigrationApplyContext = {
   cfg: OpenClawConfig;
   env: NodeJS.ProcessEnv;
   stateDir: string;
   oauthDir: string;
 };
 
-export type ChannelDoctorLegacyStateMigrationFilePlan = {
+export type ChannelLegacyStateMigrationFilePlan = {
   kind: "copy" | "move";
   label: string;
   sourcePath: string;
   targetPath: string;
 };
 
-export type ChannelDoctorLegacyPluginStateImportPlan = {
+export type ChannelLegacyPluginStateImportPlan = {
   kind: "plugin-state-import";
   label: string;
   sourcePath: string;
@@ -181,13 +182,15 @@ export type ChannelDoctorLegacyPluginStateImportPlan = {
   namespace: string;
   maxEntries: number;
   scopeKey: string;
+  stateDir?: string;
   cleanupSource?: "rename";
+  preview?: string;
   readEntries: () =>
-    | Array<{ key: string; value: unknown }>
-    | Promise<Array<{ key: string; value: unknown }>>;
+    | Array<{ key: string; value: unknown; ttlMs?: number }>
+    | Promise<Array<{ key: string; value: unknown; ttlMs?: number }>>;
 };
 
-export type ChannelDoctorLegacyStateMigrationCustomPlan = {
+export type ChannelLegacyStateMigrationCustomPlan = {
   kind: "custom";
   label: string;
   sourcePath: string;
@@ -195,16 +198,14 @@ export type ChannelDoctorLegacyStateMigrationCustomPlan = {
   targetTable?: string;
   recordCount?: number;
   apply: (
-    context: ChannelDoctorLegacyStateMigrationApplyContext,
-  ) =>
-    | ChannelDoctorLegacyStateMigrationApplyResult
-    | Promise<ChannelDoctorLegacyStateMigrationApplyResult>;
+    context: ChannelLegacyStateMigrationApplyContext,
+  ) => ChannelLegacyStateMigrationApplyResult | Promise<ChannelLegacyStateMigrationApplyResult>;
 };
 
-export type ChannelDoctorLegacyStateMigrationPlan =
-  | ChannelDoctorLegacyStateMigrationFilePlan
-  | ChannelDoctorLegacyPluginStateImportPlan
-  | ChannelDoctorLegacyStateMigrationCustomPlan;
+export type ChannelLegacyStateMigrationPlan =
+  | ChannelLegacyStateMigrationFilePlan
+  | ChannelLegacyPluginStateImportPlan
+  | ChannelLegacyStateMigrationCustomPlan;
 
 /** User-facing metadata used in docs, pickers, and setup surfaces. */
 export type ChannelMeta = {

@@ -2,6 +2,7 @@ import { existsSync, rmSync } from "node:fs";
 import path from "node:path";
 import type { DatabaseSync } from "node:sqlite";
 import type { Insertable, Selectable } from "kysely";
+import { resolveStateDir } from "../config/paths.js";
 import {
   executeSqliteQuerySync,
   executeSqliteQueryTakeFirstSync,
@@ -9,7 +10,6 @@ import {
 } from "../infra/kysely-sync.js";
 import { requireNodeSqlite } from "../infra/node-sqlite.js";
 import { runSqliteImmediateTransactionSync } from "../infra/sqlite-transaction.js";
-import { resolveStateDir } from "../config/paths.js";
 import type { DB as OpenClawStateKyselyDatabase } from "../state/openclaw-state-db.generated.js";
 import {
   closeOpenClawStateDatabase,
@@ -29,7 +29,7 @@ import {
 } from "./plugin-state-store.types.js";
 
 export const MAX_PLUGIN_STATE_VALUE_BYTES = 65_536;
-export const MAX_PLUGIN_STATE_ENTRIES_PER_PLUGIN = 1_000;
+export const MAX_PLUGIN_STATE_ENTRIES_PER_PLUGIN = 50_000;
 
 type PluginStateEntriesTable = OpenClawStateKyselyDatabase["plugin_state_entries"];
 type PluginStateStoreDatabase = Pick<OpenClawStateKyselyDatabase, "plugin_state_entries">;

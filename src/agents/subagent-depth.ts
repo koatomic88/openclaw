@@ -1,5 +1,6 @@
 import { listSessionEntries } from "../config/sessions.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
+import { parseStrictNonNegativeInteger } from "../infra/parse-finite-number.js";
 import { getSubagentDepth, parseAgentSessionKey } from "../sessions/session-key-utils.js";
 import { resolveDefaultAgentId } from "./agent-scope.js";
 import { normalizeSubagentSessionKey } from "./subagent-session-key.js";
@@ -15,12 +16,7 @@ function normalizeSpawnDepth(value: unknown): number | undefined {
     return Number.isInteger(value) && value >= 0 ? value : undefined;
   }
   if (typeof value === "string") {
-    const trimmed = value.trim();
-    if (!trimmed) {
-      return undefined;
-    }
-    const numeric = Number(trimmed);
-    return Number.isInteger(numeric) && numeric >= 0 ? numeric : undefined;
+    return parseStrictNonNegativeInteger(value);
   }
   return undefined;
 }

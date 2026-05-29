@@ -13,6 +13,7 @@ import {
 } from "openclaw/plugin-sdk/agent-runtime";
 import type { OpenClawConfig } from "openclaw/plugin-sdk/config-contracts";
 import { closeActiveMemorySearchManager } from "openclaw/plugin-sdk/memory-host-search";
+import { parseStrictPositiveInteger } from "openclaw/plugin-sdk/number-runtime";
 import {
   resolveLivePluginConfigObject,
   resolvePluginConfigObject,
@@ -36,6 +37,7 @@ const DEFAULT_MIN_TIMEOUT_MS = 250;
 const DEFAULT_SETUP_GRACE_TIMEOUT_MS = 0;
 const DEFAULT_QUERY_MODE = "recent" as const;
 const DEFAULT_QMD_SEARCH_MODE = "search" as const;
+const ACTIVE_MEMORY_RECALL_LANE = "active-memory";
 const DEFAULT_CIRCUIT_BREAKER_MAX_TIMEOUTS = 3;
 const DEFAULT_CIRCUIT_BREAKER_COOLDOWN_MS = 60_000;
 const DEFAULT_ACTIVE_MEMORY_TOOLS_ALLOW = ["memory_search", "memory_get"] as const;
@@ -386,9 +388,9 @@ function parseOptionalPositiveInt(value: unknown, fallback: number): number {
     typeof value === "number"
       ? value
       : typeof value === "string"
-        ? Number.parseInt(value, 10)
+        ? parseStrictPositiveInteger(value)
         : Number.NaN;
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+  return parsed !== undefined && Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
 function clampInt(value: number | undefined, fallback: number, min: number, max: number): number {
@@ -2436,6 +2438,7 @@ async function runRecallSubagent(params: {
       prompt,
       provider: modelRef.provider,
       model: modelRef.model,
+      lane: ACTIVE_MEMORY_RECALL_LANE,
       timeoutMs: embeddedTimeoutMs,
       runId: subagentSessionId,
       trigger: "manual",

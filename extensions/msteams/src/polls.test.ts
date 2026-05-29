@@ -8,6 +8,7 @@ import {
   buildMSTeamsPollCard,
   createMSTeamsPollStoreState,
   extractMSTeamsPollVote,
+  normalizeMSTeamsPollSelections,
 } from "./polls.js";
 import { setMSTeamsRuntime } from "./runtime.js";
 import { msteamsRuntimeStub } from "./test-runtime.js";
@@ -66,6 +67,38 @@ describe("msteams polls", () => {
     }
     expect(stored.votes["user-1"]).toEqual(["0"]);
   });
+
+  it("does not coerce partial poll selections", () => {
+    expect(
+      normalizeMSTeamsPollSelections(
+        {
+          id: "poll-1",
+          question: "Lunch?",
+          options: ["Pizza", "Sushi"],
+          maxSelections: 2,
+          votes: {},
+          createdAt: "2026-03-22T00:00:00.000Z",
+        },
+        ["0", "1x"],
+      ),
+    ).toEqual(["0"]);
+  });
+
+  it("accepts only strict decimal poll selections", () => {
+    expect(
+      normalizeMSTeamsPollSelections(
+        {
+          id: "poll-1",
+          question: "Lunch?",
+          options: ["Pizza", "Sushi"],
+          maxSelections: 2,
+          votes: {},
+          createdAt: "2026-03-22T00:00:00.000Z",
+        },
+        ["+0", "0x1", "1"],
+      ),
+    ).toEqual(["0", "1"]);
+  });
 });
 
 const createSqliteStore = async () => {
@@ -79,11 +112,6 @@ describe.each([
   { name: "memory", createStore: createMemoryStore },
   { name: "sqlite", createStore: createSqliteStore },
 ])("$name poll store", ({ createStore }) => {
-  beforeEach(() => {
-    resetPluginStateStoreForTests();
-    setMSTeamsRuntime(msteamsRuntimeStub);
-  });
-
   it("stores polls and records normalized votes", async () => {
     const store = await createStore();
     await store.createPoll({

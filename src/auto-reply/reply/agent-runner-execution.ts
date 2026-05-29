@@ -2032,6 +2032,17 @@ export async function runAgentTurnWithFallback(params: {
                   onReasoningText: async (text) => {
                     await params.opts?.onReasoningStream?.({ text });
                   },
+                  onToolEvent: async ({ name, phase, args }) => {
+                    await Promise.all([
+                      params.typingSignals.signalToolStart(),
+                      params.opts?.onToolStart?.({
+                        name,
+                        phase,
+                        args,
+                        detailMode: params.toolProgressDetail,
+                      }),
+                    ]);
+                  },
                   onErrorBeforeLifecycle: async () => {
                     if (!rollbackFallbackCandidateSelection) {
                       return;
@@ -2246,6 +2257,7 @@ export async function runAgentTurnWithFallback(params: {
                             await params.opts?.onReasoningStream?.({
                               text: payload.text,
                               mediaUrls: payload.mediaUrls,
+                              isReasoningSnapshot: payload.isReasoningSnapshot,
                             });
                           }
                         : undefined,
@@ -2283,6 +2295,8 @@ export async function runAgentTurnWithFallback(params: {
                         }
                         if (phase === "start" || phase === "update") {
                           const toolStartProgressPromise = params.opts?.onToolStart?.({
+                            itemId: readStringValue(evt.data.itemId),
+                            toolCallId: readStringValue(evt.data.toolCallId),
                             name,
                             phase,
                             args,
@@ -2428,17 +2442,18 @@ export async function runAgentTurnWithFallback(params: {
                         const phase = readStringValue(evt.data.phase) ?? "";
                         const hookMessages = readCompactionHookMessages(evt.data.messages);
                         if (phase === "start") {
-                          // Keep custom compaction callbacks active, but gate the
-                          // fallback user-facing notice behind explicit opt-in.
+                          // Three independent audiences: internal callbacks
+                          // (Control UI) fire regardless; hookMessages deliver
+                          // plugin-authored user-channel text (overlap with the
+                          // default notice, so they suppress it); notifyUser is
+                          // the opt-in user-channel notice. Internal callbacks
+                          // must not suppress the user notice — see #87107.
                           if (params.opts?.onCompactionStart) {
                             await params.opts.onCompactionStart();
                           }
                           if (hookMessages.length > 0) {
                             await sendCompactionHookMessages(hookMessages);
-                          } else if (
-                            !params.opts?.onCompactionStart &&
-                            shouldNotifyUserAboutCompaction
-                          ) {
+                          } else if (shouldNotifyUserAboutCompaction) {
                             // Send directly via opts.onBlockReply (bypassing the
                             // pipeline) so the notice does not cause final payloads
                             // to be discarded on non-streaming model paths.
@@ -2454,10 +2469,7 @@ export async function runAgentTurnWithFallback(params: {
                             }
                             if (hookMessages.length > 0) {
                               await sendCompactionHookMessages(hookMessages);
-                            } else if (
-                              !params.opts?.onCompactionEnd &&
-                              shouldNotifyUserAboutCompaction
-                            ) {
+                            } else if (shouldNotifyUserAboutCompaction) {
                               await sendCompactionNotice("end");
                             }
                           } else if (hookMessages.length > 0) {

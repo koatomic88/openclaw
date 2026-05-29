@@ -4,8 +4,11 @@ import {
   clearApnsRegistration,
   clearApnsRegistrationIfCurrent,
   loadApnsRegistration,
+  loadApnsRegistrations,
+  normalizeApnsRegistrationStateSnapshot,
   registerApnsRegistration,
   registerApnsToken,
+  writeApnsRegistrationStateSnapshot,
 } from "./push-apns.js";
 
 const tempDirs = createTrackedTempDirs();
@@ -56,11 +59,93 @@ describe("push APNs registration store", () => {
 
   it("falls back cleanly for missing registration state", async () => {
     const baseDir = await makeTempDir();
-
     await expect(loadApnsRegistration("ios-node-missing", baseDir)).resolves.toBeNull();
     await expect(loadApnsRegistration("   ", baseDir)).resolves.toBeNull();
     await expect(clearApnsRegistration("   ", baseDir)).resolves.toBe(false);
     await expect(clearApnsRegistration("ios-node-missing", baseDir)).resolves.toBe(false);
+  });
+
+  it("normalizes legacy APNs registration snapshots before SQLite persistence", async () => {
+    const baseDir = await makeTempDir();
+    const snapshot = normalizeApnsRegistrationStateSnapshot({
+      registrationsByNodeId: {
+        " ios-node-legacy ": {
+          nodeId: " ios-node-legacy ",
+          token: "<ABCD1234ABCD1234ABCD1234ABCD1234>",
+          topic: " ai.openclaw.ios ",
+          environment: " PRODUCTION ",
+          updatedAtMs: 3,
+        },
+        "   ": {
+          nodeId: " ios-node-fallback ",
+          token: "<ABCD1234ABCD1234ABCD1234ABCD1234>",
+          topic: " ai.openclaw.ios ",
+          updatedAtMs: 2,
+        },
+        "ios-node-bad-relay": {
+          transport: "relay",
+          nodeId: "ios-node-bad-relay",
+          relayHandle: "relay-handle-123",
+          sendGrant: "send-grant-123",
+          installationId: "install-123",
+          topic: "ai.openclaw.ios",
+          environment: "production",
+          distribution: "beta",
+          updatedAtMs: 1,
+        },
+      },
+    });
+    if (!snapshot) {
+      throw new Error("expected normalized APNs snapshot");
+    }
+    await writeApnsRegistrationStateSnapshot(snapshot, baseDir);
+
+    await expect(loadApnsRegistration("ios-node-legacy", baseDir)).resolves.toEqual({
+      nodeId: "ios-node-legacy",
+      transport: "direct",
+      token: "abcd1234abcd1234abcd1234abcd1234",
+      topic: "ai.openclaw.ios",
+      environment: "production",
+      updatedAtMs: 3,
+    });
+    await expect(loadApnsRegistration("ios-node-fallback", baseDir)).resolves.toEqual({
+      nodeId: "ios-node-fallback",
+      transport: "direct",
+      token: "abcd1234abcd1234abcd1234abcd1234",
+      topic: "ai.openclaw.ios",
+      environment: "sandbox",
+      updatedAtMs: 2,
+    });
+    await expect(loadApnsRegistration("ios-node-bad-relay", baseDir)).resolves.toBeNull();
+  });
+
+  it("loads multiple APNs registrations from one SQLite store snapshot", async () => {
+    const baseDir = await makeTempDir();
+    const first = await registerApnsToken({
+      nodeId: "ios-node-1",
+      token: "ABCD1234ABCD1234ABCD1234ABCD1234",
+      topic: "ai.openclaw.ios",
+      environment: "sandbox",
+      baseDir,
+    });
+    const second = await registerApnsRegistration({
+      nodeId: "ios-node-2",
+      transport: "relay",
+      relayHandle: "relay-handle-123",
+      sendGrant: "send-grant-123",
+      installationId: "install-123",
+      topic: "ai.openclaw.ios",
+      environment: "production",
+      distribution: "official",
+      baseDir,
+    });
+
+    await expect(
+      loadApnsRegistrations(["ios-node-2", "missing", "   ", "ios-node-1"], baseDir),
+    ).resolves.toEqual([
+      { nodeId: "ios-node-2", registration: second },
+      { nodeId: "ios-node-1", registration: first },
+    ]);
   });
 
   it("rejects invalid direct and relay registration inputs", async () => {

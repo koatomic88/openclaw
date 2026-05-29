@@ -3,13 +3,13 @@ import { defineBundledChannelSetupEntry } from "openclaw/plugin-sdk/channel-entr
 export default defineBundledChannelSetupEntry({
   importMetaUrl: import.meta.url,
   features: {
-    doctorLegacyState: true,
+    legacyStateMigrations: true,
   },
   plugin: {
     specifier: "./api.js",
     exportName: "imessageSetupPlugin",
   },
-  doctorLegacyState: {
+  legacyStateMigrations: {
     specifier: "./doctor-legacy-state-api.js",
     exportName: "detectIMessageLegacyStateMigrations",
   },

@@ -1,8 +1,11 @@
 import { expect, test, vi } from "vitest";
 import { WebSocket } from "ws";
+import {
+  GATEWAY_CLIENT_IDS,
+  GATEWAY_CLIENT_MODES,
+} from "../../packages/gateway-protocol/src/client-info.js";
 import { getSessionEntry, upsertSessionEntry } from "../config/sessions.js";
 import { isSessionPatchEvent } from "../hooks/internal-hooks.js";
-import { GATEWAY_CLIENT_IDS, GATEWAY_CLIENT_MODES } from "./protocol/client-info.js";
 import {
   connectOk,
   rpcReq,

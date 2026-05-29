@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { ErrorCodes, errorShape } from "../../packages/gateway-protocol/src/index.js";
 import { getAcpSessionManager } from "../acp/control-plane/manager.js";
 import { getAcpRuntimeBackend } from "../acp/runtime/registry.js";
 import { readAcpSessionEntry, upsertAcpSessionMeta } from "../acp/runtime/session-meta.js";
@@ -40,7 +41,6 @@ import {
   listActiveSessionsForShutdown,
   noteActiveSessionForShutdown,
 } from "./active-sessions-shutdown-tracker.js";
-import { ErrorCodes, errorShape } from "./protocol/index.js";
 import { findDirectChildSessionsForParent } from "./session-child-sessions.js";
 import {
   loadSessionEntry,

@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type {
   AgentToolArtifact,
   AgentToolArtifactExport,
@@ -29,6 +29,7 @@ function makeTempDir(): string {
 }
 
 afterEach(() => {
+  vi.useRealTimers();
   closeOpenClawAgentDatabasesForTest();
   closeOpenClawStateDatabaseForTest();
   if (ORIGINAL_STATE_DIR === undefined) {
@@ -261,6 +262,39 @@ describe("trajectory runtime", () => {
       limitBytes: 900,
     });
     expect(truncated?.data?.droppedEvents).toBeGreaterThan(0);
+  });
+
+  it("keeps stale and newer recorder events in SQLite", async () => {
+    useTempStateDir();
+    const staleRecorder = createTrajectoryRuntimeRecorder({
+      sessionId: "session-1",
+    });
+
+    const staleRuntimeRecorder = expectTrajectoryRuntimeRecorder(staleRecorder);
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
+    staleRuntimeRecorder.recordEvent("prompt.submitted", {
+      marker: "old-recorder",
+      prompt: "x".repeat(260),
+    });
+
+    const newerRecorder = createTrajectoryRuntimeRecorder({
+      sessionId: "session-1",
+    });
+    const newerRuntimeRecorder = expectTrajectoryRuntimeRecorder(newerRecorder);
+    newerRuntimeRecorder.recordEvent("prompt.submitted", {
+      marker: "new-recorder",
+      prompt: "y".repeat(260),
+    });
+    vi.useRealTimers();
+    await newerRuntimeRecorder.flush();
+    await staleRuntimeRecorder.flush();
+
+    const events = listTrajectoryRuntimeEvents({ agentId: "main", sessionId: "session-1" });
+    const markers = events.map((event) => event.data?.marker);
+    expect(markers).toContain("old-recorder");
+    expect(markers).toContain("new-recorder");
+    expect(markers.indexOf("old-recorder")).toBeLessThan(markers.indexOf("new-recorder"));
   });
 
   it("does not record runtime events when explicitly disabled", () => {

@@ -40,6 +40,7 @@ openclaw doctor
 openclaw doctor --lint
 openclaw doctor --lint --json
 openclaw doctor --lint --severity-min warning
+openclaw doctor --lint --allow-exec
 openclaw doctor --deep
 openclaw doctor --fix
 openclaw doctor --fix --non-interactive
@@ -64,6 +65,7 @@ The targeted Discord capabilities probe reports the bot's effective channel perm
 - `--force`: apply aggressive repairs, including overwriting custom service config when needed
 - `--non-interactive`: run without prompts; safe migrations and non-service repairs only
 - `--generate-gateway-token`: generate and configure a gateway token
+- `--allow-exec`: allow doctor to execute configured exec SecretRefs while verifying secrets
 - `--deep`: scan system services for extra gateway installs and report recent Gateway supervisor restart handoffs
 - `--lint`: run modernized health checks in read-only mode and emit diagnostic findings
 - `--json`: with `--lint`, emit JSON findings instead of human output
@@ -84,6 +86,7 @@ are only accepted with `--lint`.
 openclaw doctor --lint
 openclaw doctor --lint --severity-min warning
 openclaw doctor --lint --json
+openclaw doctor --lint --allow-exec
 openclaw doctor --lint --only core/doctor/gateway-config --json
 ```
 
@@ -191,6 +194,7 @@ Notes:
 - Interactive prompts (like keychain/OAuth fixes) only run when stdin is a TTY and `--non-interactive` is **not** set. Headless runs (cron, Telegram, no terminal) will skip prompts.
 - Performance: non-interactive `doctor` runs skip eager plugin loading so headless health checks stay fast. Interactive doctor sessions still load the plugin surfaces needed by the legacy health and repair flow.
 - `--lint` is stricter than `--non-interactive`: it is always read-only, never prompts, and never applies safe migrations. Run `doctor --fix` or `doctor --repair` when you want doctor to make changes.
+- By default, doctor does not execute `exec` SecretRefs while checking secrets. Use `openclaw doctor --allow-exec` or `openclaw doctor --lint --allow-exec` only when you intentionally want doctor to run those configured secret resolvers.
 - `--fix` (alias for `--repair`) writes a backup to `~/.openclaw/openclaw.json.bak` and drops unknown config keys, listing each removal.
 - Modernized health checks can expose a `repair()` path for `doctor --fix`; checks that do not expose one continue through the existing doctor repair flow.
 - `doctor --fix --non-interactive` reports missing or stale gateway service definitions but does not install or rewrite them outside update repair mode. Run `openclaw gateway install` for a missing service, or `openclaw gateway install --force` when you intentionally want to replace the launcher.
@@ -215,7 +219,7 @@ Notes:
 - If sandbox mode is enabled but Docker is unavailable, doctor reports a high-signal warning with remediation (`install Docker` or `openclaw config set agents.defaults.sandbox.mode off`).
 - If legacy sandbox registry files (`~/.openclaw/sandbox/containers.json`, `~/.openclaw/sandbox/browsers.json`, or old registry shard JSON files) are present, doctor reports them; `openclaw doctor --fix` migrates valid entries into SQLite and quarantines invalid legacy files.
 - Legacy session state (`sessions.json`, transcript JSONL files, compaction checkpoints, and related session sidecars) is a doctor/migrate input only. Repair imports valid data into the global/per-agent SQLite databases and removes successfully imported sources; runtime code no longer keeps compatibility readers for those files.
-- If `gateway.auth.token`/`gateway.auth.password` are SecretRef-managed and unavailable in the current command path, doctor reports a read-only warning and does not write plaintext fallback credentials.
+- If `gateway.auth.token`/`gateway.auth.password` are SecretRef-managed and unavailable in the current command path, doctor reports a read-only warning and does not write plaintext fallback credentials. For exec-backed SecretRefs, doctor skips execution unless `--allow-exec` is present.
 - If channel SecretRef inspection fails in a fix path, doctor continues and reports a warning instead of exiting early.
 - Extension-owned state migrations run through doctor without loading full
   channel runtimes. BlueBubbles, Discord, Feishu, Matrix, Microsoft Teams,

@@ -10,7 +10,6 @@
   "dependencies": {
     "audio-decode": "2.2.3",
     "baileys": "7.0.0-rc13",
-    "https-proxy-agent": "9.0.0",
     "typebox": "1.1.38"
   },
   "devDependencies": {
@@ -31,8 +30,8 @@
     ],
     "setupEntry": "./setup-entry.ts",
     "setupFeatures": {
-      "doctorLegacyState": true,
-      "doctorSessionMigrationSurface": true
+      "legacyStateMigrations": true,
+      "legacySessionSurfaces": true
     },
     "channel": {
       "id": "whatsapp",

@@ -3,6 +3,7 @@
  */
 
 import crypto from "node:crypto";
+import fs from "node:fs";
 import { sanitizePendingFinalDeliveryText } from "../auto-reply/reply/pending-final-delivery.js";
 import {
   type SessionEntry,
@@ -19,6 +20,7 @@ import { isAcpSessionKey, isCronSessionKey, isSubagentSessionKey } from "../rout
 import { normalizeOptionalString } from "../shared/string-coerce.js";
 import { listOpenClawRegisteredAgentDatabases } from "../state/openclaw-agent-db.js";
 import { deliveryContextFromSession } from "../utils/delivery-context.shared.js";
+import type { SessionLockInspection } from "./session-write-lock.js";
 
 const log = createSubsystemLogger("main-session-restart-recovery");
 
@@ -38,6 +40,41 @@ function normalizeStringSet(values: Iterable<string> | undefined): Set<string> {
     }
   }
   return result;
+}
+
+function normalizeTranscriptLockPath(lockPath: string): string | undefined {
+  const trimmed = lockPath.trim();
+  if (!path.basename(trimmed).endsWith(".jsonl.lock")) {
+    return undefined;
+  }
+  const resolved = path.resolve(trimmed);
+  try {
+    return path.join(fs.realpathSync(path.dirname(resolved)), path.basename(resolved));
+  } catch {
+    return resolved;
+  }
+}
+
+function resolveEntryTranscriptLockPaths(params: {
+  entry: SessionEntry;
+  sessionsDir: string;
+}): string[] {
+  const paths = new Set<string>();
+  const push = (candidate: string | undefined) => {
+    const trimmed = candidate?.trim();
+    if (!trimmed) {
+      return;
+    }
+    const transcriptPath = path.isAbsolute(trimmed)
+      ? path.resolve(trimmed)
+      : path.resolve(params.sessionsDir, trimmed);
+    paths.add(`${transcriptPath}.lock`);
+  };
+  push(params.entry.sessionFile);
+  if (typeof params.entry.sessionId === "string" && params.entry.sessionId.trim()) {
+    push(`${params.entry.sessionId}.jsonl`);
+  }
+  return [...paths];
 }
 
 function shouldSkipMainRecovery(entry: SessionEntry, sessionKey: string): boolean {
@@ -166,6 +203,60 @@ export async function markRestartAbortedMainSessions(params: {
         params.reason ? ` (${params.reason})` : ""
       }`,
     );
+  }
+  return result;
+}
+
+export async function markRestartAbortedMainSessionsFromLocks(params: {
+  sessionsDir: string;
+  cleanedLocks: SessionLockInspection[];
+}): Promise<{ marked: number; skipped: number }> {
+  const result = { marked: 0, skipped: 0 };
+  const sessionsDir = path.resolve(params.sessionsDir);
+  const interruptedLockPaths = new Set(
+    params.cleanedLocks
+      .map((lock) => normalizeTranscriptLockPath(lock.lockPath))
+      .filter((lockPath): lockPath is string => Boolean(lockPath)),
+  );
+  if (interruptedLockPaths.size === 0) {
+    return result;
+  }
+
+  const env = resolveRecoveryEnv();
+  for (const agentDatabase of listOpenClawRegisteredAgentDatabases({ env })) {
+    for (const { sessionKey, entry } of listSessionEntries({
+      agentId: agentDatabase.agentId,
+      env,
+      path: agentDatabase.path,
+    })) {
+      if (!entry || entry.status !== "running") {
+        continue;
+      }
+      if (shouldSkipMainRecovery(entry, sessionKey)) {
+        result.skipped++;
+        continue;
+      }
+      const entryLockPaths = resolveEntryTranscriptLockPaths({ entry, sessionsDir });
+      if (!entryLockPaths.some((lockPath) => interruptedLockPaths.has(lockPath))) {
+        continue;
+      }
+      upsertSessionEntry({
+        agentId: agentDatabase.agentId,
+        env,
+        path: agentDatabase.path,
+        sessionKey,
+        entry: {
+          ...entry,
+          abortedLastRun: true,
+          updatedAt: Date.now(),
+        },
+      });
+      result.marked++;
+    }
+  }
+
+  if (result.marked > 0) {
+    log.warn(`marked ${result.marked} interrupted main session(s) from stale transcript locks`);
   }
   return result;
 }

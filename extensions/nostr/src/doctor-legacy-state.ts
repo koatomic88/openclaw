@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { ChannelDoctorLegacyStateMigrationPlan } from "openclaw/plugin-sdk/channel-contract";
+import type { ChannelLegacyStateMigrationPlan } from "openclaw/plugin-sdk/channel-contract";
 import { upsertPluginStateMigrationEntry } from "openclaw/plugin-sdk/migration-runtime";
 import {
   NOSTR_BUS_STATE_NAMESPACE,
@@ -111,7 +111,7 @@ function importLegacyNostrStateFiles(
 
 export function detectNostrLegacyStateMigrations(params: {
   stateDir: string;
-}): ChannelDoctorLegacyStateMigrationPlan[] {
+}): ChannelLegacyStateMigrationPlan[] {
   const sourceDir = path.join(params.stateDir, "nostr");
   const files = listLegacyNostrStateFiles(sourceDir);
   if (files.length === 0) {

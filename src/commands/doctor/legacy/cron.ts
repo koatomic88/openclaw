@@ -5,7 +5,13 @@ import { formatCliCommand } from "../../../cli/command-format.js";
 import { resolveAgentModelPrimaryValue } from "../../../config/model-input.js";
 import type { OpenClawConfig } from "../../../config/types.openclaw.js";
 import { resolveCronRunLogPruneOptions } from "../../../cron/run-log.js";
-import { resolveCronStoreKey, loadCronStore, saveCronStore } from "../../../cron/store.js";
+import {
+  loadCronQuarantineFile,
+  resolveCronQuarantinePath,
+  loadCronStore,
+  resolveCronStoreKey,
+  saveCronStore,
+} from "../../../cron/store.js";
 import type { CronJob } from "../../../cron/types.js";
 import {
   normalizeOptionalLowercaseString,
@@ -347,12 +353,49 @@ export async function maybeRepairLegacyCronStore(params: {
   const configuredLegacyStorePath = (params.cfg.cron as { store?: string } | undefined)?.store;
   const legacyStorePath = resolveLegacyCronStorePath(configuredLegacyStorePath);
   const storeKey = resolveCronStoreKey();
+  const quarantinePath = resolveCronQuarantinePath(storeKey);
   const hasLegacyStoreFile = legacyCronStoreFileExists(legacyStorePath);
   const hasLegacyStateSidecar = legacyCronStateFileExists(legacyStorePath);
   const hasLegacyRunLogs = await legacyCronRunLogFilesExist(legacyStorePath);
-  const store =
-    (hasLegacyStoreFile ? await loadLegacyCronStoreForMigration(legacyStorePath) : null) ??
-    (await loadCronStore(storeKey));
+  let store: Awaited<ReturnType<typeof loadCronStore>>;
+  try {
+    store =
+      (hasLegacyStoreFile ? await loadLegacyCronStoreForMigration(legacyStorePath) : null) ??
+      (await loadCronStore(storeKey));
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err);
+    note(
+      [
+        `Unable to read cron job store at ${shortenHomePath(legacyStorePath)}.`,
+        `- ${reason}`,
+        `Fix the file's permissions or contents and re-run ${formatCliCommand("openclaw doctor")}; later health checks will continue.`,
+      ].join("\n"),
+      "Cron",
+    );
+    return;
+  }
+  try {
+    const quarantine = await loadCronQuarantineFile(storeKey);
+    if (quarantine.jobs.length > 0) {
+      note(
+        [
+          `Quarantined cron job rows found at ${shortenHomePath(quarantinePath)}.`,
+          `- ${pluralize(quarantine.jobs.length, "row")} was removed from the active cron store after runtime validation failed.`,
+          "- Review or repair the quarantined rows manually before recreating any cron job.",
+        ].join("\n"),
+        "Cron",
+      );
+    }
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err);
+    note(
+      [
+        `Unable to read quarantined cron rows at ${shortenHomePath(quarantinePath)}.`,
+        `- ${reason}`,
+      ].join("\n"),
+      "Cron",
+    );
+  }
   const rawJobs = (store.jobs ?? []) as unknown as Array<Record<string, unknown>>;
   if (rawJobs.length === 0 && !hasLegacyStoreFile && !hasLegacyStateSidecar && !hasLegacyRunLogs) {
     return;

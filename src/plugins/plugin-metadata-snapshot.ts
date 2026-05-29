@@ -6,10 +6,11 @@ import {
   getActiveDiagnosticsTimelineSpan,
   measureDiagnosticsTimelineSpanSync,
 } from "../infra/diagnostics-timeline.js";
+import { isRecord } from "../shared/record-coerce.js";
 import { resolveUserPath } from "../utils.js";
 import { resolveCompatibilityHostVersion } from "../version.js";
 import { getCurrentPluginMetadataSnapshot } from "./current-plugin-metadata-snapshot.js";
-import { resolveDefaultPluginNpmDir } from "./install-paths.js";
+import { resolveDefaultPluginNpmDir, resolvePluginNpmProjectsDir } from "./install-paths.js";
 import { hashJson } from "./installed-plugin-index-hash.js";
 import {
   readPersistedInstalledPluginIndexFingerprintSync,
@@ -24,7 +25,7 @@ import {
 } from "./manifest-registry-installed.js";
 import { loadPluginManifestRegistry, type PluginManifestRecord } from "./manifest-registry.js";
 import { resolvePluginControlPlaneFingerprint } from "./plugin-control-plane-context.js";
-import { registerPluginMetadataSnapshotMemoClear } from "./plugin-metadata-snapshot-memo.js";
+import { registerPluginMetadataProcessMemoLifecycleClear } from "./plugin-metadata-lifecycle.js";
 import type {
   LoadPluginMetadataSnapshotParams,
   PluginMetadataSnapshot,
@@ -60,7 +61,7 @@ export function clearLoadPluginMetadataSnapshotMemo(): void {
   pluginMetadataSnapshotMemos = [];
 }
 
-registerPluginMetadataSnapshotMemoClear(clearLoadPluginMetadataSnapshotMemo);
+registerPluginMetadataProcessMemoLifecycleClear(clearLoadPluginMetadataSnapshotMemo);
 
 const MEMO_RELEVANT_ENV_KEYS = [
   "APPDATA",
@@ -98,12 +99,24 @@ function fileFingerprint(filePath: string): unknown {
   }
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
-}
-
 function normalizeString(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+function directoryChildPackageJsonFingerprint(directoryPath: string): unknown {
+  let entries: fs.Dirent[];
+  try {
+    entries = fs.readdirSync(directoryPath, { withFileTypes: true });
+  } catch {
+    return [directoryPath, "missing"];
+  }
+  return [
+    directoryPath,
+    ...entries
+      .filter((entry) => entry.isDirectory())
+      .toSorted((a, b) => a.name.localeCompare(b.name))
+      .map((entry) => fileFingerprint(path.join(directoryPath, entry.name, "package.json"))),
+  ];
 }
 
 function readJsonObject(filePath: string): Record<string, unknown> | undefined {
@@ -363,6 +376,9 @@ function resolvePersistedRegistryFastMemoFingerprint(params: {
       ...(params.stateDir ? { stateDir: params.stateDir } : {}),
     }),
     npmPackageJson: fileFingerprint(path.join(npmRoot, "package.json")),
+    npmProjectPackageJsons: directoryChildPackageJsonFingerprint(
+      resolvePluginNpmProjectsDir(npmRoot),
+    ),
   };
 }
 

@@ -14,6 +14,26 @@ Manage cron jobs for the Gateway scheduler.
 Run `openclaw cron --help` for the full command surface. See [Cron jobs](/automation/cron-jobs) for the conceptual guide.
 </Tip>
 
+## Create jobs quickly
+
+`openclaw cron create` is an alias for `openclaw cron add`. For new jobs, put the schedule first and the prompt second:
+
+```bash
+openclaw cron create "0 7 * * *" \
+  "Summarize overnight updates." \
+  --name "Morning brief" \
+  --agent ops
+```
+
+Use `--webhook <url>` when the job should POST the finished payload instead of delivering to a chat target:
+
+```bash
+openclaw cron create "0 18 * * 1-5" \
+  "Summarize today's deploys as JSON." \
+  --name "Deploy digest" \
+  --webhook "https://example.invalid/openclaw/cron"
+```
+
 ## Sessions
 
 `--session` accepts `main`, `isolated`, `current`, or `session:<id>`.
@@ -49,6 +69,8 @@ Isolated cron chat delivery is shared between the agent and the runner:
 - `announce` fallback-delivers the final reply only when the agent did not send directly to the resolved target.
 - `webhook` posts the finished payload to a URL.
 - `none` disables runner fallback delivery.
+
+Use `cron add|create --webhook <url>` or `cron edit <job-id> --webhook <url>` to set webhook delivery. Do not combine `--webhook` with chat delivery flags such as `--announce`, `--no-deliver`, `--channel`, `--to`, `--thread-id`, or `--account`.
 
 `--announce` is runner fallback delivery for the final reply. `--no-deliver` disables that fallback but does not remove the agent's `message` tool when a chat route is available.
 
@@ -96,7 +118,7 @@ Skipped runs are tracked separately from execution errors. They do not affect re
 
 For isolated jobs that target a local configured model provider, cron runs a lightweight provider preflight before starting the agent turn. Loopback, private-network, and `.local` `api: "ollama"` providers are probed at `/api/tags`; local OpenAI-compatible providers such as vLLM, SGLang, and LM Studio are probed at `/models`. If the endpoint is unreachable, the run is recorded as `skipped` and retried on a later schedule; matching dead endpoints are cached for 5 minutes to avoid many jobs hammering the same local server.
 
-Note: cron job definitions and pending runtime state live in the shared SQLite state database. Legacy `jobs.json` and `jobs-state.json` files are imported and removed by `openclaw doctor --fix`.
+Note: cron job definitions and pending runtime state live in the shared SQLite state database. Legacy `jobs.json` and `jobs-state.json` files are imported and removed by `openclaw doctor --fix`; malformed legacy rows are preserved in SQLite quarantine state during import.
 
 ### Manual runs
 
@@ -133,6 +155,7 @@ Cron `--model` is a **job primary**, not a chat-session `/model` override. That 
 - Per-job payload `fallbacks` replaces the configured fallback list when present.
 - An empty per-job fallback list (`fallbacks: []` in the job payload/API) makes the cron run strict.
 - When a job has `--model` but no fallback list is configured, OpenClaw passes an explicit empty fallback override so the agent primary is not appended as a hidden retry target.
+- Local-provider preflight checks walk configured fallbacks before marking a cron run `skipped`.
 
 `openclaw doctor` reports jobs that already have `payload.model` set, including provider namespace counts and mismatches against `agents.defaults.model`. Use that check when auth, provider, or billing behavior looks different between live chat and scheduled jobs.
 
@@ -218,11 +241,10 @@ openclaw cron edit <job-id> --announce --channel telegram --to "-1001234567890" 
 Create an isolated job with lightweight bootstrap context:
 
 ```bash
-openclaw cron add \
+openclaw cron create "0 7 * * *" \
+  "Summarize overnight updates." \
   --name "Lightweight morning brief" \
-  --cron "0 7 * * *" \
   --session isolated \
-  --message "Summarize overnight updates." \
   --light-context \
   --no-deliver
 ```
@@ -269,6 +291,7 @@ Delivery tweaks:
 
 ```bash
 openclaw cron edit <job-id> --announce --channel slack --to "channel:C1234567890"
+openclaw cron edit <job-id> --webhook "https://example.invalid/openclaw/cron"
 openclaw cron edit <job-id> --best-effort-deliver
 openclaw cron edit <job-id> --no-best-effort-deliver
 openclaw cron edit <job-id> --no-deliver

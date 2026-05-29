@@ -180,12 +180,8 @@ function abortActiveRunsForRestart(params: {
       {
         chatAbortControllers: params.chatAbortControllers,
         chatRunBuffers: params.chatRunState.buffers,
-        chatDeltaSentAt: params.chatRunState.deltaSentAt,
-        chatDeltaLastBroadcastLen: params.chatRunState.deltaLastBroadcastLen,
-        chatDeltaLastBroadcastText: params.chatRunState.deltaLastBroadcastText,
-        agentDeltaSentAt: params.chatRunState.agentDeltaSentAt,
-        bufferedAgentEvents: params.chatRunState.bufferedAgentEvents,
         chatAbortedRuns: params.chatRunState.abortedRuns,
+        clearChatRunState: params.chatRunState.clearRun,
         removeChatRun: params.removeChatRun,
         agentRunSeq: params.agentRunSeq,
         broadcast: params.broadcast,
@@ -562,11 +558,6 @@ export function createGatewayCloseHandler(params: {
           }),
         ]);
       });
-      if (params.pluginServices) {
-        await measureCloseStep("plugin-services", () =>
-          shutdownStep("plugin-services", () => params.pluginServices!.stop(), warnings),
-        );
-      }
       await shutdownStep("plugin-state-store", () => closePluginStateDatabase(), warnings);
       await measureCloseStep("config-reloader", () =>
         shutdownStep("config-reloader", () => params.configReloader.stop(), warnings),

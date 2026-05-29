@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import type { SessionsPatchResult } from "../../packages/gateway-protocol/src/index.js";
 import { modelKey } from "../agents/model-ref-shared.js";
 import { normalizeGroupActivation } from "../auto-reply/group-activation.js";
 import {
@@ -7,7 +8,6 @@ import {
   resolveResponseUsageMode,
 } from "../auto-reply/thinking.js";
 import { isChatStopCommandText } from "../gateway/chat-abort.js";
-import type { SessionsPatchResult } from "../gateway/protocol/index.js";
 import { formatRelativeTimestamp } from "../infra/format-time/format-relative.ts";
 import { normalizeAgentId } from "../routing/session-key.js";
 import { helpText, parseCommand } from "./commands.js";

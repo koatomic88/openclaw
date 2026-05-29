@@ -55,6 +55,8 @@ export type AgentSession = {
   isCompacting: boolean;
   subscribe(listener: AgentSessionEventListener): () => void;
   abortCompaction(): void;
+  /** Replace the runtime-owned base system prompt for this session. */
+  setBaseSystemPrompt(systemPrompt: string): void;
   setActiveToolsByName(toolNames: string[]): void;
 };
 

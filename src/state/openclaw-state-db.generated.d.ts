@@ -5,9 +5,10 @@
 
 import type { ColumnType } from "kysely";
 
-export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
-  ? ColumnType<S, I | undefined, U>
-  : ColumnType<T, T | undefined, T>;
+export type Generated<T> =
+  T extends ColumnType<infer S, infer I, infer U>
+    ? ColumnType<S, I | undefined, U>
+    : ColumnType<T, T | undefined, T>;
 
 export interface AcpReplayEvents {
   at: number;
@@ -40,6 +41,7 @@ export interface AgentModelCatalogs {
   agent_dir: string;
   catalog_key: string;
   raw_json: string;
+  relative_path: Generated<string>;
   updated_at: number;
 }
 
@@ -262,6 +264,19 @@ export interface CronJobs {
   store_key: string;
   updated_at: number;
   wake_mode: string;
+}
+
+export interface CronQuarantinedJobs {
+  job_json: string | null;
+  quarantine_key: string;
+  quarantined_at_ms: number;
+  raw_json: string | null;
+  reason: string;
+  schedule_identity: string | null;
+  source_index: number;
+  state_json: string | null;
+  store_key: string;
+  updated_at_ms: number | null;
 }
 
 export interface CronRunLogs {
@@ -917,6 +932,7 @@ export interface DB {
   commitments: Commitments;
   config_health_entries: ConfigHealthEntries;
   cron_jobs: CronJobs;
+  cron_quarantined_jobs: CronQuarantinedJobs;
   cron_run_logs: CronRunLogs;
   current_conversation_bindings: CurrentConversationBindings;
   delivery_queue_entries: DeliveryQueueEntries;

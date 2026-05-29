@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 import { statSync } from "node:fs";
 import path from "node:path";
+import type { OpenClawConfig } from "../../config/types.openclaw.js";
+import type { PluginMetadataSnapshot } from "../../plugins/plugin-metadata-snapshot.types.js";
 import {
   resolveRuntimeExternalAuthProviderRefs,
   resolveRuntimeSyntheticAuthProviderRefs,
@@ -10,7 +12,11 @@ import { resolveDefaultAgentDir } from "../agent-scope.js";
 import { authProfileStoreKey } from "../auth-profiles/persisted.js";
 import { hasAnyRuntimeAuthProfileStoreSource } from "../auth-profiles/runtime-snapshots.js";
 import { readAuthProfileStorePayloadResult } from "../auth-profiles/sqlite-storage.js";
-import { readStoredModelsConfigRaw } from "../models-config-store.js";
+import { resolveModelPluginMetadataSnapshot } from "../model-discovery-context.js";
+import {
+  listStoredPluginModelCatalogs,
+  readStoredModelsConfigRaw,
+} from "../models-config-store.js";
 import type { AuthStorage, ModelRegistry } from "../sessions/index.js";
 
 type DiscoveryStores = {
@@ -20,9 +26,10 @@ type DiscoveryStores = {
 
 type DiscoverCachedAgentStoresOptions = {
   agentDir: string;
+  config?: OpenClawConfig;
   inheritedAuthDir?: string;
+  workspaceDir?: string;
 };
-type DiscoverCachedPiStoresOptions = DiscoverCachedAgentStoresOptions;
 
 type CacheEntry = DiscoveryStores & {
   fingerprint: string;
@@ -81,7 +88,23 @@ function storedModelCatalogFingerprint(agentDir: string): object | null {
   };
 }
 
-function discoveryFingerprint(params: DiscoverCachedPiStoresOptions): string {
+function storedPluginModelCatalogFingerprint(agentDir: string): Array<{
+  rawHash: string;
+  relativePath: string;
+  updatedAt: number;
+}> {
+  return listStoredPluginModelCatalogs(agentDir).map((entry) => ({
+    relativePath: entry.relativePath,
+    updatedAt: entry.updatedAt,
+    rawHash: createHash("sha256").update(entry.raw).digest("hex"),
+  }));
+}
+
+function discoveryFingerprint(
+  params: DiscoverCachedAgentStoresOptions & {
+    pluginMetadataSnapshot?: PluginMetadataSnapshot;
+  },
+): string {
   const inheritedAuthDir =
     params.inheritedAuthDir && params.inheritedAuthDir !== params.agentDir
       ? params.inheritedAuthDir
@@ -92,6 +115,8 @@ function discoveryFingerprint(params: DiscoverCachedPiStoresOptions): string {
     localAuth: authFingerprint(params.agentDir),
     inheritedAuth: inheritedAuthDir ? authFingerprint(inheritedAuthDir) : undefined,
     modelCatalog: storedModelCatalogFingerprint(params.agentDir),
+    pluginMetadata: pluginMetadataFingerprint(params.pluginMetadataSnapshot),
+    pluginModelCatalogs: storedPluginModelCatalogFingerprint(params.agentDir),
   });
 }
 
@@ -116,9 +141,35 @@ function pruneDiscoveryStoreCache(): void {
   }
 }
 
-function discoverFreshAgentStores(agentDir: string): DiscoveryStores {
+function resolvePluginMetadataSnapshotForDiscovery(
+  options: DiscoverCachedAgentStoresOptions,
+): PluginMetadataSnapshot | undefined {
+  return resolveModelPluginMetadataSnapshot({
+    ...(options.config ? { config: options.config } : {}),
+    ...(options.workspaceDir ? { workspaceDir: options.workspaceDir } : {}),
+    useRuntimeConfig: options.config === undefined,
+  }) as PluginMetadataSnapshot | undefined;
+}
+
+function pluginMetadataFingerprint(snapshot: PluginMetadataSnapshot | undefined): object {
+  return {
+    configFingerprint: snapshot?.configFingerprint,
+    policyHash: snapshot?.policyHash,
+    workspaceDir: snapshot?.workspaceDir,
+  };
+}
+
+function discoverFreshAgentStores(
+  agentDir: string,
+  options: Pick<DiscoverCachedAgentStoresOptions, "config" | "workspaceDir">,
+  pluginMetadataSnapshot: PluginMetadataSnapshot | undefined,
+): DiscoveryStores {
   const authStorage = discoverAuthStorage(agentDir);
-  const modelRegistry = discoverModels(authStorage, agentDir);
+  const modelRegistry = discoverModels(authStorage, agentDir, {
+    ...(options.config ? { config: options.config } : {}),
+    ...(pluginMetadataSnapshot ? { pluginMetadataSnapshot } : {}),
+    ...(options.workspaceDir ? { workspaceDir: options.workspaceDir } : {}),
+  });
   return { authStorage, modelRegistry };
 }
 
@@ -130,11 +181,16 @@ export function discoverCachedAgentStores(
     options.inheritedAuthDir ?? resolveDefaultAgentDir({}),
   );
   if (hasAnyRuntimeAuthProfileStoreSource(agentDir) || hasRuntimePluginAuthSources()) {
-    return discoverFreshAgentStores(agentDir);
+    return discoverFreshAgentStores(
+      agentDir,
+      options,
+      resolvePluginMetadataSnapshotForDiscovery(options),
+    );
   }
+  const pluginMetadataSnapshot = resolvePluginMetadataSnapshotForDiscovery(options);
 
   const cacheKey = JSON.stringify({ agentDir, inheritedAuthDir });
-  const fingerprint = discoveryFingerprint({ agentDir, inheritedAuthDir });
+  const fingerprint = discoveryFingerprint({ agentDir, inheritedAuthDir, pluginMetadataSnapshot });
   const cached = DISCOVERY_STORE_CACHE.get(cacheKey);
   if (cached?.fingerprint === fingerprint) {
     cached.lastUsedAt = Date.now();
@@ -144,7 +200,7 @@ export function discoverCachedAgentStores(
     };
   }
 
-  const stores = discoverFreshAgentStores(agentDir);
+  const stores = discoverFreshAgentStores(agentDir, options, pluginMetadataSnapshot);
   DISCOVERY_STORE_CACHE.set(cacheKey, {
     authStorage: stores.authStorage,
     fingerprint,

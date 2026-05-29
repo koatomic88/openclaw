@@ -1,7 +1,9 @@
 import type { Insertable, Selectable } from "kysely";
+import type { ReplyDispatchKind } from "../../auto-reply/reply/reply-dispatcher.types.js";
 import type { ReplyPayload } from "../../auto-reply/types.js";
 import type { RenderedMessageBatchPlanItem } from "../../channels/message/types.js";
 import type { ReplyToMode } from "../../config/types.js";
+import type { PluginHookReplyPayloadSendingContext } from "../../plugins/hook-types.js";
 import type { DB as OpenClawStateKyselyDatabase } from "../../state/openclaw-state-db.generated.js";
 import {
   openOpenClawStateDatabase,
@@ -38,6 +40,14 @@ export type QueuedRenderedMessageBatchPlan = {
   items: readonly RenderedMessageBatchPlanItem[];
 };
 
+export type QueuedReplyPayloadSendingHook = {
+  kind: ReplyDispatchKind;
+  channel?: string;
+  sessionKey?: string;
+  runId?: string;
+  context: PluginHookReplyPayloadSendingContext;
+};
+
 export type QueuedDeliveryPayload = {
   channel: Exclude<OutboundChannel, "none">;
   to: string;
@@ -58,6 +68,8 @@ export type QueuedDeliveryPayload = {
   bestEffort?: boolean;
   gifPlayback?: boolean;
   forceDocument?: boolean;
+  /** Replayable reply payload hook context for recovery and live delivery. */
+  replyPayloadSendingHook?: QueuedReplyPayloadSendingHook;
   silent?: boolean;
   mirror?: OutboundMirror;
   /** Session context needed to preserve outbound media policy on recovery. */
@@ -233,6 +245,7 @@ export async function enqueueDelivery(
     bestEffort: params.bestEffort,
     gifPlayback: params.gifPlayback,
     forceDocument: params.forceDocument,
+    replyPayloadSendingHook: params.replyPayloadSendingHook,
     silent: params.silent,
     mirror: params.mirror,
     session: params.session,

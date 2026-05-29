@@ -10,6 +10,10 @@ import {
   installModelsConfigTestHooks,
   withModelsTempHome,
 } from "./models-config.e2e-harness.js";
+import {
+  encodePluginModelCatalogRelativePath,
+  PLUGIN_MODEL_CATALOG_GENERATED_BY,
+} from "./plugin-model-catalog.js";
 
 const planOpenClawModelCatalogMock = vi.fn();
 
@@ -191,6 +195,94 @@ describe("models-config write serialization", () => {
           process.env.OPENCLAW_STATE_DIR = previousStateDir;
         }
       }
+    });
+  });
+
+  it("writes plugin-owned model catalogs beside the agent plugin state", async () => {
+    await withModelsTempHome(async (home) => {
+      const agentDir = path.join(home, "agent");
+      planOpenClawModelCatalogMock.mockImplementation(async () => ({
+        action: "write",
+        contents: `${JSON.stringify({ providers: {} }, null, 2)}\n`,
+        pluginCatalogWrites: {
+          [encodePluginModelCatalogRelativePath("zai")]: `${JSON.stringify(
+            {
+              generatedBy: PLUGIN_MODEL_CATALOG_GENERATED_BY,
+              providers: {
+                zai: {
+                  baseUrl: "https://api.z.ai/api/paas/v4",
+                  api: "openai-completions",
+                  apiKey: "ZAI_API_KEY",
+                  models: [{ id: "glm-5.1", name: "GLM 5.1" }],
+                },
+              },
+            },
+            null,
+            2,
+          )}\n`,
+        },
+      }));
+
+      await ensureOpenClawModelCatalog({}, agentDir);
+
+      const root = JSON.parse(readStoredModelsConfigRaw(agentDir)?.raw ?? "{}") as {
+        providers?: Record<string, unknown>;
+      };
+      const catalog = JSON.parse(
+        readStoredModelsConfigRaw(agentDir, {}, encodePluginModelCatalogRelativePath("zai"))?.raw ??
+          "{}",
+      ) as { providers?: Record<string, unknown> };
+      expect(root.providers).toEqual({});
+      expect(root).not.toHaveProperty("pluginCatalogs");
+      expect(Object.keys(catalog.providers ?? {})).toEqual(["zai"]);
+    });
+  });
+
+  it("removes stale plugin-owned model catalogs", async () => {
+    await withModelsTempHome(async (home) => {
+      const agentDir = path.join(home, "agent");
+      const staleCatalog = encodePluginModelCatalogRelativePath("old-provider");
+      writeStoredModelsConfigRaw(
+        agentDir,
+        `${JSON.stringify(
+          { generatedBy: PLUGIN_MODEL_CATALOG_GENERATED_BY, providers: {} },
+          null,
+          2,
+        )}\n`,
+        { relativePath: staleCatalog },
+      );
+      planOpenClawModelCatalogMock.mockImplementation(async () => ({
+        action: "noop",
+        pluginCatalogWrites: {},
+      }));
+      writeStoredModelsConfigRaw(agentDir, `${JSON.stringify({ providers: {} })}\n`);
+
+      const result = await ensureOpenClawModelCatalog({}, agentDir);
+
+      expect(result.wrote).toBe(true);
+      expect(readStoredModelsConfigRaw(agentDir, {}, staleCatalog)).toBeUndefined();
+    });
+  });
+
+  it("keeps generated plugin catalogs on non-authoritative skip plans", async () => {
+    await withModelsTempHome(async (home) => {
+      const agentDir = path.join(home, "agent");
+      const catalogPath = encodePluginModelCatalogRelativePath("zai");
+      writeStoredModelsConfigRaw(
+        agentDir,
+        `${JSON.stringify(
+          { generatedBy: PLUGIN_MODEL_CATALOG_GENERATED_BY, providers: {} },
+          null,
+          2,
+        )}\n`,
+        { relativePath: catalogPath },
+      );
+      planOpenClawModelCatalogMock.mockImplementation(async () => ({ action: "skip" }));
+
+      const result = await ensureOpenClawModelCatalog({}, agentDir);
+
+      expect(result.wrote).toBe(false);
+      expect(readStoredModelsConfigRaw(agentDir, {}, catalogPath)).toBeDefined();
     });
   });
 

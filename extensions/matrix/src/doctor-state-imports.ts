@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import type { ChannelDoctorLegacyStateMigrationPlan } from "openclaw/plugin-sdk/channel-contract";
+import type { ChannelLegacyStateMigrationPlan } from "openclaw/plugin-sdk/channel-contract";
 import {
   upsertPluginBlobMigrationEntry,
   upsertPluginStateMigrationEntry,
@@ -428,7 +428,7 @@ function pluginStatePlan(params: {
     | "inbound-dedupe"
     | "startup-verification";
   importSource: (sourcePath: string, env: NodeJS.ProcessEnv) => ImportResult;
-}): ChannelDoctorLegacyStateMigrationPlan {
+}): ChannelLegacyStateMigrationPlan {
   return {
     kind: "custom",
     label: params.label,
@@ -451,7 +451,7 @@ function pluginBlobPlan(params: {
   sourcePath: string;
   namespace: typeof MATRIX_IDB_SNAPSHOT_NAMESPACE | typeof MATRIX_SYNC_STORE_NAMESPACE;
   importSource: (sourcePath: string, env: NodeJS.ProcessEnv) => ImportResult;
-}): ChannelDoctorLegacyStateMigrationPlan {
+}): ChannelLegacyStateMigrationPlan {
   return {
     kind: "custom",
     label: params.label,
@@ -471,9 +471,9 @@ function pluginBlobPlan(params: {
 
 export function detectMatrixLegacyStateMigrations(params: {
   stateDir: string;
-}): ChannelDoctorLegacyStateMigrationPlan[] {
+}): ChannelLegacyStateMigrationPlan[] {
   const root = path.join(params.stateDir, "matrix");
-  const plans: ChannelDoctorLegacyStateMigrationPlan[] = [];
+  const plans: ChannelLegacyStateMigrationPlan[] = [];
   if (collectFiles(root, SYNC_STORE_FILENAME).length > 0) {
     plans.push(
       pluginBlobPlan({

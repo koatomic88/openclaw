@@ -3,7 +3,12 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { OpenClawConfig } from "../../../config/config.js";
-import { loadCronStore, resolveCronStoreKey, saveCronStore } from "../../../cron/store.js";
+import {
+  loadCronStore,
+  resolveCronStoreKey,
+  saveCronQuarantineFile,
+  saveCronStore,
+} from "../../../cron/store.js";
 import { closeOpenClawStateDatabaseForTest } from "../../../state/openclaw-state-db.js";
 import { maybeRepairLegacyCronStore, noteLegacyWhatsAppCrontabHealthCheck } from "./cron.js";
 
@@ -129,6 +134,32 @@ function expectNoNoteContaining(message: string, title: string): void {
 }
 
 describe("maybeRepairLegacyCronStore", () => {
+  it("reports quarantined cron rows from SQLite even when the active store is already sanitized", async () => {
+    const storePath = await makeTempLegacyStorePath();
+    const storeKey = resolveCronStoreKey();
+    await saveCronStore(storeKey, { version: 1, jobs: [] });
+    await saveCronQuarantineFile({
+      storeKey,
+      entries: [
+        {
+          sourceIndex: 1,
+          reason: "missing-schedule",
+          job: { id: "bad-cron", name: "Bad cron" },
+        },
+      ],
+      nowMs: Date.parse("2026-05-29T09:00:00.000Z"),
+    });
+
+    await maybeRepairLegacyCronStore({
+      cfg: createCronConfig(storePath),
+      options: {},
+      prompter: makePrompter(true),
+    });
+
+    expectNoteContaining("Quarantined cron job rows found", "Cron");
+    expectNoteContaining("1 row was removed from the active cron store", "Cron");
+  });
+
   it("surfaces cron payload model overrides without rewriting current jobs", async () => {
     const storePath = await makeTempLegacyStorePath();
     await writeLegacyCronStore(storePath, [

@@ -4,6 +4,7 @@ import type { ReplyPayload } from "../../auto-reply/reply-payload.js";
 import type { ReplyBackendHandle } from "../../auto-reply/reply/reply-run-registry.js";
 import type { ThinkLevel } from "../../auto-reply/thinking.js";
 import { SILENT_REPLY_TOKEN } from "../../auto-reply/tokens.js";
+import { patchSessionEntry } from "../../config/sessions.js";
 import { ensureContextEnginesInitialized } from "../../context-engine/init.js";
 import {
   resolveContextEngine,
@@ -170,6 +171,7 @@ import {
   STRICT_AGENTIC_BLOCKED_TEXT,
   resolveReplayInvalidFlag,
   resolveRunLivenessState,
+  shouldRetryMissingAssistantTurn,
   shouldTreatEmptyAssistantReplyAsSilent,
 } from "./run/incomplete-turn.js";
 import type { RunEmbeddedAgentParams, RunEmbeddedPiAgentParams } from "./run/params.js";
@@ -204,6 +206,7 @@ const MID_TURN_PRECHECK_CONTINUATION_PROMPT =
   "Continue from the current transcript after the latest tool result. Do not repeat the original user request, and do not rerun completed tools unless the transcript shows they are still needed.";
 const COMPACTION_CONTINUATION_RETRY_INSTRUCTION =
   "The previous attempt compacted the conversation context before producing a final user-visible answer. Continue from the compacted transcript and produce the final answer now. Do not restart from scratch, do not repeat completed work, and do not rerun tools unless the transcript clearly lacks required evidence.";
+const NO_REAL_CONVERSATION_MESSAGES_REASON = "no real conversation messages";
 type EmbeddedRunAttemptForRunner = Awaited<ReturnType<typeof runEmbeddedAttemptWithBackend>>;
 type PiRunWorkerOptions = NonNullable<Parameters<typeof runPiRunInWorker>[1]>;
 
@@ -295,6 +298,54 @@ async function runPiRunInWorkerWithParentReplyOperation(
     running = false;
     params.abortSignal?.removeEventListener?.("abort", forwardParentAbort);
     params.replyOperation.detachBackend(backendHandle);
+  }
+}
+
+function isNoRealConversationCompactionNoop(params: {
+  ok?: boolean;
+  compacted?: boolean;
+  reason?: string;
+}): boolean {
+  return (
+    params.ok === true &&
+    params.compacted === false &&
+    params.reason === NO_REAL_CONVERSATION_MESSAGES_REASON
+  );
+}
+
+async function resetNoRealConversationTokenSnapshot(params: {
+  config?: RunEmbeddedAgentParams["config"];
+  sessionKey?: string;
+  agentId?: string;
+}): Promise<void> {
+  if (!params.sessionKey) {
+    return;
+  }
+  const { defaultAgentId, sessionAgentId } = resolveSessionAgentIds({
+    sessionKey: params.sessionKey,
+    config: params.config,
+    agentId: params.agentId,
+  });
+  try {
+    await patchSessionEntry({
+      agentId: sessionAgentId ?? defaultAgentId,
+      sessionKey: params.sessionKey,
+      update: async () => ({
+        totalTokens: 0,
+        totalTokensFresh: true,
+        inputTokens: undefined,
+        outputTokens: undefined,
+        cacheRead: undefined,
+        cacheWrite: undefined,
+        contextBudgetStatus: undefined,
+        updatedAt: Date.now(),
+      }),
+    });
+  } catch (err) {
+    log.warn(
+      `[context-overflow-precheck] failed to reset stale context snapshot for ` +
+        `${params.sessionKey}: ${String(err)}`,
+    );
   }
 }
 
@@ -832,17 +883,26 @@ export async function runEmbeddedAgent(
         pluginHarnessOwnsTransport &&
         provider === OPENAI_CODEX_PROVIDER_ID &&
         effectiveModel.api === "openai-codex-responses";
+      const openClawNativeCodexResponsesNeedsAuthBootstrap =
+        !pluginHarnessOwnsTransport &&
+        provider === OPENAI_CODEX_PROVIDER_ID &&
+        effectiveModel.api === "openai-codex-responses";
       let piExternalCliAuthScope = pluginHarnessOwnsTransport
         ? { ignoreAutoPreferredProfile: false }
-        : resolveExternalCliAuthOverlayScopeFromSelection({
-            provider,
-            cfg: params.config,
-            agentId: params.agentId,
-            modelId,
-            workspaceDir: resolvedWorkspace,
-            userLockedAuthProfileId:
-              params.authProfileIdSource === "user" ? params.authProfileId : undefined,
-          });
+        : openClawNativeCodexResponsesNeedsAuthBootstrap
+          ? {
+              providerIds: [OPENAI_CODEX_PROVIDER_ID],
+              ignoreAutoPreferredProfile: false,
+            }
+          : resolveExternalCliAuthOverlayScopeFromSelection({
+              provider,
+              cfg: params.config,
+              agentId: params.agentId,
+              modelId,
+              workspaceDir: resolvedWorkspace,
+              userLockedAuthProfileId:
+                params.authProfileIdSource === "user" ? params.authProfileId : undefined,
+            });
       let noExternalAuthStore: AuthProfileStore | undefined;
       if (
         !pluginHarnessOwnsTransport &&
@@ -1156,6 +1216,8 @@ export async function runEmbeddedAgent(
               : lastProfileId,
           )
         : attemptAuthProfileStore;
+      const harnessBuildsOpenClawTools =
+        agentHarness.id === "codex" || agentHarness.id === "copilot";
       const { sessionAgentId } = resolveSessionAgentIds({
         sessionKey: params.sessionKey,
         config: params.config,
@@ -1173,8 +1235,8 @@ export async function runEmbeddedAgent(
         modelId,
       });
       const executionContract = strictAgenticActive ? "strict-agentic" : "default";
-      const configuredExecutionContractForLog = configuredExecutionContract ?? "default";
-      if (strictAgenticActive) {
+      const configuredExecutionContractForLog = configuredExecutionContract ?? "unspecified";
+      if (strictAgenticActive && configuredExecutionContract) {
         log.info(
           `strict-agentic execution contract active: runId=${params.runId} sessionId=${params.sessionId} ` +
             `provider=${sanitizeForLog(provider)}/${sanitizeForLog(modelId)} harness=${sanitizeForLog(agentHarness.id)} ` +
@@ -1258,6 +1320,8 @@ export async function runEmbeddedAgent(
       // visible-answer retry instruction instead.
       const MAX_EMPTY_ERROR_RETRIES = 3;
       let emptyErrorRetries = 0;
+      const MAX_MISSING_ASSISTANT_RETRIES = 1;
+      let missingAssistantRetryAttempts = 0;
       const overloadFailoverBackoffMs = resolveOverloadFailoverBackoffMs(params.config);
       const overloadProfileRotationLimit = resolveOverloadProfileRotationLimit(params.config);
       const rateLimitProfileRotationLimit = resolveRateLimitProfileRotationLimit(params.config);
@@ -1367,7 +1431,7 @@ export async function runEmbeddedAgent(
         agentDir,
         workspaceDir: resolvedWorkspace,
       });
-      const contextEnginePluginId = resolveContextEngineOwnerPluginId(contextEngine);
+      const resolveContextEnginePluginId = () => resolveContextEngineOwnerPluginId(contextEngine);
       startupStages.mark("context-engine");
       notifyExecutionPhase("context_engine", { provider, model: modelId });
       try {
@@ -1650,6 +1714,9 @@ export async function runEmbeddedAgent(
             initialReplayState: accumulatedReplayState,
             authStorage,
             authProfileStore: runAttemptAuthProfileStore,
+            // These harnesses build OpenClaw tools internally. Keep transport auth
+            // scoped while letting tool construction see plugin/provider creds.
+            toolAuthProfileStore: harnessBuildsOpenClawTools ? attemptAuthProfileStore : undefined,
             modelRegistry,
             agentId: workspaceResolution.agentId,
             beforeAgentStartResult,
@@ -1960,7 +2027,7 @@ export async function runEmbeddedAgent(
                     config: params.config,
                     sessionKey: params.sessionKey,
                     agentId: sessionAgentId,
-                    contextEnginePluginId,
+                    contextEnginePluginId: resolveContextEnginePluginId(),
                     purpose: "context-engine.timeout-compaction",
                   }),
                   onCompactionHookMessages,
@@ -2142,7 +2209,7 @@ export async function runEmbeddedAgent(
                     config: params.config,
                     sessionKey: params.sessionKey,
                     agentId: sessionAgentId,
-                    contextEnginePluginId,
+                    contextEnginePluginId: resolveContextEnginePluginId(),
                     purpose: "context-engine.overflow-compaction",
                   }),
                   onCompactionHookMessages,
@@ -2193,6 +2260,23 @@ export async function runEmbeddedAgent(
                 };
               }
               await runOwnsCompactionAfterHook("overflow recovery", compactResult);
+              if (preflightRecovery && isNoRealConversationCompactionNoop(compactResult)) {
+                lastCompactionTokensAfter = undefined;
+                lastContextBudgetStatus = undefined;
+                await resetNoRealConversationTokenSnapshot({
+                  config: params.config,
+                  sessionKey: params.sessionKey,
+                  agentId: sessionAgentId,
+                });
+                log.info(
+                  `[context-overflow-precheck] stale token state had no real conversation messages for ` +
+                    `${provider}/${modelId}; resetting the context snapshot and retrying prompt`,
+                );
+                if (preflightRecovery.source === "mid-turn") {
+                  continueFromCurrentTranscript();
+                }
+                continue;
+              }
               if (compactResult.compacted) {
                 adoptCompactionTranscript(compactResult);
                 if (
@@ -3087,9 +3171,14 @@ export async function runEmbeddedAgent(
             }
             planningOnlyRetryAttempts += 1;
             planningOnlyRetryInstruction = nextPlanningOnlyRetryInstruction;
+            const planningOnlyRetryLogPrefix =
+              executionContract === "strict-agentic"
+                ? "strict-agentic execution contract triggered"
+                : "planning-only turn detected";
             log.warn(
-              `planning-only turn detected: runId=${params.runId} sessionId=${params.sessionId} ` +
-                `provider=${provider}/${modelId} contract=${executionContract} configured=${configuredExecutionContractForLog} — retrying ` +
+              `${planningOnlyRetryLogPrefix}: runId=${params.runId} sessionId=${params.sessionId} ` +
+                `provider=${provider}/${modelId} harness=${sanitizeForLog(agentHarness.id)} ` +
+                `contract=${executionContract} configured=${configuredExecutionContractForLog} — retrying ` +
                 `${planningOnlyRetryAttempts}/${maxPlanningOnlyRetryAttempts} with act-now steer`,
             );
             continue;
@@ -3112,6 +3201,24 @@ export async function runEmbeddedAgent(
             !nextPlanningOnlyRetryInstruction &&
             nextReasoningOnlyRetryInstruction &&
             reasoningOnlyRetryAttempts >= maxReasoningOnlyRetryAttempts;
+          if (
+            !emptyAssistantReplyIsSilent &&
+            shouldRetryMissingAssistantTurn({
+              payloadCount,
+              aborted,
+              promptError,
+              timedOut,
+              attempt,
+            }) &&
+            missingAssistantRetryAttempts < MAX_MISSING_ASSISTANT_RETRIES
+          ) {
+            missingAssistantRetryAttempts += 1;
+            log.warn(
+              `missing assistant terminal message detected: runId=${params.runId} sessionId=${params.sessionId} ` +
+                `provider=${activeErrorContext.provider}/${activeErrorContext.model} — retrying ${missingAssistantRetryAttempts}/${MAX_MISSING_ASSISTANT_RETRIES} with same prompt`,
+            );
+            continue;
+          }
           if (
             !nextPlanningOnlyRetryInstruction &&
             !nextReasoningOnlyRetryInstruction &&
@@ -3337,9 +3444,17 @@ export async function runEmbeddedAgent(
               livenessState,
             });
             const incompleteStopReason = attempt.lastAssistant?.stopReason;
+            const replayMetadata = resolveAttemptReplayMetadata(attempt);
             log.warn(
               `incomplete turn detected: runId=${params.runId} sessionId=${params.sessionId} ` +
-                `stopReason=${incompleteStopReason} payloads=${payloadCount} — surfacing error to user`,
+                `provider=${activeErrorContext.provider}/${activeErrorContext.model} ` +
+                `stopReason=${incompleteStopReason ?? "missing"} hasLastAssistant=${attempt.lastAssistant ? "yes" : "no"} ` +
+                `hasCurrentAttemptAssistant=${attempt.currentAttemptAssistant ? "yes" : "no"} payloads=${payloadCount} ` +
+                `tools=${attempt.toolMetas?.length ?? 0} replaySafe=${replayMetadata.replaySafe ? "yes" : "no"} ` +
+                `compactions=${attemptCompactionCount} planningRetries=${planningOnlyRetryAttempts}/${maxPlanningOnlyRetryAttempts} ` +
+                `reasoningRetries=${reasoningOnlyRetryAttempts}/${maxReasoningOnlyRetryAttempts} ` +
+                `emptyRetries=${emptyResponseRetryAttempts}/${maxEmptyResponseRetryAttempts} ` +
+                `missingAssistantRetries=${missingAssistantRetryAttempts}/${MAX_MISSING_ASSISTANT_RETRIES} — surfacing error to user`,
             );
 
             // Mark the failing profile for cooldown so multi-profile setups

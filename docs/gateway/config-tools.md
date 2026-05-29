@@ -488,7 +488,8 @@ Configuring a custom/local provider `baseUrl` is also the narrow network trust d
       - Empty or missing agent `apiKey`/`baseUrl` fall back to `models.providers` in config.
       - Matching model `contextWindow`/`maxTokens` use the higher value between explicit config and implicit catalog values.
       - Matching model `contextTokens` preserves an explicit runtime cap when present; use it to limit effective context without changing native model metadata.
-      - Use `models.mode: "replace"` when you want config to fully rewrite the stored model catalog.
+      - Provider-plugin catalogs are stored as generated plugin-owned catalog shards in SQLite catalog state.
+      - Use `models.mode: "replace"` when you want config to fully rewrite the stored model catalog and active plugin catalog shards.
       - Marker persistence is source-authoritative: markers are written from the active source config snapshot (pre-resolution), not from resolved runtime secret values.
 
   </Accordion>

@@ -17,6 +17,7 @@ import {
   type AcpRuntimeTurn,
   type AcpRuntimeTurnResult,
 } from "acpx/runtime";
+import { parseStrictPositiveInteger } from "openclaw/plugin-sdk/number-runtime";
 import { createPluginBlobStore } from "openclaw/plugin-sdk/plugin-state-runtime";
 import { redactSensitiveText } from "openclaw/plugin-sdk/security-runtime";
 import { normalizeStringEntries } from "openclaw/plugin-sdk/string-coerce-runtime";
@@ -236,7 +237,7 @@ function readRecordAgentPid(record: unknown): number | undefined {
     typeof rawPid === "number"
       ? rawPid
       : typeof rawPid === "string"
-        ? Number.parseInt(rawPid, 10)
+        ? parseStrictPositiveInteger(rawPid)
         : undefined;
   return numericPid && Number.isInteger(numericPid) && numericPid > 0 ? numericPid : undefined;
 }

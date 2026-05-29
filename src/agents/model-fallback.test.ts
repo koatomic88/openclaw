@@ -666,6 +666,36 @@ describe("runWithModelFallback", () => {
     expect(run).toHaveBeenCalledTimes(1);
   });
 
+  it("does not prepare agent harness plugins for forced OpenClaw runtime candidates", async () => {
+    const cfg = makeCfg({
+      models: {
+        providers: {
+          openai: {
+            baseUrl: "https://api.openai.com/v1",
+            agentRuntime: { id: "openclaw" },
+            models: [],
+          },
+        },
+      },
+    });
+    const prepareAgentHarnessRuntime = vi.fn(() => {
+      throw new Error("OpenClaw candidates should not prepare plugin harnesses");
+    });
+    const run = vi.fn().mockResolvedValueOnce("ok");
+
+    const result = await runWithModelFallback({
+      cfg,
+      provider: "openai",
+      model: "gpt-5.5",
+      prepareAgentHarnessRuntime,
+      run,
+    });
+
+    expect(result.result).toBe("ok");
+    expect(prepareAgentHarnessRuntime).not.toHaveBeenCalled();
+    expect(run).toHaveBeenCalledTimes(1);
+  });
+
   it("does not prepare agent harness plugins for implicit Codex candidates", async () => {
     const cfg = makeCfg();
     const prepareAgentHarnessRuntime = vi.fn(() => {
@@ -2485,7 +2515,7 @@ describe("runWithModelFallback", () => {
       });
     });
 
-    it("keeps alias-resolved primary models subject to transient cooldowns", async () => {
+    it("probes alias-resolved primary models during rate-limit cooldowns", async () => {
       const { dir } = await makeAuthStoreWithCooldown("anthropic", "rate_limit");
       const cfg = makeCfg({
         agents: {
@@ -2501,7 +2531,7 @@ describe("runWithModelFallback", () => {
         },
       });
 
-      const run = vi.fn().mockResolvedValueOnce("haiku success");
+      const run = vi.fn().mockResolvedValueOnce("sonnet success");
 
       const result = await runWithModelFallback({
         cfg,
@@ -2511,9 +2541,9 @@ describe("runWithModelFallback", () => {
         agentDir: dir,
       });
 
-      expect(result.result).toBe("haiku success");
+      expect(result.result).toBe("sonnet success");
       expect(run).toHaveBeenCalledTimes(1);
-      expect(run).toHaveBeenNthCalledWith(1, "anthropic", "claude-haiku-3-5", {
+      expect(run).toHaveBeenNthCalledWith(1, "anthropic", "claude-sonnet-4-6", {
         allowTransientCooldownProbe: true,
       });
     });
@@ -2589,7 +2619,7 @@ describe("runWithModelFallback", () => {
 
       expect(result.result).toBe("groq success");
       expect(run).toHaveBeenCalledTimes(2);
-      expect(run).toHaveBeenNthCalledWith(1, "anthropic", "claude-sonnet-4-5", {
+      expect(run).toHaveBeenNthCalledWith(1, "anthropic", "claude-opus-4-6", {
         allowTransientCooldownProbe: true,
       });
       expect(run).toHaveBeenNthCalledWith(2, "groq", "llama-3.3-70b-versatile");
@@ -2627,7 +2657,7 @@ describe("runWithModelFallback", () => {
 
       expect(result.result).toBe("groq success");
       expect(run).toHaveBeenCalledTimes(2);
-      expect(run).toHaveBeenNthCalledWith(1, "anthropic", "claude-sonnet-4-5", {
+      expect(run).toHaveBeenNthCalledWith(1, "anthropic", "claude-opus-4-6", {
         allowTransientCooldownProbe: true,
       });
       expect(run).toHaveBeenNthCalledWith(2, "groq", "llama-3.3-70b-versatile");
@@ -2652,8 +2682,8 @@ describe("runWithModelFallback", () => {
 
       const run = vi
         .fn()
-        .mockRejectedValueOnce(new Error("Model not found: anthropic/claude-sonnet-4-5"))
-        .mockResolvedValueOnce("haiku success");
+        .mockRejectedValueOnce(new Error("Model not found: anthropic/claude-opus-4-6"))
+        .mockResolvedValueOnce("sonnet success");
 
       const result = await runWithModelFallback({
         cfg,
@@ -2663,12 +2693,12 @@ describe("runWithModelFallback", () => {
         agentDir: dir,
       });
 
-      expect(result.result).toBe("haiku success");
+      expect(result.result).toBe("sonnet success");
       expect(run).toHaveBeenCalledTimes(2);
-      expect(run).toHaveBeenNthCalledWith(1, "anthropic", "claude-sonnet-4-5", {
+      expect(run).toHaveBeenNthCalledWith(1, "anthropic", "claude-opus-4-6", {
         allowTransientCooldownProbe: true,
       });
-      expect(run).toHaveBeenNthCalledWith(2, "anthropic", "claude-haiku-3-5", {
+      expect(run).toHaveBeenNthCalledWith(2, "anthropic", "claude-sonnet-4-5", {
         allowTransientCooldownProbe: true,
       });
     });

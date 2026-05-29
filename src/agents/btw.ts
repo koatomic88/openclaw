@@ -250,7 +250,7 @@ async function resolveRuntimeModel(params: {
   const modelsOptions = params.workspaceDir ? { workspaceDir: params.workspaceDir } : undefined;
   await ensureOpenClawModelCatalog(params.cfg, params.agentDir, modelsOptions);
   const authStorage = discoverAuthStorage(params.agentDir);
-  const modelRegistry = discoverModels(authStorage, params.agentDir);
+  const modelRegistry = discoverModels(authStorage, params.agentDir, modelsOptions);
   const model = resolveModelWithRegistry({
     provider: params.provider,
     modelId: params.model,

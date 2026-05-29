@@ -6,7 +6,7 @@ import {
   openOpenClawStateDatabase,
   runOpenClawStateWriteTransaction,
 } from "../state/openclaw-state-db.js";
-import type { DeliveryContext } from "../utils/delivery-context.types.js";
+import { normalizeSqliteNumber, parseDeliveryContextJson } from "./task-registry.sqlite.shared.js";
 import type { TaskRegistryStoreSnapshot } from "./task-registry.store.types.js";
 import {
   parseOptionalTaskTerminalOutcome,
@@ -44,34 +44,15 @@ type TaskRegistryDatabase = {
 
 let cachedDatabase: TaskRegistryDatabase | null = null;
 
-function normalizeNumber(value: number | bigint | null): number | undefined {
-  if (typeof value === "bigint") {
-    return Number(value);
-  }
-  return typeof value === "number" ? value : undefined;
-}
-
 function serializeJson(value: unknown): string | null {
   return value == null ? null : JSON.stringify(value);
 }
 
-// oxlint-disable-next-line typescript/no-unnecessary-type-parameters -- Persisted JSON columns are typed by the receiving field.
-function parseJsonValue<T>(raw: string | null): T | undefined {
-  if (!raw?.trim()) {
-    return undefined;
-  }
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return undefined;
-  }
-}
-
 function rowToTaskRecord(row: TaskRegistryRow): TaskRecord {
-  const startedAt = normalizeNumber(row.started_at);
-  const endedAt = normalizeNumber(row.ended_at);
-  const lastEventAt = normalizeNumber(row.last_event_at);
-  const cleanupAfter = normalizeNumber(row.cleanup_after);
+  const startedAt = normalizeSqliteNumber(row.started_at);
+  const endedAt = normalizeSqliteNumber(row.ended_at);
+  const lastEventAt = normalizeSqliteNumber(row.last_event_at);
+  const cleanupAfter = normalizeSqliteNumber(row.cleanup_after);
   const scopeKind = parseTaskScopeKind(row.scope_kind);
   const terminalOutcome = parseOptionalTaskTerminalOutcome(row.terminal_outcome);
   const requesterSessionKey =
@@ -94,7 +75,7 @@ function rowToTaskRecord(row: TaskRegistryRow): TaskRecord {
     status: parseTaskStatus(row.status),
     deliveryStatus: parseTaskDeliveryStatus(row.delivery_status),
     notifyPolicy: parseTaskNotifyPolicy(row.notify_policy),
-    createdAt: normalizeNumber(row.created_at) ?? 0,
+    createdAt: normalizeSqliteNumber(row.created_at) ?? 0,
     ...(startedAt != null ? { startedAt } : {}),
     ...(endedAt != null ? { endedAt } : {}),
     ...(lastEventAt != null ? { lastEventAt } : {}),
@@ -107,8 +88,8 @@ function rowToTaskRecord(row: TaskRegistryRow): TaskRecord {
 }
 
 function rowToTaskDeliveryState(row: TaskDeliveryStateRow): TaskDeliveryState {
-  const requesterOrigin = parseJsonValue<DeliveryContext>(row.requester_origin_json);
-  const lastNotifiedEventAt = normalizeNumber(row.last_notified_event_at);
+  const requesterOrigin = parseDeliveryContextJson(row.requester_origin_json);
+  const lastNotifiedEventAt = normalizeSqliteNumber(row.last_notified_event_at);
   return {
     taskId: row.task_id,
     ...(requesterOrigin ? { requesterOrigin } : {}),

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import * as doctorLegacyStateApi from "./doctor-legacy-state-api.js";
-import * as doctorSessionMigrationSurfaceApi from "./doctor-session-migration-surface-api.js";
+import * as legacyStateMigrationsApi from "./doctor-legacy-state-api.js";
+import * as legacySessionSurfacesApi from "./doctor-session-migration-surface-api.js";
 import setupEntry from "./setup-entry.js";
 import * as setupPluginApi from "./setup-plugin-api.js";
 
@@ -18,10 +18,10 @@ const setupEntryLoadOptions = {
       return setupPluginApi;
     }
     if (/[\\/]doctor-legacy-state-api\.[jt]s$/u.test(specifier)) {
-      return doctorLegacyStateApi;
+      return legacyStateMigrationsApi;
     }
     if (/[\\/]doctor-session-migration-surface-api\.[jt]s$/u.test(specifier)) {
-      return doctorSessionMigrationSurfaceApi;
+      return legacySessionSurfacesApi;
     }
     throw new Error(`unexpected setup entry module load: ${specifier}`);
   }) as never,
@@ -31,8 +31,8 @@ describe("whatsapp setup entry", () => {
   it("loads setup entry metadata without importing runtime dependencies", () => {
     expect(setupEntry.kind).toBe("bundled-channel-setup-entry");
     expect(setupEntry.features).toEqual({
-      doctorSessionMigrationSurface: true,
-      doctorLegacyState: true,
+      legacySessionSurfaces: true,
+      legacyStateMigrations: true,
     });
   });
 
@@ -43,7 +43,7 @@ describe("whatsapp setup entry", () => {
 
   it("loads legacy setup helpers without importing runtime dependencies", () => {
     const detectDoctorLegacyState =
-      setupEntry.loadDoctorLegacyStateDetector?.(setupEntryLoadOptions);
+      setupEntry.loadLegacyStateMigrationDetector?.(setupEntryLoadOptions);
     if (!detectDoctorLegacyState) {
       throw new Error("expected WhatsApp legacy state migration detector");
     }
@@ -55,7 +55,7 @@ describe("whatsapp setup entry", () => {
         stateDir: "/tmp/openclaw-state",
       }),
     ).toStrictEqual([]);
-    expect(setupEntry.loadDoctorSessionMigrationSurface?.(setupEntryLoadOptions)).toEqual({
+    expect(setupEntry.loadLegacySessionSurface?.(setupEntryLoadOptions)).toEqual({
       canonicalizeLegacySessionKey: expect.any(Function),
       isLegacyGroupSessionKey: expect.any(Function),
     });

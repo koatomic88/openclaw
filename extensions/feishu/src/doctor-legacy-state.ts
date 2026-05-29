@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import type { ChannelDoctorLegacyStateMigrationPlan } from "openclaw/plugin-sdk/channel-contract";
+import type { ChannelLegacyStateMigrationPlan } from "openclaw/plugin-sdk/channel-contract";
 import { upsertPluginStateMigrationEntry } from "openclaw/plugin-sdk/migration-runtime";
 
 const FEISHU_PLUGIN_ID = "feishu";
@@ -76,7 +76,7 @@ function importDedupFiles(sourceDir: string, env: NodeJS.ProcessEnv): ImportResu
 
 export function detectFeishuLegacyStateMigrations(params: {
   stateDir: string;
-}): ChannelDoctorLegacyStateMigrationPlan[] {
+}): ChannelLegacyStateMigrationPlan[] {
   const dedupDir = path.join(params.stateDir, "feishu", "dedup");
   if (listDedupFiles(dedupDir).length === 0) {
     return [];

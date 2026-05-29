@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 // Live prompt probe for Anthropic setup-token and Claude CLI prompt-path debugging.
 // Usage:
 // OPENCLAW_PROMPT_TRANSPORT=direct|gateway
-// OPENCLAW_PROMPT_MODE=extra|override
+// OPENCLAW_PROMPT_MODE=extra
 // OPENCLAW_PROMPT_TEXT='...'
 // OPENCLAW_PROMPT_CAPTURE=1
 // pnpm probe:anthropic:prompt
@@ -29,8 +29,7 @@ import {
 } from "./lib/dev-tooling-safety.ts";
 
 const TRANSPORT = process.env.OPENCLAW_PROMPT_TRANSPORT?.trim() === "direct" ? "direct" : "gateway";
-const GATEWAY_PROMPT_MODE =
-  process.env.OPENCLAW_PROMPT_MODE?.trim() === "override" ? "override" : "extra";
+const GATEWAY_PROMPT_MODE = "extra";
 const PROMPT_TEXT = process.env.OPENCLAW_PROMPT_TEXT?.trim() ?? "";
 const PROMPT_LIST_JSON = process.env.OPENCLAW_PROMPT_LIST_JSON?.trim() ?? "";
 const USER_PROMPT = process.env.OPENCLAW_USER_PROMPT?.trim() || "is clawd here?";
@@ -81,7 +80,7 @@ type PromptResult = {
   prompt: string;
   ok: boolean;
   transport: "direct" | "gateway";
-  promptMode?: "extra" | "override";
+  promptMode?: "extra";
   exitCode?: number | null;
   signal?: NodeJS.Signals | null;
   status?: string;
@@ -580,7 +579,6 @@ async function runGatewayPrompt(prompt: string): Promise<PromptResult> {
             heartbeat: {
               includeSystemPromptSection: false,
             },
-            ...(GATEWAY_PROMPT_MODE === "override" ? { systemPromptOverride: prompt } : {}),
           },
         },
       },

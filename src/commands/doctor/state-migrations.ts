@@ -11,10 +11,10 @@ import {
 } from "../../agents/agent-scope.js";
 import type { TranscriptEntry } from "../../agents/transcript/session-transcript-types.js";
 import {
-  listBundledChannelDoctorSessionMigrationSurfaces,
-  listBundledChannelDoctorLegacyStateDetectors,
+  listBundledChannelLegacySessionSurfaces,
+  listBundledChannelLegacyStateMigrationDetectors,
 } from "../../channels/plugins/bundled.js";
-import type { ChannelDoctorLegacyStateMigrationPlan } from "../../channels/plugins/types.core.js";
+import type { ChannelLegacyStateMigrationPlan } from "../../channels/plugins/types.core.js";
 import {
   CONFIG_AUDIT_NAMESPACE,
   CONFIG_AUDIT_OWNER_ID,
@@ -99,7 +99,7 @@ export type LegacyStateDetection = {
   };
   channelPlans: {
     hasLegacy: boolean;
-    plans: ChannelDoctorLegacyStateMigrationPlan[];
+    plans: ChannelLegacyStateMigrationPlan[];
   };
   preview: string[];
 };
@@ -351,7 +351,7 @@ function getDoctorSessionMigrationSurfaces(): DoctorSessionMigrationSurface[] {
   // Doctor migrations run on cold doctor/startup paths. Prefer the narrower
   // setup plugin surface here so session-key cleanup does not materialize full
   // bundled channel runtimes.
-  return [...listBundledChannelDoctorSessionMigrationSurfaces()];
+  return [...listBundledChannelLegacySessionSurfaces()];
 }
 
 function isSurfaceGroupKey(key: string): boolean {
@@ -375,14 +375,14 @@ function isLegacyGroupKey(key: string): boolean {
   return false;
 }
 
-function buildLegacyMigrationPreview(plan: ChannelDoctorLegacyStateMigrationPlan): string {
+function buildLegacyMigrationPreview(plan: ChannelLegacyStateMigrationPlan): string {
   return plan.targetPath
     ? `- ${plan.label}: ${plan.sourcePath} → ${plan.targetPath}`
     : `- ${plan.label}: ${plan.sourcePath} → SQLite`;
 }
 
 async function runLegacyPluginStateImportPlan(
-  plan: Extract<ChannelDoctorLegacyStateMigrationPlan, { kind: "plugin-state-import" }>,
+  plan: Extract<ChannelLegacyStateMigrationPlan, { kind: "plugin-state-import" }>,
   env: NodeJS.ProcessEnv,
 ): Promise<{ changes: string[]; warnings: string[] }> {
   const entries = await plan.readEntries();
@@ -414,7 +414,7 @@ async function runLegacyPluginStateImportPlan(
 
 async function runLegacyMigrationPlans(
   detected: LegacyStateDetection,
-  plans: ChannelDoctorLegacyStateMigrationPlan[],
+  plans: ChannelLegacyStateMigrationPlan[],
 ): Promise<{ changes: string[]; warnings: string[] }> {
   const changes: string[] = [];
   const warnings: string[] = [];
@@ -1494,7 +1494,7 @@ function collectCoreLegacyStateMigrationPlans(params: {
   stateDir: string;
   env: NodeJS.ProcessEnv;
   cfg: OpenClawConfig;
-}): ChannelDoctorLegacyStateMigrationPlan[] {
+}): ChannelLegacyStateMigrationPlan[] {
   const specs: LegacyDeliveryQueueSpec[] = [
     {
       label: "Outbound delivery queue",
@@ -1507,7 +1507,7 @@ function collectCoreLegacyStateMigrationPlans(params: {
       sourcePath: path.join(params.stateDir, "session-delivery-queue"),
     },
   ];
-  const plans: ChannelDoctorLegacyStateMigrationPlan[] = specs.flatMap((spec) => {
+  const plans: ChannelLegacyStateMigrationPlan[] = specs.flatMap((spec) => {
     if (!hasLegacyDeliveryQueueArtifacts(spec.sourcePath)) {
       return [];
     }
@@ -2618,20 +2618,20 @@ export async function autoMigrateLegacyStateDir(params: {
   return { migrated: changes.length > 0, skipped: false, changes, warnings };
 }
 
-async function collectChannelDoctorLegacyStateMigrationPlans(params: {
+async function collectChannelLegacyStateMigrationPlans(params: {
   cfg: OpenClawConfig;
   env: NodeJS.ProcessEnv;
   stateDir: string;
   oauthDir: string;
-}): Promise<ChannelDoctorLegacyStateMigrationPlan[]> {
-  const plans: ChannelDoctorLegacyStateMigrationPlan[] = collectCoreLegacyStateMigrationPlans({
+}): Promise<ChannelLegacyStateMigrationPlan[]> {
+  const plans: ChannelLegacyStateMigrationPlan[] = collectCoreLegacyStateMigrationPlans({
     stateDir: params.stateDir,
     env: params.env,
     cfg: params.cfg,
   });
   // Legacy state detection belongs on a narrow setup-entry surface so doctor
   // does not cold-load unrelated runtime channel code.
-  const detectors = listBundledChannelDoctorLegacyStateDetectors({ config: params.cfg });
+  const detectors = listBundledChannelLegacyStateMigrationDetectors({ config: params.cfg });
   for (const detectLegacyStateMigrations of detectors) {
     const detected = await detectLegacyStateMigrations({
       cfg: params.cfg,
@@ -2700,7 +2700,7 @@ export async function detectLegacyStateMigrations(params: {
   const targetAgentDir = path.join(stateDir, "agents", targetAgentId, "agent");
   const hasLegacyAgentDir = existsDir(legacyAgentDir);
   const channelPlans = includeChannelPlans
-    ? await collectChannelDoctorLegacyStateMigrationPlans({
+    ? await collectChannelLegacyStateMigrationPlans({
         cfg: params.cfg,
         env,
         stateDir,

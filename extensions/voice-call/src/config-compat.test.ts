@@ -4,37 +4,35 @@ import {
   collectVoiceCallLegacyConfigIssues,
   formatVoiceCallLegacyConfigWarnings,
   migrateVoiceCallLegacyConfigInput,
+  normalizeVoiceCallLegacyConfigInput,
+  parseVoiceCallPluginConfig,
 } from "./config-compat.js";
 
 describe("voice-call config compatibility", () => {
-  it("doctor migration maps deprecated provider and twilio.from fields", () => {
-    const migration = migrateVoiceCallLegacyConfigInput({
-      value: {
-        enabled: true,
-        provider: "log",
-        twilio: {
-          from: "+15550001234",
-        },
+  it("maps deprecated provider and twilio.from fields into canonical config", () => {
+    const parsed = parseVoiceCallPluginConfig({
+      enabled: true,
+      provider: "log",
+      twilio: {
+        from: "+15550001234",
       },
     });
 
-    expect(migration.config.provider).toBe("mock");
-    expect(migration.config.fromNumber).toBe("+15550001234");
+    expect(parsed.provider).toBe("mock");
+    expect(parsed.fromNumber).toBe("+15550001234");
   });
 
-  it("doctor migration moves legacy streaming OpenAI fields into streaming.providers.openai", () => {
-    const normalized = migrateVoiceCallLegacyConfigInput({
-      value: {
-        streaming: {
-          enabled: true,
-          sttProvider: "openai",
-          openaiApiKey: "sk-test", // pragma: allowlist secret
-          sttModel: "gpt-4o-transcribe",
-          silenceDurationMs: 700,
-          vadThreshold: 0.4,
-        },
+  it("moves legacy streaming OpenAI fields into streaming.providers.openai", () => {
+    const normalized = normalizeVoiceCallLegacyConfigInput({
+      streaming: {
+        enabled: true,
+        sttProvider: "openai",
+        openaiApiKey: "sk-test", // pragma: allowlist secret
+        sttModel: "gpt-4o-transcribe",
+        silenceDurationMs: 700,
+        vadThreshold: 0.4,
       },
-    }).config;
+    });
 
     const streaming = normalized.streaming as
       | {
@@ -64,6 +62,67 @@ describe("voice-call config compatibility", () => {
     expect(streaming?.sttModel).toBeUndefined();
   });
 
+  it("removes legacy realtime agentContext system prompt toggle", () => {
+    const normalized = normalizeVoiceCallLegacyConfigInput({
+      realtime: {
+        agentContext: {
+          enabled: true,
+          includeSystemPrompt: false,
+          includeWorkspaceFiles: true,
+        },
+      },
+    });
+
+    const agentContext = (
+      normalized.realtime as
+        | {
+            agentContext?: {
+              enabled?: boolean;
+              includeSystemPrompt?: unknown;
+              includeWorkspaceFiles?: boolean;
+            };
+          }
+        | undefined
+    )?.agentContext;
+
+    expect(agentContext).toEqual({
+      enabled: true,
+      includeWorkspaceFiles: true,
+    });
+  });
+
+  it("does not migrate non-finite legacy streaming numbers", () => {
+    const migration = migrateVoiceCallLegacyConfigInput({
+      value: {
+        streaming: {
+          silenceDurationMs: Number.NaN,
+          vadThreshold: Number.POSITIVE_INFINITY,
+        },
+      },
+      configPathPrefix: "plugins.entries.voice-call.config",
+    });
+    const streaming = migration.config.streaming as
+      | {
+          providers?: {
+            openai?: {
+              silenceDurationMs?: number;
+              vadThreshold?: number;
+            };
+          };
+        }
+      | undefined;
+
+    expect(streaming?.providers?.openai).toBeUndefined();
+    expect(migration.changes).toEqual([
+      "Removed invalid plugins.entries.voice-call.config.streaming.silenceDurationMs.",
+      "Removed invalid plugins.entries.voice-call.config.streaming.vadThreshold.",
+    ]);
+    expect(migration.issues.map((issue) => issue.path)).toEqual([
+      "streaming.silenceDurationMs",
+      "streaming.vadThreshold",
+    ]);
+  });
+
   it("reports doctor-oriented legacy issues and warnings", () => {
     const raw = {
       provider: "log",
@@ -75,6 +134,11 @@ describe("voice-call config compatibility", () => {
         openaiApiKey: "sk-test", // pragma: allowlist secret
       },
       store: "~/.openclaw/voice-calls",
+      realtime: {
+        agentContext: {
+          includeSystemPrompt: true,
+        },
+      },
     };
 
     expect(collectVoiceCallLegacyConfigIssues(raw)).toEqual([
@@ -99,6 +163,12 @@ describe("voice-call config compatibility", () => {
         message: "Move streaming.openaiApiKey to streaming.providers.openai.apiKey.",
       },
       {
+        path: "realtime.agentContext.includeSystemPrompt",
+        replacement: "realtime.agentContext",
+        message:
+          "Remove realtime.agentContext.includeSystemPrompt; realtime context now uses the generated agent prompt.",
+      },
+      {
         path: "store",
         replacement: "SQLite plugin state",
         message: "Remove store; call records are stored in SQLite plugin state.",
@@ -116,6 +186,7 @@ describe("voice-call config compatibility", () => {
       "[voice-call] plugins.entries.voice-call.config.twilio.from: Move twilio.from to fromNumber.",
       "[voice-call] plugins.entries.voice-call.config.streaming.sttProvider: Move streaming.sttProvider to streaming.provider.",
       "[voice-call] plugins.entries.voice-call.config.streaming.openaiApiKey: Move streaming.openaiApiKey to streaming.providers.openai.apiKey.",
+      "[voice-call] plugins.entries.voice-call.config.realtime.agentContext.includeSystemPrompt: Remove realtime.agentContext.includeSystemPrompt; realtime context now uses the generated agent prompt.",
       "[voice-call] plugins.entries.voice-call.config.store: Remove store; call records are stored in SQLite plugin state.",
     ]);
   });
@@ -127,6 +198,11 @@ describe("voice-call config compatibility", () => {
         streaming: {
           sttProvider: "openai",
         },
+        realtime: {
+          agentContext: {
+            includeSystemPrompt: true,
+          },
+        },
         store: "~/.openclaw/voice-calls",
       },
       configPathPrefix: "plugins.entries.voice-call.config",
@@ -135,6 +211,7 @@ describe("voice-call config compatibility", () => {
     expect(migration.changes).toEqual([
       'Moved plugins.entries.voice-call.config.provider "log" → "mock".',
       "Moved plugins.entries.voice-call.config.streaming.sttProvider → plugins.entries.voice-call.config.streaming.provider.",
+      "Removed plugins.entries.voice-call.config.realtime.agentContext.includeSystemPrompt.",
       "Removed plugins.entries.voice-call.config.store; call records use SQLite plugin state.",
     ]);
     expect(migration.config.store).toBeUndefined();

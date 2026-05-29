@@ -68,7 +68,6 @@ import {
   markSubagentRunPausedAfterYield,
   type RegisterSubagentRunParams,
 } from "./subagent-registry-run-manager.js";
-import { resolveSubagentSessionCompletion } from "./subagent-session-reconciliation.js";
 import {
   getSubagentRunsSnapshotForRead,
   persistSubagentRunsToState,
@@ -77,6 +76,10 @@ import {
 } from "./subagent-registry-state.js";
 import { configureSubagentRegistrySteerRuntime } from "./subagent-registry-steer-runtime.js";
 import type { SubagentRunRecord } from "./subagent-registry.types.js";
+import {
+  resolveSubagentSessionCompletion,
+  resolveSubagentSessionStartedAt,
+} from "./subagent-session-reconciliation.js";
 import { resolveAgentTimeoutMs } from "./timeout.js";
 
 export type { SubagentRunRecord } from "./subagent-registry.types.js";
@@ -267,19 +270,37 @@ function loadSubagentSessionEntry(
 function resolveCompletionFromSessionEntry(
   sessionEntry: SessionEntry | undefined,
   fallbackEndedAt: number,
+  opts?: { notBeforeMs?: number },
 ): {
+  startedAt?: number;
   endedAt: number;
   outcome: SubagentRunOutcome;
   reason: SubagentLifecycleEndedReason;
 } | null {
   const status = sessionEntry?.status;
-  const endedAt =
+  const terminalAt =
     typeof sessionEntry?.endedAt === "number" && Number.isFinite(sessionEntry.endedAt)
       ? sessionEntry.endedAt
-      : fallbackEndedAt;
+      : typeof sessionEntry?.updatedAt === "number" && Number.isFinite(sessionEntry.updatedAt)
+        ? sessionEntry.updatedAt
+        : undefined;
+  if (
+    opts?.notBeforeMs !== undefined &&
+    (terminalAt === undefined || terminalAt < opts.notBeforeMs)
+  ) {
+    return null;
+  }
+  const startedAt =
+    typeof sessionEntry?.startedAt === "number" &&
+    Number.isFinite(sessionEntry.startedAt) &&
+    (opts?.notBeforeMs === undefined || sessionEntry.startedAt >= opts.notBeforeMs)
+      ? sessionEntry.startedAt
+      : undefined;
+  const endedAt = terminalAt !== undefined ? terminalAt : fallbackEndedAt;
 
   if (status === "done") {
     return {
+      startedAt,
       endedAt,
       outcome: { status: "ok" },
       reason: SUBAGENT_ENDED_REASON_COMPLETE,
@@ -287,6 +308,7 @@ function resolveCompletionFromSessionEntry(
   }
   if (status === "timeout") {
     return {
+      startedAt,
       endedAt,
       outcome: { status: "timeout" },
       reason: SUBAGENT_ENDED_REASON_COMPLETE,
@@ -294,6 +316,7 @@ function resolveCompletionFromSessionEntry(
   }
   if (status === "failed") {
     return {
+      startedAt,
       endedAt,
       outcome: { status: "error", error: "session completed before registry settled" },
       reason: SUBAGENT_ENDED_REASON_ERROR,
@@ -301,6 +324,7 @@ function resolveCompletionFromSessionEntry(
   }
   if (status === "killed") {
     return {
+      startedAt,
       endedAt,
       outcome: { status: "error", error: "subagent run terminated" },
       reason: SUBAGENT_ENDED_REASON_KILLED,
@@ -308,6 +332,7 @@ function resolveCompletionFromSessionEntry(
   }
   if (status !== "running" && typeof sessionEntry?.endedAt === "number") {
     return {
+      startedAt,
       endedAt,
       outcome: { status: "ok" },
       reason: SUBAGENT_ENDED_REASON_COMPLETE,
@@ -391,6 +416,7 @@ const pendingLifecycleErrorByRunId = new Map<
   {
     timer: NodeJS.Timeout;
     endedAt: number;
+    startedAt?: number;
     error?: string;
   }
 >();
@@ -399,6 +425,7 @@ const pendingLifecycleTimeoutByRunId = new Map<
   {
     timer: NodeJS.Timeout;
     endedAt: number;
+    startedAt?: number;
   }
 >();
 
@@ -442,6 +469,7 @@ type CompleteSubagentRunParams = {
   sendFarewell?: boolean;
   accountId?: string;
   triggerCleanup: boolean;
+  startedAt?: number;
 };
 
 async function completeSubagentRunWithRecovery(params: CompleteSubagentRunParams, source: string) {
@@ -498,7 +526,12 @@ function completeSubagentRunInBackground(params: CompleteSubagentRunParams, sour
   void completeSubagentRunWithRecovery(params, source);
 }
 
-function schedulePendingLifecycleError(params: { runId: string; endedAt: number; error?: string }) {
+function schedulePendingLifecycleError(params: {
+  runId: string;
+  endedAt: number;
+  startedAt?: number;
+  error?: string;
+}) {
   clearPendingLifecycleTimeout(params.runId);
   clearPendingLifecycleError(params.runId);
   const timer = setTimeout(() => {
@@ -525,6 +558,7 @@ function schedulePendingLifecycleError(params: { runId: string; endedAt: number;
       sendFarewell: true,
       accountId: entry.requesterOrigin?.accountId,
       triggerCleanup: true,
+      startedAt: pending.startedAt,
     };
     completeSubagentRunInBackground(completionParams, "lifecycle-error-grace");
   }, LIFECYCLE_ERROR_RETRY_GRACE_MS);
@@ -532,11 +566,16 @@ function schedulePendingLifecycleError(params: { runId: string; endedAt: number;
   pendingLifecycleErrorByRunId.set(params.runId, {
     timer,
     endedAt: params.endedAt,
+    startedAt: params.startedAt,
     error: params.error,
   });
 }
 
-function schedulePendingLifecycleTimeout(params: { runId: string; endedAt: number }) {
+function schedulePendingLifecycleTimeout(params: {
+  runId: string;
+  endedAt: number;
+  startedAt?: number;
+}) {
   clearPendingLifecycleError(params.runId);
   clearPendingLifecycleTimeout(params.runId);
   const timer = setTimeout(() => {
@@ -562,6 +601,7 @@ function schedulePendingLifecycleTimeout(params: { runId: string; endedAt: numbe
       sendFarewell: true,
       accountId: entry.requesterOrigin?.accountId,
       triggerCleanup: true,
+      startedAt: pending.startedAt,
     };
     completeSubagentRunInBackground(completionParams, "lifecycle-timeout-grace");
   }, LIFECYCLE_TIMEOUT_RETRY_GRACE_MS);
@@ -569,6 +609,7 @@ function schedulePendingLifecycleTimeout(params: { runId: string; endedAt: numbe
   pendingLifecycleTimeoutByRunId.set(params.runId, {
     timer,
     endedAt: params.endedAt,
+    startedAt: params.startedAt,
   });
 }
 
@@ -770,7 +811,7 @@ function resumeSubagentRun(runId: string) {
   // Wait for completion again after restart.
   const cfg = subagentRegistryDeps.getRuntimeConfig();
   const waitTimeoutMs = resolveSubagentWaitTimeoutMs(cfg, entry.runTimeoutSeconds);
-  void subagentRunManager.waitForSubagentCompletion(runId, waitTimeoutMs, entry);
+  void subagentRunManager.waitForSubagentCompletion(runId, waitTimeoutMs, entry, true);
   resumedRuns.add(runId);
 }
 
@@ -998,11 +1039,14 @@ async function sweepSubagentRuns() {
           }
 
           const sessionEntry = loadSubagentSessionEntry(entry.childSessionKey, storeCache);
-          const completion = resolveCompletionFromSessionEntry(sessionEntry, now);
+          const completion = resolveCompletionFromSessionEntry(sessionEntry, now, {
+            notBeforeMs: entry.startedAt ?? entry.createdAt,
+          });
           if (completion) {
             await completeSubagentRunWithRecovery(
               {
                 runId,
+                startedAt: completion.startedAt,
                 endedAt: completion.endedAt,
                 outcome: completion.outcome,
                 reason: completion.reason,
@@ -1147,6 +1191,7 @@ function ensureListener() {
         return;
       }
       const endedAt = typeof evt.data?.endedAt === "number" ? evt.data.endedAt : Date.now();
+      const startedAt = typeof evt.data?.startedAt === "number" ? evt.data.startedAt : undefined;
       const error = typeof evt.data?.error === "string" ? evt.data.error : undefined;
       const livenessState =
         typeof evt.data?.livenessState === "string" ? evt.data.livenessState : undefined;
@@ -1155,6 +1200,7 @@ function ensureListener() {
         schedulePendingLifecycleError({
           runId: evt.runId,
           endedAt,
+          startedAt,
           error,
         });
         return;
@@ -1174,6 +1220,7 @@ function ensureListener() {
             sendFarewell: true,
             accountId: entry.requesterOrigin?.accountId,
             triggerCleanup: true,
+            startedAt,
           },
           "lifecycle-killed-event",
         );
@@ -1193,6 +1240,7 @@ function ensureListener() {
           sendFarewell: true,
           accountId: entry.requesterOrigin?.accountId,
           triggerCleanup: true,
+          startedAt,
         };
         await completeSubagentRunWithRecovery(blockedParams, "lifecycle-blocked-event");
         return;
@@ -1201,6 +1249,7 @@ function ensureListener() {
         schedulePendingLifecycleTimeout({
           runId: evt.runId,
           endedAt,
+          startedAt,
         });
         return;
       }
@@ -1209,8 +1258,7 @@ function ensureListener() {
           markSubagentRunPausedAfterYield({
             entry,
             endedAt,
-            startedAt:
-              typeof evt.data?.startedAt === "number" ? evt.data.startedAt : entry.startedAt,
+            startedAt: startedAt ?? entry.startedAt,
           })
         ) {
           persistSubagentRuns();
@@ -1227,6 +1275,7 @@ function ensureListener() {
         sendFarewell: true,
         accountId: entry.requesterOrigin?.accountId,
         triggerCleanup: true,
+        startedAt,
       };
       await completeSubagentRunWithRecovery(completionParams, "lifecycle-ok-event");
     })().catch((err) => {
@@ -1256,6 +1305,7 @@ const subagentRunManager = createSubagentRunManager({
   resolveSubagentWaitTimeoutMs,
   scheduleOrphanRecovery: (args) => scheduleSubagentOrphanRecovery(args),
   resolveSubagentSessionCompletion,
+  resolveSubagentSessionStartedAt,
   notifyContextEngineSubagentEnded,
   completeCleanupBookkeeping,
   completeSubagentRun,

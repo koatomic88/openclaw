@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import type { ChannelDoctorLegacyStateMigrationPlan } from "openclaw/plugin-sdk/channel-contract";
+import type { ChannelLegacyStateMigrationPlan } from "openclaw/plugin-sdk/channel-contract";
 import { upsertPluginStateMigrationEntry } from "openclaw/plugin-sdk/migration-runtime";
 import { normalizeIMessageCatchupCursor } from "./monitor/catchup.js";
 
@@ -255,7 +255,7 @@ function imessagePluginStatePlan(params: {
     sourcePath: string,
     env: NodeJS.ProcessEnv,
   ) => { imported: number; skipped: number };
-}): ChannelDoctorLegacyStateMigrationPlan {
+}): ChannelLegacyStateMigrationPlan {
   return {
     kind: "custom",
     label: params.label,
@@ -278,8 +278,8 @@ function imessagePluginStatePlan(params: {
 
 export function detectIMessageLegacyStateMigrations(params: {
   stateDir: string;
-}): ChannelDoctorLegacyStateMigrationPlan[] {
-  const plans: ChannelDoctorLegacyStateMigrationPlan[] = [];
+}): ChannelLegacyStateMigrationPlan[] {
+  const plans: ChannelLegacyStateMigrationPlan[] = [];
   const replyCachePath = path.join(imessageDir(params.stateDir), "reply-cache.jsonl");
   if (fileExists(replyCachePath)) {
     plans.push(

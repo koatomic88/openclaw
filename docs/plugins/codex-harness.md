@@ -362,30 +362,35 @@ turn instead of relying on Codex host-side sandboxing. Shell access is exposed
 through OpenClaw sandbox-backed dynamic tools such as `sandbox_exec` and
 `sandbox_process` when the normal exec/process tools are available.
 
-Use guardian mode when you want Codex native auto-review before sandbox escapes
-or extra permissions:
+Use normalized OpenClaw exec mode when you want Codex native auto-review before
+sandbox escapes or extra permissions:
 
 ```json5
 {
+  tools: {
+    exec: {
+      mode: "auto",
+    },
+  },
   plugins: {
     entries: {
       codex: {
         enabled: true,
-        config: {
-          appServer: {
-            mode: "guardian",
-            serviceTier: "priority",
-          },
-        },
       },
     },
   },
 }
 ```
 
-Guardian mode expands to Codex app-server approvals, usually
+For Codex app-server sessions, OpenClaw maps `tools.exec.mode: "auto"` to Codex
+Guardian-reviewed approvals, usually
 `approvalPolicy: "on-request"`, `approvalsReviewer: "auto_review"`, and
 `sandbox: "workspace-write"` when the local requirements allow those values.
+In `tools.exec.mode: "auto"`, OpenClaw does not preserve legacy unsafe Codex
+`approvalPolicy: "never"` or `sandbox: "danger-full-access"` overrides; use
+`tools.exec.mode: "full"` for an intentional no-approval Codex posture. The
+legacy `plugins.entries.codex.config.appServer.mode: "guardian"` preset still
+works, but `tools.exec.mode: "auto"` is the normalized OpenClaw surface.
 
 For every app-server field, auth order, environment isolation, discovery, and
 timeout behavior, see [Codex harness reference](/plugins/codex-harness-reference).
@@ -738,9 +743,11 @@ protocol version.
 the Codex thread is still trying to use a native hook relay id that OpenClaw no
 longer has registered. This is a native Codex hook transport problem, not an ACP
 backend, provider, GitHub, or shell-command failure. Start a fresh session in
-the affected chat with `/new` or `/reset`, then retry a harmless command. If the
-same fresh session still fails, restart the Codex app-server or OpenClaw Gateway
-so native hook registrations are recreated.
+the affected chat with `/new` or `/reset`, then retry a harmless command. If that
+works once but the next native tool call fails again, treat `/new` as a temporary
+workaround only: copy the prompt into a fresh session after restarting the Codex
+app-server or OpenClaw Gateway so old threads are dropped and native hook
+registrations are recreated.
 
 **A non-Codex model uses the built-in harness:** that is expected unless
 provider or model runtime policy routes it to another harness. Plain non-OpenAI

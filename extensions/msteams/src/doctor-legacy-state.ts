@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { ChannelDoctorLegacyStateMigrationPlan } from "openclaw/plugin-sdk/channel-contract";
+import type { ChannelLegacyStateMigrationPlan } from "openclaw/plugin-sdk/channel-contract";
 import {
   upsertPluginBlobMigrationEntry,
   upsertPluginStateMigrationEntry,
@@ -328,7 +328,7 @@ function pluginStatePlan(params: {
     | typeof MSTEAMS_SSO_TOKEN_NAMESPACE
     | typeof MSTEAMS_DELEGATED_TOKEN_NAMESPACE;
   importSource: (sourcePath: string, env: NodeJS.ProcessEnv) => ImportResult;
-}): ChannelDoctorLegacyStateMigrationPlan {
+}): ChannelLegacyStateMigrationPlan {
   return {
     kind: "custom",
     label: params.label,
@@ -351,7 +351,7 @@ function pluginBlobPlan(params: {
   sourcePath: string;
   namespace: "pending-uploads";
   importSource: (sourcePath: string, env: NodeJS.ProcessEnv) => ImportResult;
-}): ChannelDoctorLegacyStateMigrationPlan {
+}): ChannelLegacyStateMigrationPlan {
   return {
     kind: "custom",
     label: params.label,
@@ -371,8 +371,8 @@ function pluginBlobPlan(params: {
 
 export function detectMSTeamsLegacyStateMigrations(params: {
   stateDir: string;
-}): ChannelDoctorLegacyStateMigrationPlan[] {
-  const plans: ChannelDoctorLegacyStateMigrationPlan[] = [];
+}): ChannelLegacyStateMigrationPlan[] {
+  const plans: ChannelLegacyStateMigrationPlan[] = [];
   const conversations = path.join(params.stateDir, "msteams-conversations.json");
   if (fs.existsSync(conversations)) {
     plans.push(

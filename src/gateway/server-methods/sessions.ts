@@ -1,4 +1,28 @@
 import { randomUUID } from "node:crypto";
+import { GATEWAY_CLIENT_IDS } from "../../../packages/gateway-protocol/src/client-info.js";
+import {
+  ErrorCodes,
+  errorShape,
+  type SessionOperationEvent,
+  validateSessionsAbortParams,
+  validateSessionsCompactParams,
+  validateSessionsCompactionBranchParams,
+  validateSessionsCompactionGetParams,
+  validateSessionsCompactionListParams,
+  validateSessionsCompactionRestoreParams,
+  validateSessionsCreateParams,
+  validateSessionsDeleteParams,
+  validateSessionsDescribeParams,
+  validateSessionsListParams,
+  validateSessionsMessagesSubscribeParams,
+  validateSessionsMessagesUnsubscribeParams,
+  validateSessionsPatchParams,
+  validateSessionsPluginPatchParams,
+  validateSessionsPreviewParams,
+  validateSessionsResetParams,
+  validateSessionsResolveParams,
+  validateSessionsSendParams,
+} from "../../../packages/gateway-protocol/src/index.js";
 import { resolveModelAgentRuntimeMetadata } from "../../agents/agent-runtime-metadata.js";
 import { resolveAgentWorkspaceDir, resolveDefaultAgentId } from "../../agents/agent-scope.js";
 import {
@@ -51,30 +75,6 @@ import {
   readStringValue,
 } from "../../shared/string-coerce.js";
 import { ADMIN_SCOPE } from "../operator-scopes.js";
-import { GATEWAY_CLIENT_IDS } from "../protocol/client-info.js";
-import {
-  ErrorCodes,
-  errorShape,
-  validateSessionsAbortParams,
-  validateSessionsCompactParams,
-  validateSessionsCompactionBranchParams,
-  validateSessionsCompactionGetParams,
-  validateSessionsCompactionListParams,
-  validateSessionsCompactionRestoreParams,
-  validateSessionsCreateParams,
-  validateSessionsDeleteParams,
-  validateSessionsDescribeParams,
-  validateSessionsListParams,
-  validateSessionsMessagesSubscribeParams,
-  validateSessionsMessagesUnsubscribeParams,
-  validateSessionsPatchParams,
-  validateSessionsPluginPatchParams,
-  validateSessionsPreviewParams,
-  validateSessionsResetParams,
-  validateSessionsResolveParams,
-  validateSessionsSendParams,
-  type SessionOperationEvent,
-} from "../protocol/index.js";
 import { resolveSessionKeyForRun } from "../server-session-key.js";
 import {
   forkCompactionCheckpointTranscriptAsync,
@@ -148,6 +148,42 @@ function filterSessionStoreToConfiguredAgents(
     }),
   );
 }
+
+function inheritSessionRuntimeSelection(
+  parentEntry: SessionEntry | undefined,
+): Partial<SessionEntry> {
+  if (!parentEntry) {
+    return {};
+  }
+  return {
+    ...(parentEntry.providerOverride ? { providerOverride: parentEntry.providerOverride } : {}),
+    ...(parentEntry.modelOverride ? { modelOverride: parentEntry.modelOverride } : {}),
+    ...(parentEntry.modelOverrideSource
+      ? { modelOverrideSource: parentEntry.modelOverrideSource }
+      : {}),
+    ...(parentEntry.agentRuntimeOverride
+      ? { agentRuntimeOverride: parentEntry.agentRuntimeOverride }
+      : {}),
+    ...(parentEntry.modelProvider ? { modelProvider: parentEntry.modelProvider } : {}),
+    ...(parentEntry.model ? { model: parentEntry.model } : {}),
+    ...(typeof parentEntry.contextTokens === "number"
+      ? { contextTokens: parentEntry.contextTokens }
+      : {}),
+    ...(parentEntry.thinkingLevel ? { thinkingLevel: parentEntry.thinkingLevel } : {}),
+    ...(typeof parentEntry.fastMode === "boolean" ? { fastMode: parentEntry.fastMode } : {}),
+    ...(parentEntry.verboseLevel ? { verboseLevel: parentEntry.verboseLevel } : {}),
+    ...(parentEntry.traceLevel ? { traceLevel: parentEntry.traceLevel } : {}),
+    ...(parentEntry.reasoningLevel ? { reasoningLevel: parentEntry.reasoningLevel } : {}),
+    ...(parentEntry.elevatedLevel ? { elevatedLevel: parentEntry.elevatedLevel } : {}),
+    ...(parentEntry.authProfileOverride
+      ? { authProfileOverride: parentEntry.authProfileOverride }
+      : {}),
+    ...(parentEntry.authProfileOverrideSource
+      ? { authProfileOverrideSource: parentEntry.authProfileOverrideSource }
+      : {}),
+  };
+}
+
 type SessionsRuntimeModule = typeof import("./sessions.runtime.js");
 
 let sessionsRuntimeModulePromise: Promise<SessionsRuntimeModule> | undefined;
@@ -635,7 +671,11 @@ function collectTrackedActiveSessionRunKeys(
     return keys;
   }
   for (const active of context.chatAbortControllers.values()) {
-    if (typeof active.sessionKey === "string" && active.sessionKey.trim()) {
+    if (
+      active.projectSessionActive !== false &&
+      typeof active.sessionKey === "string" &&
+      active.sessionKey.trim()
+    ) {
       keys.add(active.sessionKey);
     }
   }
@@ -1230,6 +1270,7 @@ export const sessionsHandlers: GatewayRequestHandlers = {
     }
     const parentSessionKey = normalizeOptionalString(p.parentSessionKey);
     let canonicalParentSessionKey: string | undefined;
+    let parentSessionEntry: SessionEntry | undefined;
     if (parentSessionKey) {
       const parent = loadSessionEntry(parentSessionKey);
       if (!parent.entry?.sessionId) {
@@ -1241,6 +1282,7 @@ export const sessionsHandlers: GatewayRequestHandlers = {
         return;
       }
       canonicalParentSessionKey = parent.canonicalKey;
+      parentSessionEntry = parent.entry;
     }
     if (
       canonicalParentSessionKey &&
@@ -1342,6 +1384,9 @@ export const sessionsHandlers: GatewayRequestHandlers = {
           entry: canonicalParentSessionKey
             ? {
                 ...patched.entry,
+                ...(normalizeOptionalString(p.model)
+                  ? {}
+                  : inheritSessionRuntimeSelection(parentSessionEntry)),
                 parentSessionKey: canonicalParentSessionKey,
               }
             : patched.entry,

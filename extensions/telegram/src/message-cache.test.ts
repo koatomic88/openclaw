@@ -5,6 +5,7 @@ import {
   buildTelegramConversationContext,
   buildTelegramReplyChain,
   createTelegramMessageCache,
+  importTelegramMessageCacheEntries,
   resetTelegramMessageCacheBucketsForTest,
   resolveTelegramMessageCacheScopeKey,
 } from "./message-cache.js";
@@ -119,6 +120,132 @@ describe("telegram message cache", () => {
     ]);
   });
 
+  it("records embedded reply targets as normal cached messages", async () => {
+    const persistedScopeKey = resolveTelegramMessageCacheScopeKey(
+      `message-cache-reply-target:${process.pid}:${Date.now()}`,
+    );
+    const chat = { id: 7, type: "group", title: "Ops" } as const;
+    const firstCache = createTelegramMessageCache({ persistedScopeKey });
+    await firstCache.record({
+      accountId: "default",
+      chatId: 7,
+      msg: {
+        chat,
+        message_id: 102,
+        date: 1736380750,
+        text: "Why is there a 4th person?",
+        from: { id: 2, is_bot: false, first_name: "UserB" },
+        reply_to_message: {
+          chat,
+          message_id: 101,
+          date: 1736380700,
+          text: "Done, here is the image",
+          from: { id: 999, is_bot: true, first_name: "Bot" },
+          photo: [
+            {
+              file_id: "generated-photo-1",
+              file_unique_id: "generated-photo-unique-1",
+              width: 640,
+              height: 480,
+            },
+          ],
+        } as Message["reply_to_message"],
+      } as Message,
+    });
+
+    resetTelegramMessageCacheBucketsForTest();
+    const secondCache = createTelegramMessageCache({ persistedScopeKey });
+    const current = {
+      chat,
+      message_id: 103,
+      date: 1736380800,
+      text: "Explain what went wrong",
+      from: { id: 1, is_bot: false, first_name: "UserA" },
+      reply_to_message: {
+        chat,
+        message_id: 102,
+        date: 1736380750,
+        text: "Why is there a 4th person?",
+        from: { id: 2, is_bot: false, first_name: "UserB" },
+      } as Message["reply_to_message"],
+    } as Message;
+    const chain = await buildTelegramReplyChain({
+      cache: secondCache,
+      accountId: "default",
+      chatId: 7,
+      msg: current,
+    });
+    const context = await buildTelegramConversationContext({
+      cache: secondCache,
+      accountId: "default",
+      chatId: 7,
+      messageId: "103",
+      replyChainNodes: chain,
+      recentLimit: 10,
+      replyTargetWindowSize: 2,
+    });
+
+    expect(chain.map((entry) => entry.messageId)).toEqual(["102", "101"]);
+    expect(chain[1]).toMatchObject({
+      sender: "Bot",
+      body: "Done, here is the image",
+      mediaRef: "telegram:file/generated-photo-1",
+    });
+    expect(context.map((entry) => entry.node.messageId)).toEqual(["101", "102"]);
+    expect(context.find((entry) => entry.node.messageId === "101")?.isReplyTarget).toBe(true);
+  });
+
+  it("replaces authoritative edited message fields without stale caption carryover", async () => {
+    const cache = createTelegramMessageCache();
+    const chat = { id: 7, type: "group", title: "Ops" } as const;
+    await cache.record({
+      accountId: "default",
+      chatId: 7,
+      msg: {
+        chat,
+        message_id: 104,
+        date: 1736380900,
+        caption: "old caption",
+        from: { id: 999, is_bot: true, first_name: "Bot" },
+        photo: [
+          {
+            file_id: "generated-photo-2",
+            file_unique_id: "generated-photo-unique-2",
+            width: 640,
+            height: 480,
+          },
+        ],
+      } as Message,
+    });
+
+    const updated = await cache.record({
+      accountId: "default",
+      chatId: 7,
+      msg: {
+        chat,
+        message_id: 104,
+        date: 1736380900,
+        edit_date: 1736380910,
+        from: { id: 999, is_bot: true, first_name: "Bot" },
+        photo: [
+          {
+            file_id: "generated-photo-2",
+            file_unique_id: "generated-photo-unique-2",
+            width: 640,
+            height: 480,
+          },
+        ],
+      } as Message,
+    });
+
+    expect(updated).toMatchObject({
+      messageId: "104",
+      body: "<media:image>",
+      mediaRef: "telegram:file/generated-photo-2",
+    });
+    expect(updated?.body).not.toBe("old caption");
+  });
+
   it("shares one persisted bucket across live cache instances", async () => {
     const persistedScopeKey = resolveTelegramMessageCacheScopeKey(
       `message-cache-shared-test:${process.pid}:${Date.now()}`,
@@ -176,6 +303,127 @@ describe("telegram message cache", () => {
     });
 
     expect(chain.map((entry) => entry.messageId)).toEqual(["9101", "9100"]);
+  });
+
+  it("reloads the bounded SQLite cache window", async () => {
+    const persistedScopeKey = resolveTelegramMessageCacheScopeKey(
+      `message-cache-bounded-test:${process.pid}:${Date.now()}`,
+    );
+    const cache = createTelegramMessageCache({ persistedScopeKey, maxMessages: 3 });
+    for (let index = 0; index < 5; index++) {
+      await cache.record({
+        accountId: "default",
+        chatId: 7,
+        msg: {
+          chat: { id: 7, type: "private", first_name: "Nora" },
+          message_id: 9120 + index,
+          date: 1736380700 + index,
+          text: `State message ${index}`,
+          from: { id: 1, is_bot: false, first_name: "Nora" },
+        } as Message,
+      });
+    }
+
+    resetTelegramMessageCacheBucketsForTest();
+    const reloadedCache = createTelegramMessageCache({ persistedScopeKey, maxMessages: 3 });
+    const recent = await reloadedCache.recentBefore({
+      accountId: "default",
+      chatId: 7,
+      messageId: "9125",
+      limit: 10,
+    });
+
+    expect(recent.map((entry) => entry.messageId)).toEqual(["9122", "9123", "9124"]);
+  });
+
+  it("does not partially parse malformed persisted thread ids", async () => {
+    const persistedScopeKey = resolveTelegramMessageCacheScopeKey(
+      `message-cache-thread-test:${process.pid}:${Date.now()}`,
+    );
+    importTelegramMessageCacheEntries(persistedScopeKey, [
+      {
+        key: "default:7:9126",
+        node: {
+          threadId: "0x64",
+          sourceMessage: {
+            chat: { id: 7, type: "supergroup", title: "Ops" },
+            message_id: 9126,
+            date: 1736389126,
+            text: "State topic message",
+            from: { id: 1, is_bot: false, first_name: "Nora" },
+          } as Message,
+        },
+      },
+    ]);
+
+    resetTelegramMessageCacheBucketsForTest();
+    const reloadedCache = createTelegramMessageCache({ persistedScopeKey });
+    const recent = await reloadedCache.recentBefore({
+      accountId: "default",
+      chatId: 7,
+      threadId: 100,
+      messageId: "9127",
+      limit: 10,
+    });
+
+    expect(recent).toEqual([]);
+  });
+
+  it("drops unsafe Telegram thread ids from live messages", async () => {
+    const cache = createTelegramMessageCache();
+    await cache.record({
+      accountId: "default",
+      chatId: 7,
+      msg: {
+        chat: { id: 7, type: "supergroup", title: "Ops" },
+        message_id: 9127,
+        message_thread_id: Number.MAX_SAFE_INTEGER + 1,
+        date: 1736389127,
+        text: "Unsafe topic message",
+        from: { id: 1, is_bot: false, first_name: "Nora" },
+      } as Message,
+    });
+
+    const topicRecent = await cache.recentBefore({
+      accountId: "default",
+      chatId: 7,
+      threadId: Number.MAX_SAFE_INTEGER + 1,
+      messageId: "9128",
+      limit: 10,
+    });
+    const unscopedRecent = await cache.recentBefore({
+      accountId: "default",
+      chatId: 7,
+      messageId: "9128",
+      limit: 10,
+    });
+
+    expect(topicRecent).toEqual([]);
+    expect(unscopedRecent.map((entry) => entry.messageId)).toEqual(["9127"]);
+  });
+
+  it("does not use unsafe message ids as recent-before cutoffs", async () => {
+    const cache = createTelegramMessageCache();
+    await cache.record({
+      accountId: "default",
+      chatId: 7,
+      msg: {
+        chat: { id: 7, type: "private", first_name: "Nora" },
+        message_id: 9124,
+        date: 1736380700,
+        text: "State message",
+        from: { id: 1, is_bot: false, first_name: "Nora" },
+      } as Message,
+    });
+
+    const recent = await cache.recentBefore({
+      accountId: "default",
+      chatId: 7,
+      messageId: "9007199254740992",
+      limit: 10,
+    });
+
+    expect(recent).toEqual([]);
   });
 
   it("returns recent chat messages before the current message", async () => {

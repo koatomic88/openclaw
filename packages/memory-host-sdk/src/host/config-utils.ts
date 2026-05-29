@@ -43,6 +43,12 @@ export type MemoryQmdMcporterConfig = {
   startDaemon?: boolean;
 };
 
+export type MemoryQmdSessionConfig = {
+  enabled?: boolean;
+  exportDir?: string;
+  retentionDays?: number;
+};
+
 export type MemoryQmdUpdateConfig = {
   interval?: string;
   debounceMs?: number;
@@ -70,6 +76,7 @@ export type MemoryQmdConfig = {
   searchTool?: string;
   includeDefaultMemory?: boolean;
   paths?: MemoryQmdIndexPath[];
+  sessions?: MemoryQmdSessionConfig;
   update?: MemoryQmdUpdateConfig;
   limits?: MemoryQmdLimitsConfig;
   scope?: SessionSendPolicyConfig;
@@ -148,6 +155,14 @@ const DURATION_MULTIPLIERS: Record<string, number> = {
   h: 3_600_000,
   d: 86_400_000,
 };
+
+function roundDurationMs(raw: string, value: number): number {
+  const rounded = Math.round(value);
+  if (!Number.isSafeInteger(rounded)) {
+    throw new Error(`invalid duration: ${raw}`);
+  }
+  return rounded;
+}
 
 export function normalizeAgentId(value: string | undefined | null): string {
   const trimmed = (value ?? "").trim();
@@ -337,7 +352,7 @@ export function parseDurationMs(
       throw new Error(`invalid duration: ${raw}`);
     }
     const unit = single[2] ?? opts?.defaultUnit ?? "ms";
-    return Math.round(value * (DURATION_MULTIPLIERS[unit] ?? 1));
+    return roundDurationMs(raw, value * (DURATION_MULTIPLIERS[unit] ?? 1));
   }
 
   let totalMs = 0;
@@ -360,5 +375,5 @@ export function parseDurationMs(
   if (consumed !== trimmed.length || consumed === 0) {
     throw new Error(`invalid duration: ${raw}`);
   }
-  return Math.round(totalMs);
+  return roundDurationMs(raw, totalMs);
 }

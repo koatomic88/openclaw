@@ -380,6 +380,20 @@ describe("active-memory plugin", () => {
     );
   });
 
+  it("runs recall on a dedicated active-memory lane", async () => {
+    await hooks.before_prompt_build(
+      { prompt: "what wings should i order?", messages: [] },
+      {
+        agentId: "main",
+        trigger: "user",
+        sessionKey: "agent:main:main",
+        messageProvider: "webchat",
+      },
+    );
+
+    expect(lastEmbeddedRunParams().lane).toBe("active-memory");
+  });
+
   it("registers a session-scoped active-memory toggle command", async () => {
     const command = registeredCommands["active-memory"];
     const sessionKey = "agent:main:active-memory-toggle";

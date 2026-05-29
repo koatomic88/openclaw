@@ -16,7 +16,14 @@ export type SessionDatabaseTarget = {
   databasePath: string;
 };
 
-const NON_FATAL_DATABASE_DISCOVERY_ERROR_CODES = new Set(["EACCES", "ENOENT", "ENOTDIR", "EPERM"]);
+const NON_FATAL_DATABASE_DISCOVERY_ERROR_CODES = new Set([
+  "EACCES",
+  "ELOOP",
+  "ENOENT",
+  "ENOTDIR",
+  "EPERM",
+  "ESTALE",
+]);
 
 function resolveSessionDatabaseTarget(params: {
   agentId: string;

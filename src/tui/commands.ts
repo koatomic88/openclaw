@@ -1,7 +1,7 @@
+import type { CommandEntry } from "../../packages/gateway-protocol/src/index.js";
 import { listChatCommands, listChatCommandsForConfig } from "../auto-reply/commands-registry.js";
 import { formatThinkingLevels, listThinkingLevelLabels } from "../auto-reply/thinking.js";
 import type { OpenClawConfig } from "../config/types.js";
-import type { CommandEntry } from "../gateway/protocol/index.js";
 import { normalizeLowercaseStringOrEmpty } from "../shared/string-coerce.js";
 import type { SlashCommand } from "./pi-tui-contract.js";
 

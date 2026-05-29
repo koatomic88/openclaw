@@ -6,6 +6,7 @@ import {
 import type { EmbeddedAgentExecutionContract } from "../../../config/types.agent-defaults.js";
 import { normalizeLowercaseStringOrEmpty } from "../../../shared/string-coerce.js";
 import { normalizeStringEntries } from "../../../shared/string-normalization.js";
+import { hasAcceptedSessionSpawn } from "../../accepted-session-spawn.js";
 import type { AgentMessage } from "../../agent-core-contract.js";
 import { collectTextContentBlocks } from "../../content-blocks.js";
 import {
@@ -47,6 +48,7 @@ type IncompleteTurnAttempt = Pick<
   | "acceptedSessionSpawns"
   | "lastToolError"
   | "lastAssistant"
+  | "itemLifecycle"
   | "replayMetadata"
   | "promptErrorSource"
   | "timedOutDuringCompaction"
@@ -225,6 +227,7 @@ export function buildAttemptReplayMetadata(
     hadMutatingTools ||
     hadAsyncStartedTool ||
     hasMessagingToolDeliveryEvidence(params) ||
+    hasAcceptedSessionSpawn(params.acceptedSessionSpawns) ||
     (params.successfulCronAdds ?? 0) > 0;
   return {
     hadPotentialSideEffects,
@@ -271,6 +274,14 @@ export function resolveIncompleteTurnPayloadText(params: {
     return null;
   }
 
+  if (hasAcceptedSessionSpawn(params.attempt.acceptedSessionSpawns)) {
+    return null;
+  }
+
+  if (hasAsyncStartedToolActivity(params.attempt.toolMetas)) {
+    return null;
+  }
+
   const stopReason = params.attempt.lastAssistant?.stopReason;
   const incompleteTerminalAssistant = isIncompleteTerminalAssistantTurn({
     hasAssistantVisibleText: params.payloadCount > 0,
@@ -297,6 +308,58 @@ export function resolveIncompleteTurnPayloadText(params: {
     : "⚠️ Agent couldn't generate a response. Please try again.";
 }
 
+export function shouldRetryMissingAssistantTurn(params: {
+  payloadCount: number;
+  aborted: boolean;
+  promptError?: unknown;
+  timedOut: boolean;
+  attempt: IncompleteTurnAttempt;
+}): boolean {
+  if (
+    params.payloadCount !== 0 ||
+    params.aborted ||
+    Boolean(params.promptError) ||
+    params.timedOut ||
+    params.attempt.clientToolCalls ||
+    params.attempt.currentAttemptAssistant ||
+    params.attempt.lastAssistant ||
+    params.attempt.yieldDetected ||
+    params.attempt.didSendDeterministicApprovalPrompt ||
+    params.attempt.lastToolError
+  ) {
+    return false;
+  }
+
+  if (hasOnlySilentAssistantReply(params.attempt.assistantTexts)) {
+    return false;
+  }
+
+  if (joinAssistantTexts(params.attempt.assistantTexts).length > 0) {
+    return false;
+  }
+
+  if (hasCommittedMessagingToolDeliveryEvidence(params.attempt)) {
+    return false;
+  }
+
+  if (hasAcceptedSessionSpawn(params.attempt.acceptedSessionSpawns)) {
+    return false;
+  }
+
+  if (hasAsyncStartedToolActivity(params.attempt.toolMetas)) {
+    return false;
+  }
+
+  if (
+    (params.attempt.itemLifecycle?.startedCount ?? 0) > 0 ||
+    (params.attempt.itemLifecycle?.activeCount ?? 0) > 0
+  ) {
+    return false;
+  }
+
+  return !resolveAttemptReplayMetadata(params.attempt).hadPotentialSideEffects;
+}
+
 function joinAssistantTexts(assistantTexts?: readonly string[]): string {
   return (assistantTexts ?? []).join("\n\n").trim();
 }
@@ -307,6 +370,10 @@ function hasOnlySilentAssistantReply(assistantTexts?: readonly string[]): boolea
     nonEmptyTexts.length > 0 &&
     nonEmptyTexts.every((text) => isSilentReplyPayloadText(text, SILENT_REPLY_TOKEN))
   );
+}
+
+function hasAsyncStartedToolActivity(toolMetas?: readonly { asyncStarted?: boolean }[]): boolean {
+  return (toolMetas ?? []).some((entry) => entry.asyncStarted === true);
 }
 
 function isToolResultRole(role: string): boolean {

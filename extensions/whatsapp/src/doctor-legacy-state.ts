@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { DEFAULT_ACCOUNT_ID } from "openclaw/plugin-sdk/account-id";
-import type { ChannelDoctorLegacyStateMigrationPlan } from "openclaw/plugin-sdk/channel-contract";
+import type { ChannelLegacyStateMigrationPlan } from "openclaw/plugin-sdk/channel-contract";
 import { statRegularFileSync } from "openclaw/plugin-sdk/security-runtime";
 
 function fileExists(pathValue: string): boolean {
@@ -24,7 +24,7 @@ function isLegacyWhatsAppAuthFile(name: string): boolean {
 
 export function detectWhatsAppLegacyStateMigrations(params: {
   oauthDir: string;
-}): ChannelDoctorLegacyStateMigrationPlan[] {
+}): ChannelLegacyStateMigrationPlan[] {
   const targetDir = path.join(params.oauthDir, "whatsapp", DEFAULT_ACCOUNT_ID);
   const entries = (() => {
     try {

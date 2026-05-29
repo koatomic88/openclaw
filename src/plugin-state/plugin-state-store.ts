@@ -197,6 +197,27 @@ function assertValueSize(json: string): void {
   }
 }
 
+function prepareRegisterParams(
+  key: string,
+  value: unknown,
+  defaultTtlMs?: number,
+  opts?: { ttlMs?: number },
+): PreparedRegisterParams {
+  const normalizedKey = validateKey(key, "register");
+  assertJsonSerializable(value);
+  const json = JSON.stringify(value);
+  if (json === undefined) {
+    throw invalidInput("plugin state value must be JSON-serializable", "register");
+  }
+  assertValueSize(json);
+  const ttlMs = validateOptionalTtlMs(opts?.ttlMs, "register") ?? defaultTtlMs;
+  return {
+    key: normalizedKey,
+    valueJson: json,
+    ...(ttlMs != null ? { ttlMs } : {}),
+  };
+}
+
 function assertConsistentOptions(
   pluginId: string,
   namespace: string,
@@ -217,24 +238,6 @@ function assertConsistentOptions(
       "open",
     );
   }
-}
-
-function prepareRegisterParams(
-  key: string,
-  value: unknown,
-  defaultTtlMs?: number,
-  opts?: { ttlMs?: number },
-): PreparedRegisterParams {
-  const normalizedKey = validateKey(key, "register");
-  assertJsonSerializable(value);
-  const json = JSON.stringify(value);
-  assertValueSize(json);
-  const ttlMs = validateOptionalTtlMs(opts?.ttlMs, "register") ?? defaultTtlMs;
-  return {
-    key: normalizedKey,
-    valueJson: json,
-    ...(ttlMs != null ? { ttlMs } : {}),
-  };
 }
 
 function createKeyedStoreForPluginId<T>(

@@ -111,6 +111,7 @@ function resetMemoryRecallMocks() {
   repairShortTermPromotionArtifacts.mockResolvedValue({
     changed: false,
     removedInvalidEntries: 0,
+    removedOverflowEntries: 0,
     rewroteStore: false,
   });
   noteWorkspaceMemoryHealth.mockClear();
@@ -1008,6 +1009,7 @@ describe("memory recall doctor integration", () => {
     repairShortTermPromotionArtifacts.mockResolvedValueOnce({
       changed: true,
       removedInvalidEntries: 1,
+      removedOverflowEntries: 0,
       rewroteStore: true,
     });
     const prompter = createPrompter();

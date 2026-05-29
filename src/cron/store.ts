@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { Insertable, Selectable } from "kysely";
 import { executeSqliteQuerySync, getNodeSqliteKysely } from "../infra/kysely-sync.js";
 import {
@@ -23,10 +24,14 @@ import type {
 } from "./types.js";
 
 type CronJobsTable = OpenClawStateKyselyDatabase["cron_jobs"];
+type CronQuarantinedJobsTable = OpenClawStateKyselyDatabase["cron_quarantined_jobs"];
 type CronJobsDatabase = Pick<OpenClawStateKyselyDatabase, "cron_jobs">;
+type CronQuarantineDatabase = Pick<OpenClawStateKyselyDatabase, "cron_quarantined_jobs">;
 type CronStoreUpdateDatabase = Pick<OpenClawStateKyselyDatabase, "cron_jobs">;
 
 type CronJobRow = Selectable<CronJobsTable>;
+type CronQuarantinedJobRow = Selectable<CronQuarantinedJobsTable>;
+type CronQuarantinedJobInsert = Insertable<CronQuarantinedJobsTable>;
 
 type CronJobStateFields = Pick<
   Insertable<CronJobsTable>,
@@ -57,6 +62,21 @@ export type CronRuntimeStateEntry = {
 export type CronRuntimeStateSnapshot = {
   version: 1;
   jobs: Record<string, CronRuntimeStateEntry>;
+};
+
+export type QuarantinedCronConfigJob = {
+  sourceIndex: number;
+  reason: string;
+  job?: Record<string, unknown>;
+  raw?: unknown;
+  state?: Record<string, unknown>;
+  updatedAtMs?: number;
+  scheduleIdentity?: string;
+};
+
+export type CronQuarantineFile = {
+  version: 1;
+  jobs: Array<QuarantinedCronConfigJob & { quarantinedAtMs: number }>;
 };
 
 const DEFAULT_CRON_STORE_KEY = "default";
@@ -95,6 +115,133 @@ export function extractCronRuntimeStateSnapshot(
 
 export function resolveCronStoreKey(): string {
   return DEFAULT_CRON_STORE_KEY;
+}
+
+export function resolveCronQuarantinePath(storeKey: string): string {
+  return `sqlite:cron_quarantined_jobs/${cronStoreKey(storeKey)}`;
+}
+
+function quarantineEntryKey(entry: QuarantinedCronConfigJob): string {
+  return JSON.stringify({
+    sourceIndex: entry.sourceIndex,
+    reason: entry.reason,
+    job: entry.job ?? null,
+    raw: entry.raw ?? null,
+    state: entry.state ?? null,
+    updatedAtMs: entry.updatedAtMs ?? null,
+    scheduleIdentity: entry.scheduleIdentity ?? null,
+  });
+}
+
+function quarantineKey(entry: QuarantinedCronConfigJob): string {
+  return createHash("sha256").update(quarantineEntryKey(entry)).digest("hex");
+}
+
+function parseQuarantineJsonRecord(value: string | null): Record<string, unknown> | undefined {
+  if (value == null) {
+    return undefined;
+  }
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return isRecord(parsed) ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function parseQuarantineRawJson(value: string | null): unknown {
+  if (value == null) {
+    return undefined;
+  }
+  try {
+    return JSON.parse(value) as unknown;
+  } catch {
+    return undefined;
+  }
+}
+
+function quarantinedJobFromRow(row: CronQuarantinedJobRow): CronQuarantineFile["jobs"][number] {
+  const job = parseQuarantineJsonRecord(row.job_json);
+  const state = parseQuarantineJsonRecord(row.state_json);
+  return {
+    quarantinedAtMs: row.quarantined_at_ms,
+    sourceIndex: row.source_index,
+    reason: row.reason,
+    ...(job ? { job } : {}),
+    ...(row.raw_json !== null ? { raw: parseQuarantineRawJson(row.raw_json) } : {}),
+    ...(state ? { state } : {}),
+    ...(row.updated_at_ms !== null ? { updatedAtMs: row.updated_at_ms } : {}),
+    ...(row.schedule_identity !== null ? { scheduleIdentity: row.schedule_identity } : {}),
+  };
+}
+
+function quarantinedJobRow(params: {
+  storeKey: string;
+  entry: QuarantinedCronConfigJob;
+  nowMs: number;
+}): CronQuarantinedJobInsert {
+  return {
+    store_key: cronStoreKey(params.storeKey),
+    quarantine_key: quarantineKey(params.entry),
+    source_index: params.entry.sourceIndex,
+    reason: params.entry.reason,
+    job_json: params.entry.job ? JSON.stringify(params.entry.job) : null,
+    raw_json: "raw" in params.entry ? JSON.stringify(params.entry.raw ?? null) : null,
+    state_json: params.entry.state ? JSON.stringify(params.entry.state) : null,
+    updated_at_ms: sqliteNullableNumber(params.entry.updatedAtMs),
+    schedule_identity: sqliteNullableText(params.entry.scheduleIdentity),
+    quarantined_at_ms: params.nowMs,
+  };
+}
+
+export async function loadCronQuarantineFile(storeKey: string): Promise<CronQuarantineFile> {
+  const normalizedStoreKey = cronStoreKey(storeKey);
+  const database = openOpenClawStateDatabase();
+  const db = getNodeSqliteKysely<CronQuarantineDatabase>(database.db);
+  const rows = executeSqliteQuerySync(
+    database.db,
+    db
+      .selectFrom("cron_quarantined_jobs")
+      .selectAll()
+      .where("store_key", "=", normalizedStoreKey)
+      .orderBy("quarantined_at_ms", "asc")
+      .orderBy("source_index", "asc")
+      .orderBy("quarantine_key", "asc"),
+  ).rows;
+  return {
+    version: 1,
+    jobs: rows.map(quarantinedJobFromRow),
+  };
+}
+
+export async function saveCronQuarantineFile(params: {
+  storeKey: string;
+  entries: QuarantinedCronConfigJob[];
+  nowMs: number;
+}): Promise<string | null> {
+  if (params.entries.length === 0) {
+    return null;
+  }
+  const normalizedStoreKey = cronStoreKey(params.storeKey);
+  runOpenClawStateWriteTransaction((database) => {
+    const db = getNodeSqliteKysely<CronQuarantineDatabase>(database.db);
+    for (const entry of params.entries.toSorted((a, b) => a.sourceIndex - b.sourceIndex)) {
+      executeSqliteQuerySync(
+        database.db,
+        db
+          .insertInto("cron_quarantined_jobs")
+          .values(
+            quarantinedJobRow({
+              storeKey: normalizedStoreKey,
+              entry,
+              nowMs: params.nowMs,
+            }),
+          )
+          .onConflict((conflict) => conflict.columns(["store_key", "quarantine_key"]).doNothing()),
+      );
+    }
+  });
+  return resolveCronQuarantinePath(normalizedStoreKey);
 }
 
 function ensureJobStateObject(job: CronStoreSnapshot["jobs"][number]): void {

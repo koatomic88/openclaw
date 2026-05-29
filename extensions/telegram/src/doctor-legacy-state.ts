@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import type { ChannelDoctorLegacyStateMigrationPlan } from "openclaw/plugin-sdk/channel-contract";
+import type { ChannelLegacyStateMigrationPlan } from "openclaw/plugin-sdk/channel-contract";
 import { createPluginStateSyncKeyedStore } from "openclaw/plugin-sdk/plugin-state-runtime";
 import {
   importTelegramMessageCacheEntries,
@@ -46,8 +46,8 @@ function threadBindingKey(accountId: string, conversationId: string): string {
 function customPlan(params: {
   label: string;
   sourcePath: string;
-  apply: Extract<ChannelDoctorLegacyStateMigrationPlan, { kind: "custom" }>["apply"];
-}): Extract<ChannelDoctorLegacyStateMigrationPlan, { kind: "custom" }> {
+  apply: Extract<ChannelLegacyStateMigrationPlan, { kind: "custom" }>["apply"];
+}): Extract<ChannelLegacyStateMigrationPlan, { kind: "custom" }> {
   return {
     kind: "custom",
     label: params.label,
@@ -58,7 +58,7 @@ function customPlan(params: {
 
 function updateOffsetPlans(
   stateDir: string,
-): Array<Extract<ChannelDoctorLegacyStateMigrationPlan, { kind: "custom" }>> {
+): Array<Extract<ChannelLegacyStateMigrationPlan, { kind: "custom" }>> {
   const dir = telegramDir(stateDir);
   if (!fs.existsSync(dir)) {
     return [];
@@ -90,7 +90,7 @@ function updateOffsetPlans(
 
 function stickerCachePlan(
   stateDir: string,
-): Array<Extract<ChannelDoctorLegacyStateMigrationPlan, { kind: "custom" }>> {
+): Array<Extract<ChannelLegacyStateMigrationPlan, { kind: "custom" }>> {
   const sourcePath = path.join(telegramDir(stateDir), "sticker-cache.json");
   if (!fs.existsSync(sourcePath)) {
     return [];
@@ -117,7 +117,7 @@ function stickerCachePlan(
 
 function threadBindingPlans(
   stateDir: string,
-): Array<Extract<ChannelDoctorLegacyStateMigrationPlan, { kind: "custom" }>> {
+): Array<Extract<ChannelLegacyStateMigrationPlan, { kind: "custom" }>> {
   const dir = telegramDir(stateDir);
   if (!fs.existsSync(dir)) {
     return [];
@@ -152,10 +152,7 @@ function threadBindingPlans(
               ...(typeof binding.agentId === "string" ? { agentId: binding.agentId } : {}),
               ...(typeof binding.boundBy === "string" ? { boundBy: binding.boundBy } : {}),
             };
-            store.register(
-              threadBindingKey(accountId, record.conversationId),
-              record,
-            );
+            store.register(threadBindingKey(accountId, record.conversationId), record);
             imported += 1;
           }
           removeFile(sourcePath);
@@ -167,7 +164,7 @@ function threadBindingPlans(
 
 function sentMessagePlans(
   stateDir: string,
-): Array<Extract<ChannelDoctorLegacyStateMigrationPlan, { kind: "custom" }>> {
+): Array<Extract<ChannelLegacyStateMigrationPlan, { kind: "custom" }>> {
   return fs.globSync(path.join(stateDir, "**/*.telegram-sent-messages.json")).map((sourcePath) =>
     customPlan({
       label: "Telegram sent-message cache",
@@ -193,7 +190,7 @@ function sentMessagePlans(
 
 function messageCachePlans(
   stateDir: string,
-): Array<Extract<ChannelDoctorLegacyStateMigrationPlan, { kind: "custom" }>> {
+): Array<Extract<ChannelLegacyStateMigrationPlan, { kind: "custom" }>> {
   return fs.globSync(path.join(stateDir, "**/*.telegram-messages.json")).map((sourcePath) =>
     customPlan({
       label: "Telegram message cache",
@@ -215,7 +212,7 @@ function messageCachePlans(
 
 function topicNamePlans(
   stateDir: string,
-): Array<Extract<ChannelDoctorLegacyStateMigrationPlan, { kind: "custom" }>> {
+): Array<Extract<ChannelLegacyStateMigrationPlan, { kind: "custom" }>> {
   return fs.globSync(path.join(stateDir, "**/*.telegram-topic-names.json")).map((sourcePath) =>
     customPlan({
       label: "Telegram topic-name cache",
@@ -255,7 +252,7 @@ function topicNamePlans(
 
 export function detectTelegramLegacyStateMigrations(
   params: DetectParams,
-): Array<Extract<ChannelDoctorLegacyStateMigrationPlan, { kind: "custom" }>> {
+): Array<Extract<ChannelLegacyStateMigrationPlan, { kind: "custom" }>> {
   return [
     ...updateOffsetPlans(params.stateDir),
     ...stickerCachePlan(params.stateDir),

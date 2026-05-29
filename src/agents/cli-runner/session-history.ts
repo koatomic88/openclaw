@@ -8,6 +8,7 @@ import {
   limitAgentHookHistoryMessages,
   MAX_AGENT_HOOK_HISTORY_MESSAGES,
 } from "../harness/hook-history.js";
+import type { AgentMessage } from "../runtime/index.js";
 import { type TranscriptEntry } from "../transcript/session-transcript-contract.js";
 
 export const MAX_CLI_SESSION_HISTORY_BYTES = 5 * 1024 * 1024;
@@ -26,6 +27,15 @@ type HistoryEntry = {
   type?: unknown;
   message?: unknown;
   summary?: unknown;
+  content?: unknown;
+  customType?: unknown;
+  details?: unknown;
+  display?: unknown;
+  firstKeptEntryId?: unknown;
+  fromId?: unknown;
+  timestamp?: unknown;
+  tokensAfter?: unknown;
+  tokensBefore?: unknown;
 };
 
 type RawTranscriptReseedReason =
@@ -75,6 +85,48 @@ function coerceHistoryText(content: unknown): string {
     })
     .join("\n")
     .trim();
+}
+
+function coerceHistoryTimestamp(value: unknown): number | string {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string") {
+    return value;
+  }
+  return 0;
+}
+
+function historyEntryToContextEngineMessage(entry: HistoryEntry): AgentMessage | undefined {
+  if (entry.type === "message") {
+    return entry.message as AgentMessage;
+  }
+  if (entry.type === "custom_message") {
+    return {
+      role: "custom",
+      customType: typeof entry.customType === "string" ? entry.customType : "custom",
+      content: entry.content,
+      display: entry.display !== false,
+      details: entry.details,
+      timestamp: coerceHistoryTimestamp(entry.timestamp),
+    } as AgentMessage;
+  }
+  if (entry.type === "branch_summary") {
+    return {
+      role: "branchSummary",
+      summary: typeof entry.summary === "string" ? entry.summary : "",
+      fromId: typeof entry.fromId === "string" ? entry.fromId : "root",
+      timestamp: coerceHistoryTimestamp(entry.timestamp),
+    } as AgentMessage;
+  }
+  return undefined;
+}
+
+function loadContextEngineMessagesFromEntries(entries: unknown[]): AgentMessage[] {
+  return entries.flatMap((entry) => {
+    const message = historyEntryToContextEngineMessage(entry as HistoryEntry);
+    return message ? [message] : [];
+  });
 }
 
 function renderHistoryMessage(message: unknown): string | undefined {
@@ -250,6 +302,48 @@ export async function loadCliSessionHistoryMessages(params: {
     return candidate.type === "message" ? [candidate.message] : [];
   });
   return limitAgentHookHistoryMessages(history, MAX_CLI_SESSION_HISTORY_MESSAGES);
+}
+
+export async function loadCliSessionContextEngineMessages(params: {
+  sessionId: string;
+  sessionKey?: string;
+  agentId?: string;
+  config?: OpenClawConfig;
+}): Promise<unknown[]> {
+  const entries = await loadCliSessionEntries(params);
+  const latestCompactionIndex = entries.findLastIndex((entry) => {
+    const candidate = entry as HistoryEntry;
+    return candidate.type === "compaction" && typeof candidate.summary === "string";
+  });
+  if (latestCompactionIndex < 0) {
+    return loadContextEngineMessagesFromEntries(entries);
+  }
+
+  const compaction = entries[latestCompactionIndex] as HistoryEntry;
+  const summary = typeof compaction.summary === "string" ? compaction.summary.trim() : "";
+  if (!summary) {
+    return loadContextEngineMessagesFromEntries(entries);
+  }
+
+  const tailMessages = loadContextEngineMessagesFromEntries(
+    entries.slice(latestCompactionIndex + 1),
+  );
+  return [
+    {
+      role: "compactionSummary",
+      summary,
+      timestamp: coerceHistoryTimestamp(compaction.timestamp),
+      tokensBefore: typeof compaction.tokensBefore === "number" ? compaction.tokensBefore : 0,
+      ...(typeof compaction.tokensAfter === "number"
+        ? { tokensAfter: compaction.tokensAfter }
+        : {}),
+      ...(typeof compaction.firstKeptEntryId === "string"
+        ? { firstKeptEntryId: compaction.firstKeptEntryId }
+        : {}),
+      ...(compaction.details !== undefined ? { details: compaction.details } : {}),
+    },
+    ...tailMessages,
+  ];
 }
 
 export async function hasCliSessionTranscript(params: {

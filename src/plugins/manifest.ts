@@ -1819,8 +1819,12 @@ export type OpenClawPackageStartup = {
 
 export type OpenClawPackageSetupFeatures = {
   configPromotion?: boolean;
-  doctorLegacyState?: boolean;
-  doctorSessionMigrationSurface?: boolean;
+  legacyStateMigrations?: boolean;
+  legacySessionSurfaces?: boolean;
+};
+
+export type OpenClawPackageCompat = {
+  pluginApi?: string;
 };
 
 export type OpenClawPackageManifest = {
@@ -1834,6 +1838,7 @@ export type OpenClawPackageManifest = {
     label?: string;
   };
   channel?: PluginPackageChannel;
+  compat?: OpenClawPackageCompat;
   install?: PluginPackageInstall;
   startup?: OpenClawPackageStartup;
 };

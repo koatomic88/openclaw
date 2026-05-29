@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { validateTalkConfigResult } from "../../packages/gateway-protocol/src/index.js";
 import { normalizeResolvedSecretInputString } from "../config/types.secrets.js";
 import {
   loadOrCreateDeviceIdentity,
@@ -7,7 +8,6 @@ import {
 } from "../infra/device-identity.js";
 import { withEnvAsync } from "../test-utils/env.js";
 import { buildDeviceAuthPayload } from "./device-auth.js";
-import { validateTalkConfigResult } from "./protocol/index.js";
 import { withSpeechProviders } from "./talk.test-helpers.js";
 import {
   connectOk,

@@ -105,7 +105,7 @@ export async function maybeHandleResetCommand(
     return null;
   }
 
-  const resetMatch = params.command.commandBodyNormalized.match(/^\/(new|reset)(?:\s|$)/);
+  const resetMatch = params.command.commandBodyNormalized.match(/^\/(new|reset)(?:\s|$)/i);
   if (!resetMatch) {
     return null;
   }
@@ -116,7 +116,8 @@ export async function maybeHandleResetCommand(
     return { shouldContinue: false };
   }
 
-  const commandAction: ResetCommandAction = resetMatch[1] === "reset" ? "reset" : "new";
+  const commandAction: ResetCommandAction =
+    resetMatch[1]?.toLowerCase() === "reset" ? "reset" : "new";
   const resetTail = params.command.commandBodyNormalized.slice(resetMatch[0].length).trimStart();
   const boundAcpSessionKey = resolveBoundAcpThreadSessionKey(params);
   const boundAcpKey =

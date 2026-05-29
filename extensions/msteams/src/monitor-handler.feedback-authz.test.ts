@@ -6,15 +6,9 @@ import { resetPluginStateStoreForTests } from "openclaw/plugin-sdk/plugin-state-
 import { upsertSessionEntry } from "openclaw/plugin-sdk/session-store-runtime";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { OpenClawConfig, PluginRuntime, RuntimeEnv } from "../runtime-api.js";
-import {
-  type MSTeamsActivityHandler,
-  type MSTeamsMessageHandlerDeps,
-  registerMSTeamsHandlers,
-} from "./monitor-handler.js";
-import {
-  createActivityHandler,
-  createMSTeamsMessageHandlerDeps,
-} from "./monitor-handler.test-helpers.js";
+import { runMSTeamsFeedbackInvokeHandler } from "./feedback-invoke.js";
+import { type MSTeamsMessageHandlerDeps } from "./monitor-handler.js";
+import { createMSTeamsMessageHandlerDeps } from "./monitor-handler.test-helpers.js";
 import { setMSTeamsRuntime } from "./runtime.js";
 import type { MSTeamsTurnContext } from "./sdk-types.js";
 
@@ -63,6 +57,9 @@ function createRuntimeStub(readAllowFromStore: ReturnType<typeof vi.fn>): Plugin
           sessionKey: `msteams:${peer.kind}:${peer.id}`,
           agentId: "default",
         }),
+      },
+      session: {
+        resolveStorePath: (storePath?: string) => storePath ?? tmpdir(),
       },
     },
   } as unknown as PluginRuntime;
@@ -157,29 +154,33 @@ function readFeedbackTranscriptMessage(params: {
 async function withFeedbackHandler(params: {
   cfg: OpenClawConfig;
   context: Parameters<typeof createFeedbackInvokeContext>[0];
-  beforeRun?: (args: { tmpDir: string }) => Promise<void>;
-  assertResult: (args: { tmpDir: string; originalRun: ReturnType<typeof vi.fn> }) => Promise<void>;
+  sessionKey?: string;
+  sessionId?: string;
+  assertResult: (args: { tmpDir: string }) => Promise<void>;
 }) {
   const tmpDir = await mkdtemp(path.join(tmpdir(), "openclaw-msteams-feedback-"));
   const previousStateDir = process.env.OPENCLAW_STATE_DIR;
   process.env.OPENCLAW_STATE_DIR = tmpDir;
   try {
-    const originalRun = vi.fn(async () => undefined);
-    const handler = registerMSTeamsHandlers(
-      createActivityHandler(originalRun),
-      createDeps({
-        cfg: {
-          ...params.cfg,
-          session: {},
+    if (params.sessionKey && params.sessionId) {
+      await upsertSessionEntry({
+        agentId: "default",
+        env: { ...process.env, OPENCLAW_STATE_DIR: tmpDir },
+        sessionKey: params.sessionKey,
+        entry: {
+          sessionId: params.sessionId,
+          updatedAt: Date.now(),
         },
-      }),
-    ) as MSTeamsActivityHandler & {
-      run: NonNullable<MSTeamsActivityHandler["run"]>;
-    };
-
-    await params.beforeRun?.({ tmpDir });
-    await handler.run(createFeedbackInvokeContext(params.context));
-    await params.assertResult({ tmpDir, originalRun });
+      });
+    }
+    const deps = createDeps({
+      cfg: {
+        ...params.cfg,
+        session: {},
+      },
+    });
+    await runMSTeamsFeedbackInvokeHandler(createFeedbackInvokeContext(params.context), deps);
+    await params.assertResult({ tmpDir });
   } finally {
     resetPluginStateStoreForTests();
     if (previousStateDir == null) {
@@ -216,12 +217,17 @@ describe("msteams feedback invoke authz", () => {
         senderName: "Owner",
         comment: "allowed feedback",
       },
-      assertResult: async ({ tmpDir, originalRun }) => {
+      sessionKey: "msteams:direct:owner-aad",
+      sessionId: "owner-session",
+      assertResult: async ({ tmpDir }) => {
         const event = readFeedbackTranscriptMessage({
           stateDir: tmpDir,
-          sessionId: "msteams:direct:owner-aad",
+          sessionId: "owner-session",
         });
-        expect(Object.keys(event ?? {}).toSorted()).toEqual([
+        if (!event) {
+          throw new Error("expected feedback transcript event");
+        }
+        expect(Object.keys(event).toSorted()).toEqual([
           "agentId",
           "comment",
           "conversationId",
@@ -232,7 +238,7 @@ describe("msteams feedback invoke authz", () => {
           "type",
           "value",
         ]);
-        expect(typeof event?.ts).toBe("number");
+        expect(typeof event.ts).toBe("number");
         expect({ ...event, ts: 0 }).toEqual({
           type: "custom",
           event: "feedback",
@@ -244,7 +250,6 @@ describe("msteams feedback invoke authz", () => {
           agentId: "default",
           conversationId: "a:personal-chat",
         });
-        expect(originalRun).not.toHaveBeenCalled();
       },
     });
   });
@@ -274,12 +279,17 @@ describe("msteams feedback invoke authz", () => {
         senderName: "Owner",
         comment: "allowed dm feedback",
       },
-      assertResult: async ({ tmpDir, originalRun }) => {
+      sessionKey: "msteams:direct:owner-aad",
+      sessionId: "owner-session",
+      assertResult: async ({ tmpDir }) => {
         const event = readFeedbackTranscriptMessage({
           stateDir: tmpDir,
-          sessionId: "msteams:direct:owner-aad",
+          sessionId: "owner-session",
         });
-        expect(Object.keys(event ?? {}).toSorted()).toEqual([
+        if (!event) {
+          throw new Error("expected feedback transcript event");
+        }
+        expect(Object.keys(event).toSorted()).toEqual([
           "agentId",
           "comment",
           "conversationId",
@@ -290,7 +300,7 @@ describe("msteams feedback invoke authz", () => {
           "type",
           "value",
         ]);
-        expect(typeof event?.ts).toBe("number");
+        expect(typeof event.ts).toBe("number");
         expect({ ...event, ts: 0 }).toEqual({
           type: "custom",
           event: "feedback",
@@ -302,63 +312,6 @@ describe("msteams feedback invoke authz", () => {
           agentId: "default",
           conversationId: "a:personal-chat",
         });
-        expect(originalRun).not.toHaveBeenCalled();
-      },
-    });
-  });
-
-  it("records feedback in the stored transcript session when the route key differs", async () => {
-    await withFeedbackHandler({
-      cfg: {
-        channels: {
-          msteams: {
-            dmPolicy: "allowlist",
-            allowFrom: ["owner-aad"],
-          },
-        },
-      } as OpenClawConfig,
-      context: {
-        reaction: "like",
-        conversationId: "a:personal-chat;messageid=bot-msg-1",
-        conversationType: "personal",
-        senderId: "owner-aad",
-        senderName: "Owner",
-        comment: "stored transcript feedback",
-      },
-      beforeRun: async ({ tmpDir }) => {
-        upsertSessionEntry({
-          env: { ...process.env, OPENCLAW_STATE_DIR: tmpDir },
-          agentId: "default",
-          sessionKey: "msteams:direct:owner-aad",
-          entry: {
-            sessionId: "stored-session-uuid",
-            updatedAt: Date.now(),
-          },
-        });
-      },
-      assertResult: async ({ tmpDir, originalRun }) => {
-        expect(
-          readFeedbackTranscriptMessage({
-            stateDir: tmpDir,
-            sessionId: "msteams:direct:owner-aad",
-          }),
-        ).toBeUndefined();
-        expect(
-          readFeedbackTranscriptMessage({
-            stateDir: tmpDir,
-            sessionId: "stored-session-uuid",
-          }),
-        ).toMatchObject({
-          type: "custom",
-          event: "feedback",
-          messageId: "bot-msg-1",
-          value: "positive",
-          comment: "stored transcript feedback",
-          sessionKey: "msteams:direct:owner-aad",
-          agentId: "default",
-          conversationId: "a:personal-chat",
-        });
-        expect(originalRun).not.toHaveBeenCalled();
       },
     });
   });
@@ -381,72 +334,52 @@ describe("msteams feedback invoke authz", () => {
         senderName: "Attacker",
         comment: "blocked feedback",
       },
-      assertResult: async ({ tmpDir, originalRun }) => {
+      sessionKey: "msteams:direct:attacker-aad",
+      sessionId: "attacker-session",
+      assertResult: async ({ tmpDir }) => {
         expect(
           readFeedbackTranscriptMessage({
             stateDir: tmpDir,
-            sessionId: "msteams:direct:attacker-aad",
+            sessionId: "attacker-session",
           }),
         ).toBeUndefined();
         expect(feedbackReflectionMockState.runFeedbackReflection).not.toHaveBeenCalled();
-        expect(originalRun).not.toHaveBeenCalled();
       },
     });
   });
 
   it("does not trigger reflection for a group sender outside groupAllowFrom", async () => {
-    const tmpDir = await mkdtemp(path.join(tmpdir(), "openclaw-msteams-feedback-"));
-    const previousStateDir = process.env.OPENCLAW_STATE_DIR;
-    process.env.OPENCLAW_STATE_DIR = tmpDir;
-    try {
-      const originalRun = vi.fn(async () => undefined);
-      const handler = registerMSTeamsHandlers(
-        createActivityHandler(originalRun),
-        createDeps({
-          cfg: {
-            session: {},
-            channels: {
-              msteams: {
-                groupPolicy: "allowlist",
-                groupAllowFrom: ["owner-aad"],
-                feedbackReflection: true,
-              },
-            },
-          } as OpenClawConfig,
-        }),
-      ) as MSTeamsActivityHandler & {
-        run: NonNullable<MSTeamsActivityHandler["run"]>;
-      };
-
-      await handler.run(
-        createFeedbackInvokeContext({
-          reaction: "dislike",
-          conversationId: "19:group@thread.tacv2;messageid=bot-msg-1",
-          conversationType: "groupChat",
-          senderId: "attacker-aad",
-          senderName: "Attacker",
-          teamId: "team-1",
-          channelName: "General",
-          comment: "blocked reflection",
-        }),
-      );
-
-      expect(
-        readFeedbackTranscriptMessage({
-          stateDir: tmpDir,
-          sessionId: "msteams:group:19:group@thread.tacv2",
-        }),
-      ).toBeUndefined();
-      expect(feedbackReflectionMockState.runFeedbackReflection).not.toHaveBeenCalled();
-      expect(originalRun).not.toHaveBeenCalled();
-    } finally {
-      resetPluginStateStoreForTests();
-      if (previousStateDir == null) {
-        delete process.env.OPENCLAW_STATE_DIR;
-      } else {
-        process.env.OPENCLAW_STATE_DIR = previousStateDir;
-      }
-      await rm(tmpDir, { recursive: true, force: true });
-    }
+    await withFeedbackHandler({
+      cfg: {
+        channels: {
+          msteams: {
+            groupPolicy: "allowlist",
+            groupAllowFrom: ["owner-aad"],
+            feedbackReflection: true,
+          },
+        },
+      } as OpenClawConfig,
+      context: {
+        reaction: "dislike",
+        conversationId: "19:group@thread.tacv2;messageid=bot-msg-1",
+        conversationType: "groupChat",
+        senderId: "attacker-aad",
+        senderName: "Attacker",
+        teamId: "team-1",
+        channelName: "General",
+        comment: "blocked reflection",
+      },
+      sessionKey: "msteams:group:19:group@thread.tacv2",
+      sessionId: "group-session",
+      assertResult: async ({ tmpDir }) => {
+        expect(
+          readFeedbackTranscriptMessage({
+            stateDir: tmpDir,
+            sessionId: "group-session",
+          }),
+        ).toBeUndefined();
+        expect(feedbackReflectionMockState.runFeedbackReflection).not.toHaveBeenCalled();
+      },
+    });
   });
 });

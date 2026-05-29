@@ -2349,6 +2349,7 @@ public struct SessionsCompactParams: Codable, Sendable {
 public struct SessionsUsageParams: Codable, Sendable {
     public let key: String?
     public let agentid: String?
+    public let agentscope: String?
     public let startdate: String?
     public let enddate: String?
     public let mode: AnyCodable?
@@ -2362,6 +2363,7 @@ public struct SessionsUsageParams: Codable, Sendable {
     public init(
         key: String?,
         agentid: String? = nil,
+        agentscope: String? = nil,
         startdate: String?,
         enddate: String?,
         mode: AnyCodable?,
@@ -2374,6 +2376,7 @@ public struct SessionsUsageParams: Codable, Sendable {
     {
         self.key = key
         self.agentid = agentid
+        self.agentscope = agentscope
         self.startdate = startdate
         self.enddate = enddate
         self.mode = mode
@@ -2388,6 +2391,7 @@ public struct SessionsUsageParams: Codable, Sendable {
     private enum CodingKeys: String, CodingKey {
         case key
         case agentid = "agentId"
+        case agentscope = "agentScope"
         case startdate = "startDate"
         case enddate = "endDate"
         case mode
@@ -5428,6 +5432,8 @@ public struct CronListParams: Codable, Sendable {
     public let offset: Int?
     public let query: String?
     public let enabled: AnyCodable?
+    public let schedulekind: AnyCodable?
+    public let lastrunstatus: AnyCodable?
     public let sortby: AnyCodable?
     public let sortdir: AnyCodable?
     public let agentid: String?
@@ -5438,6 +5444,8 @@ public struct CronListParams: Codable, Sendable {
         offset: Int?,
         query: String?,
         enabled: AnyCodable?,
+        schedulekind: AnyCodable?,
+        lastrunstatus: AnyCodable?,
         sortby: AnyCodable?,
         sortdir: AnyCodable?,
         agentid: String?)
@@ -5447,6 +5455,8 @@ public struct CronListParams: Codable, Sendable {
         self.offset = offset
         self.query = query
         self.enabled = enabled
+        self.schedulekind = schedulekind
+        self.lastrunstatus = lastrunstatus
         self.sortby = sortby
         self.sortdir = sortdir
         self.agentid = agentid
@@ -5458,6 +5468,8 @@ public struct CronListParams: Codable, Sendable {
         case offset
         case query
         case enabled
+        case schedulekind = "scheduleKind"
+        case lastrunstatus = "lastRunStatus"
         case sortby = "sortBy"
         case sortdir = "sortDir"
         case agentid = "agentId"
@@ -5852,6 +5864,8 @@ public struct ExecApprovalRequestParams: Codable, Sendable {
     public let turnsourceto: AnyCodable?
     public let turnsourceaccountid: AnyCodable?
     public let turnsourcethreadid: AnyCodable?
+    public let requiredeliveryroute: Bool?
+    public let suppressdelivery: Bool?
     public let timeoutms: Int?
     public let twophase: Bool?
 
@@ -5875,6 +5889,8 @@ public struct ExecApprovalRequestParams: Codable, Sendable {
         turnsourceto: AnyCodable?,
         turnsourceaccountid: AnyCodable?,
         turnsourcethreadid: AnyCodable?,
+        requiredeliveryroute: Bool? = nil,
+        suppressdelivery: Bool? = nil,
         timeoutms: Int?,
         twophase: Bool?)
     {
@@ -5897,6 +5913,8 @@ public struct ExecApprovalRequestParams: Codable, Sendable {
         self.turnsourceto = turnsourceto
         self.turnsourceaccountid = turnsourceaccountid
         self.turnsourcethreadid = turnsourcethreadid
+        self.requiredeliveryroute = requiredeliveryroute
+        self.suppressdelivery = suppressdelivery
         self.timeoutms = timeoutms
         self.twophase = twophase
     }
@@ -5921,6 +5939,8 @@ public struct ExecApprovalRequestParams: Codable, Sendable {
         case turnsourceto = "turnSourceTo"
         case turnsourceaccountid = "turnSourceAccountId"
         case turnsourcethreadid = "turnSourceThreadId"
+        case requiredeliveryroute = "requireDeliveryRoute"
+        case suppressdelivery = "suppressDelivery"
         case timeoutms = "timeoutMs"
         case twophase = "twoPhase"
     }
@@ -6818,12 +6838,6 @@ public enum PluginsSessionActionResult: Codable, Sendable {
         switch discriminator {
         case true: self = try .success(PluginsSessionActionSuccessResult(from: decoder))
         case false: self = try .failure(PluginsSessionActionFailureResult(from: decoder))
-        default:
-            throw DecodingError.dataCorruptedError(
-                forKey: .discriminator,
-                in: container,
-                debugDescription: "Unknown PluginsSessionActionResult discriminator value"
-            )
         }
     }
 

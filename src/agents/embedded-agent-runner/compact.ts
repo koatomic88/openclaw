@@ -31,7 +31,6 @@ import { normalizeMessageChannel } from "../../utils/message-channel.js";
 import { isReasoningTagProvider } from "../../utils/provider-utils.js";
 import { createBundleLspToolRuntime } from "../agent-bundle-lsp-runtime.js";
 import { createBundleMcpToolRuntime } from "../agent-bundle-mcp-tools.js";
-import type { AgentMessage } from "../agent-core-contract.js";
 import {
   consumeCompactionSafeguardCancelReason,
   setCompactionSafeguardCancelReason,
@@ -96,6 +95,7 @@ import { collectRuntimeChannelCapabilities } from "../runtime-capabilities.js";
 import { buildAgentRuntimePlan } from "../runtime-plan/build.js";
 import type { AgentRuntimePlan } from "../runtime-plan/types.js";
 import { ensureRuntimePluginsLoaded } from "../runtime-plugins.js";
+import type { AgentMessage } from "../runtime/index.js";
 import { resolveSandboxContext } from "../sandbox.js";
 import { guardSessionManager } from "../session-tool-result-guard-wrapper.js";
 import { sanitizeToolUseResultPairing } from "../session-transcript-repair.js";
@@ -105,7 +105,8 @@ import {
   applySkillEnvOverridesFromSnapshot,
   resolveSkillsPromptForRun,
 } from "../skills.js";
-import { resolveSystemPromptOverride } from "../system-prompt-override.js";
+import { filterRuntimeCompatibleTools } from "../tool-schema-projection.js";
+import { logRuntimeToolSchemaQuarantine } from "../tool-schema-quarantine.js";
 import { repairTranscriptSessionStateIfNeeded } from "../transcript-state-repair.js";
 import { openTranscriptSessionManagerForSession } from "../transcript/session-manager.js";
 import type { SessionManager as TranscriptSessionManager } from "../transcript/session-transcript-contract.js";
@@ -147,17 +148,13 @@ import { buildEmbeddedMessageActionDiscoveryInput } from "./message-action-disco
 import { readAgentModelContextTokens } from "./model-context-tokens.js";
 import { resolveModelAsync } from "./model.js";
 import { sanitizeSessionHistory, validateReplayTurns } from "./replay-history.js";
-import { buildEmbeddedSandboxInfo } from "./sandbox-info.js";
+import { buildEmbeddedSandboxInfo, resolveEmbeddedSandboxInfoExecPolicy } from "./sandbox-info.js";
 import { resolveEmbeddedRunSkillEntries } from "./skills-runtime.js";
 import {
   resolveEmbeddedAgentBaseStreamFn,
   resolveEmbeddedAgentStreamFn,
 } from "./stream-resolution.js";
-import {
-  applySystemPromptOverrideToSession,
-  buildEmbeddedSystemPrompt,
-  createSystemPromptOverride,
-} from "./system-prompt.js";
+import { applySystemPromptToSession, buildEmbeddedSystemPrompt } from "./system-prompt.js";
 import {
   collectAllowedToolNames,
   collectRegisteredToolNames,
@@ -745,6 +742,8 @@ async function compactEmbeddedAgentSessionDirectOnce(
     const runAbortController = new AbortController();
     const toolsRaw = createOpenClawCodingTools({
       exec: {
+        ...params.execOverrides,
+        config: params.config,
         elevated: params.bashElevated,
       },
       sandbox,
@@ -836,7 +835,16 @@ async function compactEmbeddedAgentSessionDirectOnce(
       filteredBundledTools.length > 0
         ? runtimePlan.tools.normalize(filteredBundledTools, runtimePlanModelContext)
         : filteredBundledTools;
-    const effectiveTools = [...tools, ...normalizedBundledTools];
+    const projectedEffectiveTools = [...tools, ...normalizedBundledTools];
+    const toolSchemaProjection = filterRuntimeCompatibleTools(projectedEffectiveTools);
+    logRuntimeToolSchemaQuarantine({
+      diagnostics: toolSchemaProjection.diagnostics,
+      tools: projectedEffectiveTools,
+      runId,
+      sessionKey: params.sessionKey,
+      sessionId: params.sessionId,
+    });
+    const effectiveTools = [...toolSchemaProjection.tools];
     const allowedToolNames = collectAllowedToolNames({ tools: effectiveTools });
     runtimePlan.tools.logDiagnostics(effectiveTools, runtimePlanModelContext);
     const machineName = await getMachineDisplayName();
@@ -897,7 +905,18 @@ async function compactEmbeddedAgentSessionDirectOnce(
         }),
       }),
     };
-    const sandboxInfo = buildEmbeddedSandboxInfo(sandbox, params.bashElevated);
+    const sandboxInfoExecPolicy = resolveEmbeddedSandboxInfoExecPolicy({
+      config: params.config,
+      agentId: sessionAgentId,
+      sessionKey: params.sessionKey,
+      sandboxAvailable: sandbox?.enabled === true,
+      execOverrides: params.execOverrides,
+    });
+    const sandboxInfo = buildEmbeddedSandboxInfo(
+      sandbox,
+      params.bashElevated,
+      sandboxInfoExecPolicy,
+    );
     const reasoningTagHint = isReasoningTagProvider(provider, {
       config: params.config,
       workspaceDir: effectiveWorkspace,
@@ -938,67 +957,60 @@ async function compactEmbeddedAgentSessionDirectOnce(
     };
     const promptContribution =
       runtimePlan.prompt.resolveSystemPromptContribution(promptContributionContext);
-    const buildSystemPromptOverride = (defaultThinkLevel: ThinkLevel) => {
-      const builtSystemPrompt =
-        resolveSystemPromptOverride({
+    const buildSystemPromptText = (defaultThinkLevel: ThinkLevel) => {
+      const builtSystemPrompt = buildEmbeddedSystemPrompt({
+        config: params.config,
+        agentId: sessionAgentId,
+        workspaceDir: effectiveWorkspace,
+        defaultThinkLevel,
+        reasoningLevel: params.reasoningLevel ?? "off",
+        extraSystemPrompt: params.extraSystemPrompt,
+        ownerNumbers: params.ownerNumbers,
+        reasoningTagHint,
+        heartbeatPrompt: resolveHeartbeatPromptForSystemPrompt({
           config: params.config,
           agentId: sessionAgentId,
-        }) ??
-        buildEmbeddedSystemPrompt({
-          config: params.config,
-          agentId: sessionAgentId,
-          workspaceDir: effectiveWorkspace,
-          defaultThinkLevel,
-          reasoningLevel: params.reasoningLevel ?? "off",
-          extraSystemPrompt: params.extraSystemPrompt,
-          ownerNumbers: params.ownerNumbers,
-          reasoningTagHint,
-          heartbeatPrompt: resolveHeartbeatPromptForSystemPrompt({
-            config: params.config,
-            agentId: sessionAgentId,
-            defaultAgentId,
-          }),
-          skillsPrompt,
-          docsPath: openClawReferences.docsPath ?? undefined,
-          sourcePath: openClawReferences.sourcePath ?? undefined,
-          promptMode,
-          promptSurface,
-          sourceReplyDeliveryMode: params.sourceReplyDeliveryMode,
-          acpEnabled: isAcpRuntimeSpawnAvailable({
-            config: params.config,
-            sandboxed: sandboxInfo?.enabled === true,
-          }),
-          runtimeInfo,
-          reactionGuidance,
-          messageToolHints,
-          sandboxInfo,
-          tools: effectiveTools,
-          userTimezone,
-          userTime,
-          userTimeFormat,
-          contextFiles,
-          promptContribution,
-          nativeCommandGuidanceLines,
-        });
-      return createSystemPromptOverride(
-        transformProviderSystemPrompt({
-          provider,
-          config: params.config,
-          workspaceDir: effectiveWorkspace,
-          context: {
-            config: params.config,
-            agentDir,
-            workspaceDir: effectiveWorkspace,
-            provider,
-            modelId,
-            promptMode,
-            runtimeChannel,
-            runtimeCapabilities,
-            agentId: sessionAgentId,
-            systemPrompt: builtSystemPrompt,
-          },
+          defaultAgentId,
         }),
-      );
+        skillsPrompt,
+        docsPath: openClawReferences.docsPath ?? undefined,
+        sourcePath: openClawReferences.sourcePath ?? undefined,
+        promptMode,
+        promptSurface,
+        sourceReplyDeliveryMode: params.sourceReplyDeliveryMode,
+        acpEnabled: isAcpRuntimeSpawnAvailable({
+          config: params.config,
+          sandboxed: sandboxInfo?.enabled === true,
+        }),
+        runtimeInfo,
+        reactionGuidance,
+        messageToolHints,
+        sandboxInfo,
+        tools: effectiveTools,
+        userTimezone,
+        userTime,
+        userTimeFormat,
+        contextFiles,
+        promptContribution,
+        nativeCommandGuidanceLines,
+      });
+      return transformProviderSystemPrompt({
+        provider,
+        config: params.config,
+        workspaceDir: effectiveWorkspace,
+        context: {
+          config: params.config,
+          agentDir,
+          workspaceDir: effectiveWorkspace,
+          provider,
+          modelId,
+          promptMode,
+          runtimeChannel,
+          runtimeCapabilities,
+          agentId: sessionAgentId,
+          systemPrompt: builtSystemPrompt,
+        },
+      });
     };
 
     try {
@@ -1114,6 +1126,7 @@ async function compactEmbeddedAgentSessionDirectOnce(
         // Rebuild the compaction session on retry so provider wrappers, payload
         // shaping, and the embedded system prompt all reflect the fallback level.
         attemptedThinking.add(thinkLevel);
+        const systemPromptText = buildSystemPromptText(thinkLevel);
         let session: Awaited<ReturnType<typeof createAgentSession>>["session"] | undefined;
         try {
           const createdSession = await createAgentSession({
@@ -1130,8 +1143,8 @@ async function compactEmbeddedAgentSessionDirectOnce(
             resourceLoader,
           });
           session = createdSession.session;
-          applySystemPromptOverrideToSession(session, buildSystemPromptOverride(thinkLevel)());
           session.setActiveToolsByName(sessionToolAllowlist);
+          applySystemPromptToSession(session, systemPromptText);
           // Compaction builds the same embedded system prompt, so it must flow
           // through the same transport/payload shaping stack as normal turns.
           prepareCompactionSessionAgent({

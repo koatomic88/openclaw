@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { ChannelDoctorLegacyStateMigrationPlan } from "openclaw/plugin-sdk/channel-contract";
+import type { ChannelLegacyStateMigrationPlan } from "openclaw/plugin-sdk/channel-contract";
 import { upsertPluginStateMigrationEntry } from "openclaw/plugin-sdk/migration-runtime";
 
 const QQBOT_PLUGIN_ID = "qqbot";
@@ -186,7 +186,7 @@ function qqbotPluginStatePlan(params: {
   namespace: "known-users" | "ref-index" | "sessions" | "credential-backups";
   recordCount?: number;
   importSource: (sourcePath: string, env: NodeJS.ProcessEnv) => number;
-}): ChannelDoctorLegacyStateMigrationPlan {
+}): ChannelLegacyStateMigrationPlan {
   return {
     kind: "custom",
     label: params.label,
@@ -207,8 +207,8 @@ function qqbotPluginStatePlan(params: {
 
 export function detectQQBotLegacyStateMigrations(params: {
   stateDir: string;
-}): ChannelDoctorLegacyStateMigrationPlan[] {
-  const plans: ChannelDoctorLegacyStateMigrationPlan[] = [];
+}): ChannelLegacyStateMigrationPlan[] {
+  const plans: ChannelLegacyStateMigrationPlan[] = [];
   const dataDir = path.join(params.stateDir, "qqbot", "data");
   const sessionsDir = path.join(params.stateDir, "qqbot", "sessions");
   const knownUsersPath = path.join(dataDir, "known-users.json");

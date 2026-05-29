@@ -22,6 +22,7 @@ import {
   validatePluginCommandDefinition,
 } from "./command-registration.js";
 import {
+  canExposeSenderIsOwner,
   isTrustedReservedCommandOwner,
   listRegisteredPluginAgentPromptGuidance,
   pluginCommands,
@@ -306,7 +307,7 @@ export async function executePluginCommand(params: {
   });
   const effectiveAccountId = bindingConversation?.accountId ?? params.accountId;
   const senderIsOwnerForCommand =
-    requiredScopes.length > 0 ||
+    canExposeSenderIsOwner(command) ||
     (isTrustedReservedCommandOwner(command) &&
       command.ownership === "reserved" &&
       isReservedCommandName(command.name) &&

@@ -114,7 +114,7 @@ export async function updateSessionEntryAfterAgentRun(params: {
   const compactionTokensAfter =
     typeof result.meta.agentMeta?.compactionTokensAfter === "number" &&
     Number.isFinite(result.meta.agentMeta.compactionTokensAfter) &&
-    result.meta.agentMeta.compactionTokensAfter > 0
+    result.meta.agentMeta.compactionTokensAfter >= 0
       ? Math.floor(result.meta.agentMeta.compactionTokensAfter)
       : undefined;
   const compactionsThisRun = Math.max(0, result.meta.agentMeta?.compactionCount ?? 0);
@@ -234,18 +234,28 @@ export async function updateSessionEntryAfterAgentRun(params: {
     );
     next.inputTokens = input;
     next.outputTokens = output;
-    if (typeof totalTokens === "number" && Number.isFinite(totalTokens) && totalTokens > 0) {
-      next.totalTokens = totalTokens;
-      next.totalTokensFresh = true;
-    } else if (compactionTokensAfter !== undefined) {
+    const hasUsageTotalTokens =
+      typeof totalTokens === "number" && Number.isFinite(totalTokens) && totalTokens > 0;
+    const useCompactionSnapshot = compactionTokensAfter !== undefined && !hasUsageTotalTokens;
+    if (useCompactionSnapshot) {
       next.totalTokens = compactionTokensAfter;
+      next.totalTokensFresh = true;
+      next.inputTokens = undefined;
+      next.outputTokens = undefined;
+      next.cacheRead = undefined;
+      next.cacheWrite = undefined;
+      next.contextBudgetStatus = undefined;
+    } else if (hasUsageTotalTokens) {
+      next.totalTokens = totalTokens;
       next.totalTokensFresh = true;
     } else {
       next.totalTokens = undefined;
       next.totalTokensFresh = false;
     }
-    next.cacheRead = usage.cacheRead ?? 0;
-    next.cacheWrite = usage.cacheWrite ?? 0;
+    if (!useCompactionSnapshot) {
+      next.cacheRead = usage.cacheRead ?? 0;
+      next.cacheWrite = usage.cacheWrite ?? 0;
+    }
     // Snapshot cost like tokens (runEstimatedCostUsd is already computed from
     // cumulative run usage, so assign directly instead of accumulating).
     // Fixes #69347: cost was inflated 1x-72x by accumulating on every persist.
@@ -255,6 +265,11 @@ export async function updateSessionEntryAfterAgentRun(params: {
   } else if (compactionTokensAfter !== undefined && !preserveUserFacingRunState) {
     next.totalTokens = compactionTokensAfter;
     next.totalTokensFresh = true;
+    next.inputTokens = undefined;
+    next.outputTokens = undefined;
+    next.cacheRead = undefined;
+    next.cacheWrite = undefined;
+    next.contextBudgetStatus = undefined;
   } else if (
     !preserveUserFacingRunState &&
     typeof entry.totalTokens === "number" &&
@@ -305,6 +320,8 @@ export async function recordCliCompactionInSessionEntry(params: {
   provider: string;
   sessionKey: string;
   sessionStore?: Record<string, SessionEntry>;
+  tokensAfter?: number;
+  newSessionId?: string;
 }): Promise<SessionEntry | undefined> {
   const { provider, sessionKey, sessionStore } = params;
   const agentId = resolveAgentIdFromSessionKey(sessionKey);
@@ -320,6 +337,26 @@ export async function recordCliCompactionInSessionEntry(params: {
   clearCliSession(next, provider);
   next.compactionCount = (entry.compactionCount ?? 0) + 1;
   next.updatedAt = Date.now();
+  const newSessionId = normalizeOptionalString(params.newSessionId);
+  if (newSessionId && newSessionId !== entry.sessionId) {
+    next.sessionId = newSessionId;
+    next.usageFamilyKey = entry.usageFamilyKey ?? sessionKey;
+    next.usageFamilySessionIds = Array.from(
+      new Set([...(entry.usageFamilySessionIds ?? []), entry.sessionId, newSessionId]),
+    );
+  }
+  const tokensAfterCompaction = resolveNonNegativeNumber(params.tokensAfter);
+  next.contextBudgetStatus = undefined;
+  if (tokensAfterCompaction !== undefined) {
+    next.totalTokens = Math.floor(tokensAfterCompaction);
+    next.totalTokensFresh = true;
+  } else {
+    next.totalTokensFresh = false;
+  }
+  next.inputTokens = undefined;
+  next.outputTokens = undefined;
+  next.cacheRead = undefined;
+  next.cacheWrite = undefined;
 
   return persistMergedSessionEntry({
     sessionKey,

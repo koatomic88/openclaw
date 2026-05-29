@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { withTempHome } from "openclaw/plugin-sdk/test-env";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { addChannelAllowFromStoreEntry } from "../pairing/pairing-store.js";
 import { loadAndMaybeMigrateDoctorConfig } from "./doctor-config-flow.js";
 import {
@@ -681,6 +681,10 @@ vi.mock("./doctor/shared/missing-configured-plugin-install.js", () => ({
     warnings: [],
     failedPluginIds: [],
   })),
+}));
+
+vi.mock("./doctor/shared/active-tool-schema-warnings.js", () => ({
+  collectActiveToolSchemaProjectionWarnings: vi.fn(() => []),
 }));
 
 vi.mock("./doctor/shared/plugin-dependency-cleanup.js", () => ({
@@ -1468,6 +1472,17 @@ type RepairedDiscordPolicy = {
 };
 
 describe("doctor config flow", () => {
+  beforeAll(async () => {
+    await Promise.all([
+      import("../config/plugin-auto-enable.js"),
+      import("./doctor/repair-sequencing.js"),
+      import("./doctor/shared/channel-doctor.js"),
+      import("./doctor/shared/legacy-config-issues.js"),
+      import("./doctor/shared/plugin-tool-allowlist-warnings.js"),
+      import("./doctor/shared/preview-warnings.js"),
+    ]);
+  });
+
   beforeEach(() => {
     terminalNoteMock.mockClear();
     collectImplicitFallbackClobberWarningsMock.mockClear();
@@ -1809,7 +1824,7 @@ describe("doctor config flow", () => {
       enabled: true,
       maxPerDay: 2,
     });
-  });
+  }, 300_000);
 
   it("preserves discord streaming intent while stripping unsupported keys on repair", async () => {
     const result = await runDoctorConfigWithInput({

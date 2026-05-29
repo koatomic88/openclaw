@@ -2,6 +2,13 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  GATEWAY_CLIENT_CAPS,
+  GATEWAY_CLIENT_MODES,
+  GATEWAY_CLIENT_NAMES,
+} from "../../../packages/gateway-protocol/src/client-info.js";
+import { ErrorCodes } from "../../../packages/gateway-protocol/src/index.js";
+import { CHAT_SEND_SESSION_KEY_MAX_LENGTH } from "../../../packages/gateway-protocol/src/schema.js";
 import type { ModelCatalogEntry } from "../../agents/model-catalog.types.js";
 import { CURRENT_SESSION_VERSION } from "../../agents/transcript/session-transcript-contract.js";
 import { readTranscriptStateForSession } from "../../agents/transcript/transcript-persistence.js";
@@ -14,13 +21,6 @@ import {
   replaceSqliteSessionTranscriptEvents,
 } from "../../config/sessions/transcript-store.sqlite.js";
 import { closeOpenClawStateDatabaseForTest } from "../../state/openclaw-state-db.js";
-import {
-  GATEWAY_CLIENT_CAPS,
-  GATEWAY_CLIENT_MODES,
-  GATEWAY_CLIENT_NAMES,
-} from "../protocol/client-info.js";
-import { ErrorCodes } from "../protocol/index.js";
-import { CHAT_SEND_SESSION_KEY_MAX_LENGTH } from "../protocol/schema/primitives.js";
 import type { GatewayRequestContext } from "./types.js";
 
 const mockState = vi.hoisted(() => ({
@@ -684,6 +684,7 @@ function createChatContext(): Pick<
   | "agentDeltaSentAt"
   | "bufferedAgentEvents"
   | "chatAbortedRuns"
+  | "clearChatRunState"
   | "addChatRun"
   | "removeChatRun"
   | "dedupe"
@@ -703,6 +704,7 @@ function createChatContext(): Pick<
     agentDeltaSentAt: new Map(),
     bufferedAgentEvents: new Map(),
     chatAbortedRuns: new Map(),
+    clearChatRunState: vi.fn(),
     addChatRun: vi.fn(),
     removeChatRun: vi.fn(),
     dedupe: new Map(),

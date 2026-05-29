@@ -168,7 +168,13 @@ function resolveStatusProviderDetails(raw: TtsConfig, provider: TtsProvider) {
   if (model) {
     details.model = model;
   }
-  const voice = firstStatusDetail(record, ["voice", "voiceId", "voiceName"]);
+  const voice = firstStatusDetail(record, [
+    "speakerVoice",
+    "speakerVoiceId",
+    "voice",
+    "voiceId",
+    "voiceName",
+  ]);
   if (voice) {
     details.voice = voice;
   }

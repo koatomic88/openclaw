@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { ChannelDoctorLegacyStateMigrationPlan } from "openclaw/plugin-sdk/channel-contract";
+import type { ChannelLegacyStateMigrationPlan } from "openclaw/plugin-sdk/channel-contract";
 import { upsertPluginStateMigrationEntry } from "openclaw/plugin-sdk/migration-runtime";
 import {
   buildSkillWorkshopProposalEntryKey,
@@ -148,7 +148,7 @@ function importLegacySkillWorkshopStoreFiles(
 
 export function detectSkillWorkshopLegacyStateMigrations(params: {
   stateDir: string;
-}): ChannelDoctorLegacyStateMigrationPlan[] {
+}): ChannelLegacyStateMigrationPlan[] {
   const sourceDir = path.join(params.stateDir, "skill-workshop");
   const files = listLegacySkillWorkshopStoreFiles(sourceDir);
   if (files.length === 0) {

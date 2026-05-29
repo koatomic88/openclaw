@@ -92,10 +92,24 @@ type HookOutcome =
       reason: string;
       params?: unknown;
     }
-  | { blocked: false; params: unknown };
+  | {
+      blocked: false;
+      params: unknown;
+      approvalResolution?: PluginApprovalResolution;
+      deferredApproval?: DeferredPluginToolApproval;
+    };
 type PluginApprovalRequest = NonNullable<PluginHookBeforeToolCallResult["requireApproval"]>;
+export type DeferredPluginToolApproval = {
+  approval: PluginApprovalRequest;
+  toolName: string;
+  toolCallId?: string;
+  ctx?: HookContext;
+  baseParams: unknown;
+  overrideParams?: unknown;
+};
+
 type BeforeToolCallWrapperOptions = {
-  approvalMode?: "request" | "report";
+  approvalMode?: "request" | "report" | "defer";
   emitDiagnostics: boolean;
 };
 
@@ -462,6 +476,7 @@ async function requestPluginToolApproval(params: {
       return {
         blocked: false,
         params: mergeParamsWithApprovalOverrides(params.baseParams, params.overrideParams),
+        approvalResolution: resolution,
       };
     }
     if (decision === PluginApprovalResolutions.DENY) {
@@ -478,6 +493,7 @@ async function requestPluginToolApproval(params: {
       return {
         blocked: false,
         params: mergeParamsWithApprovalOverrides(params.baseParams, params.overrideParams),
+        approvalResolution: resolution,
       };
     }
     return {
@@ -508,6 +524,28 @@ async function requestPluginToolApproval(params: {
       params: params.baseParams,
     };
   }
+}
+
+export async function requestDeferredPluginToolApproval(params: {
+  deferredApproval: DeferredPluginToolApproval;
+  signal?: AbortSignal;
+}): Promise<HookOutcome> {
+  const deferred = params.deferredApproval;
+  return requestPluginToolApproval({
+    approval: deferred.approval,
+    toolName: deferred.toolName,
+    ...(deferred.toolCallId ? { toolCallId: deferred.toolCallId } : {}),
+    ...(deferred.ctx ? { ctx: deferred.ctx } : {}),
+    signal: params.signal,
+    baseParams: deferred.baseParams,
+    overrideParams: deferred.overrideParams,
+  });
+}
+
+export function cancelDeferredPluginToolApproval(
+  deferredApproval: DeferredPluginToolApproval,
+): void {
+  notifyPluginApprovalResolution(deferredApproval.approval, PluginApprovalResolutions.CANCELLED);
 }
 
 export function buildBlockedToolResult(params: {
@@ -706,7 +744,7 @@ export async function runBeforeToolCallHook(args: {
   toolCallId?: string;
   ctx?: HookContext;
   signal?: AbortSignal;
-  approvalMode?: "request" | "report";
+  approvalMode?: "request" | "report" | "defer";
 }): Promise<HookOutcome> {
   const toolName = normalizeToolName(args.toolName || "tool");
   const params = args.params;
@@ -831,6 +869,20 @@ export async function runBeforeToolCallHook(args: {
       };
     }
     if (trustedPolicyResult?.requireApproval) {
+      if (args.approvalMode === "defer") {
+        return {
+          blocked: false,
+          params,
+          deferredApproval: {
+            approval: trustedPolicyResult.requireApproval,
+            toolName,
+            ...(args.toolCallId ? { toolCallId: args.toolCallId } : {}),
+            ...(args.ctx ? { ctx: args.ctx } : {}),
+            baseParams: params,
+            overrideParams: trustedPolicyResult.params,
+          },
+        };
+      }
       if (args.approvalMode === "report") {
         notifyPluginApprovalResolution(
           trustedPolicyResult.requireApproval,
@@ -885,6 +937,20 @@ export async function runBeforeToolCallHook(args: {
     }
 
     if (hookResult?.requireApproval) {
+      if (args.approvalMode === "defer") {
+        return {
+          blocked: false,
+          params: policyAdjustedParams,
+          deferredApproval: {
+            approval: hookResult.requireApproval,
+            toolName,
+            ...(args.toolCallId ? { toolCallId: args.toolCallId } : {}),
+            ...(args.ctx ? { ctx: args.ctx } : {}),
+            baseParams: policyAdjustedParams,
+            overrideParams: hookResult.params,
+          },
+        };
+      }
       if (args.approvalMode === "report") {
         notifyPluginApprovalResolution(
           hookResult.requireApproval,

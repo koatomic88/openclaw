@@ -58,6 +58,15 @@ function readAuthProfileStorePayload(storeKey) {
   }
 }
 
+function npmProjectRootForInstalledPackage(installPath, packageName) {
+  const packageRoot = packageName
+    .split("/")
+    .reduce((current) => path.dirname(current), installPath);
+  return path.basename(packageRoot) === "node_modules"
+    ? path.dirname(packageRoot)
+    : path.join(stateDir(), "npm");
+}
+
 const cfg = readJson(configPath());
 const inspect = readJson("/tmp/openclaw-codex-inspect.json");
 const records = readInstalledPluginRecords();
@@ -88,7 +97,12 @@ if (codexPackage.name !== "@openclaw/codex") {
   throw new Error(`unexpected codex package name: ${codexPackage.name}`);
 }
 
-const openAiCodexPackageJson = findPackageJson("@openai/codex", [installPath, npmRoot]);
+const npmProjectRoot = npmProjectRootForInstalledPackage(installPath, "@openclaw/codex");
+const openAiCodexPackageJson = findPackageJson("@openai/codex", [
+  installPath,
+  npmProjectRoot,
+  npmRoot,
+]);
 if (!openAiCodexPackageJson) {
   throw new Error("missing @openai/codex dependency under managed npm root");
 }

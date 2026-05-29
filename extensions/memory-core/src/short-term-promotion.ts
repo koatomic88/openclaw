@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import type { MemorySearchResult } from "openclaw/plugin-sdk/memory-core-host-runtime-files";
 import {
+  DEFAULT_MEMORY_DEEP_DREAMING_MAX_PROMOTED_SNIPPET_TOKENS,
   formatMemoryDreamingDay,
   MEMORY_CORE_SHORT_TERM_META_NAMESPACE,
   MEMORY_CORE_SHORT_TERM_PHASE_SIGNAL_NAMESPACE,
@@ -39,8 +40,11 @@ export const DEFAULT_PROMOTION_MIN_SCORE = 0.75;
 export const DEFAULT_PROMOTION_MIN_RECALL_COUNT = 3;
 export const DEFAULT_PROMOTION_MIN_UNIQUE_QUERIES = 2;
 const PROMOTION_MARKER_PREFIX = "openclaw-memory-promotion:";
+const PROMOTED_SNIPPET_CHARS_PER_TOKEN_ESTIMATE = 4;
 const MAX_QUERY_HASHES = 32;
 const MAX_RECALL_DAYS = 16;
+const SHORT_TERM_RECALL_MAX_ENTRIES = 512;
+const SHORT_TERM_RECALL_MAX_SNIPPET_CHARS = 800;
 // Repeated dreaming revisits should be able to clear the default promotion gate
 // without requiring separate organic recall traffic for the same snippet.
 const PHASE_SIGNAL_LIGHT_BOOST_MAX = 0.06;
@@ -151,6 +155,7 @@ type ShortTermAuditIssue = {
     | "recall-store-unreadable"
     | "recall-store-empty"
     | "recall-store-invalid"
+    | "recall-store-over-limit"
     | "qmd-index-missing"
     | "qmd-index-empty"
     | "qmd-collections-empty";
@@ -181,6 +186,7 @@ export type ShortTermAuditSummary = {
 export type RepairShortTermPromotionArtifactsResult = {
   changed: boolean;
   removedInvalidEntries: number;
+  removedOverflowEntries: number;
   rewroteStore: boolean;
   archivedDreamSessionCorpus?: boolean;
   dreamArchiveDir?: string;
@@ -218,6 +224,13 @@ type ApplyShortTermPromotionsOptions = {
    * `DEFAULT_MEMORY_FILE_MAX_CHARS`. See #73691.
    */
   memoryFileMaxChars?: number;
+  /**
+   * Maximum visible size of each promoted short-term snippet in MEMORY.md, in
+   * estimated tokens. This keeps daily journal ranges from being copied
+   * wholesale into long-term memory while preserving the candidate's provenance
+   * metadata.
+   */
+  maxPromotedSnippetTokens?: number;
 };
 
 type ApplyShortTermPromotionsResult = {
@@ -256,6 +269,19 @@ function normalizeSnippet(raw: string): string {
     return "";
   }
   return trimmed.replace(/\s+/g, " ");
+}
+
+function truncateShortTermSnippet(snippet: string): string {
+  if (snippet.length <= SHORT_TERM_RECALL_MAX_SNIPPET_CHARS) {
+    return snippet;
+  }
+  return snippet.slice(0, SHORT_TERM_RECALL_MAX_SNIPPET_CHARS).trimEnd();
+}
+
+function enforceShortTermRecallSnippetCap(store: ShortTermRecallStore): void {
+  for (const entry of Object.values(store.entries)) {
+    entry.snippet = truncateShortTermSnippet(entry.snippet);
+  }
 }
 
 function consumeDreamingLeadPrefix(snippet: string): string {
@@ -495,10 +521,11 @@ function normalizeStore(raw: unknown, nowIso: string): ShortTermRecallStore {
         typeof entry.claimHash === "string" && entry.claimHash.trim().length > 0
           ? entry.claimHash.trim()
           : undefined;
-      const snippet = typeof entry.snippet === "string" ? normalizeSnippet(entry.snippet) : "";
-      if (snippet && isContaminatedDreamingSnippet(snippet)) {
+      const fullSnippet = typeof entry.snippet === "string" ? normalizeSnippet(entry.snippet) : "";
+      if (fullSnippet && isContaminatedDreamingSnippet(fullSnippet)) {
         continue;
       }
+      const snippet = truncateShortTermSnippet(fullSnippet);
       const queryHashes = Array.isArray(entry.queryHashes)
         ? normalizeDistinctStrings(entry.queryHashes, MAX_QUERY_HASHES)
         : [];
@@ -514,7 +541,7 @@ function normalizeStore(raw: unknown, nowIso: string): ShortTermRecallStore {
             ),
             MAX_CONCEPT_TAGS,
           )
-        : deriveConceptTags({ path: entryPath, snippet });
+        : deriveConceptTags({ path: entryPath, snippet: fullSnippet });
 
       const normalizedKey =
         key || buildEntryKey({ path: entryPath, startLine, endLine, source, claimHash });
@@ -546,6 +573,59 @@ function normalizeStore(raw: unknown, nowIso: string): ShortTermRecallStore {
     updatedAt: typeof record.updatedAt === "string" ? record.updatedAt : nowIso,
     entries,
   };
+}
+
+function parseStoreTimestampMs(value: string | undefined): number {
+  if (!value) {
+    return Number.NEGATIVE_INFINITY;
+  }
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : Number.NEGATIVE_INFINITY;
+}
+
+function compareStoreTimestampDesc(left: string | undefined, right: string | undefined): number {
+  const leftMs = parseStoreTimestampMs(left);
+  const rightMs = parseStoreTimestampMs(right);
+  if (leftMs === rightMs) {
+    return 0;
+  }
+  return rightMs > leftMs ? 1 : -1;
+}
+
+function compareShortTermRecallRetention(a: ShortTermRecallEntry, b: ShortTermRecallEntry): number {
+  const lastDiff = compareStoreTimestampDesc(a.lastRecalledAt, b.lastRecalledAt);
+  if (lastDiff !== 0) {
+    return lastDiff;
+  }
+  const signalDiff = totalSignalCountForEntry(b) - totalSignalCountForEntry(a);
+  if (signalDiff !== 0) {
+    return signalDiff;
+  }
+  const totalScoreDiff = b.totalScore - a.totalScore;
+  if (totalScoreDiff !== 0) {
+    return totalScoreDiff;
+  }
+  const maxScoreDiff = b.maxScore - a.maxScore;
+  if (maxScoreDiff !== 0) {
+    return maxScoreDiff;
+  }
+  const promotedDiff = compareStoreTimestampDesc(a.promotedAt, b.promotedAt);
+  if (promotedDiff !== 0) {
+    return promotedDiff;
+  }
+  return a.key.localeCompare(b.key);
+}
+
+function enforceShortTermRecallStoreRetention(store: ShortTermRecallStore): number {
+  const entries = Object.entries(store.entries);
+  if (entries.length <= SHORT_TERM_RECALL_MAX_ENTRIES) {
+    return 0;
+  }
+  const retained = entries
+    .toSorted(([, a], [, b]) => compareShortTermRecallRetention(a, b))
+    .slice(0, SHORT_TERM_RECALL_MAX_ENTRIES);
+  store.entries = Object.fromEntries(retained.toSorted(([a], [b]) => a.localeCompare(b)));
+  return entries.length - retained.length;
 }
 
 function toFinitePositive(value: unknown, fallback: number): number {
@@ -685,7 +765,13 @@ async function readShortTermRecallState(
     workspaceDir,
     "recall",
   );
-  return normalizeStore({ version: 1, updatedAt: meta?.updatedAt ?? nowIso, entries }, nowIso);
+  const store = normalizeStore(
+    { version: 1, updatedAt: meta?.updatedAt ?? nowIso, entries },
+    nowIso,
+  );
+  enforceShortTermRecallSnippetCap(store);
+  enforceShortTermRecallStoreRetention(store);
+  return store;
 }
 
 function emptyPhaseSignalStore(nowIso: string): ShortTermPhaseSignalStore {
@@ -794,6 +880,8 @@ async function writeShortTermRecallState(
   store: ShortTermRecallStore,
 ): Promise<void> {
   const normalized = normalizeStore(store, store.updatedAt);
+  enforceShortTermRecallSnippetCap(normalized);
+  enforceShortTermRecallStoreRetention(normalized);
   await Promise.all([
     writeDreamingWorkspaceMap(
       MEMORY_CORE_SHORT_TERM_RECALL_NAMESPACE,
@@ -905,11 +993,12 @@ export async function recordShortTermRecalls(params: {
 
     for (const result of relevant) {
       const normalizedPath = normalizeMemoryPath(result.path);
-      const snippet = normalizeSnippet(result.snippet);
-      if (!snippet || isContaminatedDreamingSnippet(snippet)) {
+      const rawSnippet = normalizeSnippet(result.snippet);
+      const snippet = truncateShortTermSnippet(rawSnippet);
+      if (!rawSnippet || isContaminatedDreamingSnippet(rawSnippet)) {
         continue;
       }
-      const claimHash = snippet ? buildClaimHash(snippet) : undefined;
+      const claimHash = buildClaimHash(rawSnippet);
       const groundedKey = claimHash
         ? buildEntryKey({
             path: normalizedPath,
@@ -1010,11 +1099,12 @@ export async function recordGroundedShortTermCandidates(params: {
   }
   const relevant = params.items
     .map((item) => {
-      const snippet = normalizeSnippet(item.snippet);
+      const rawSnippet = normalizeSnippet(item.snippet);
+      const snippet = truncateShortTermSnippet(rawSnippet);
       const normalizedPath = normalizeMemoryPath(item.path);
       if (
-        !snippet ||
-        isContaminatedDreamingSnippet(snippet) ||
+        !rawSnippet ||
+        isContaminatedDreamingSnippet(rawSnippet) ||
         !normalizedPath ||
         !isShortTermMemoryPath(normalizedPath) ||
         !Number.isFinite(item.startLine) ||
@@ -1027,6 +1117,7 @@ export async function recordGroundedShortTermCandidates(params: {
         startLine: Math.max(1, Math.floor(item.startLine)),
         endLine: Math.max(1, Math.floor(item.endLine)),
         snippet,
+        identitySnippet: rawSnippet,
         score: clampScore(item.score),
         query: normalizeSnippet(item.query ?? query),
         signalCount: Math.max(1, Math.floor(item.signalCount ?? 1)),
@@ -1051,7 +1142,7 @@ export async function recordGroundedShortTermCandidates(params: {
         continue;
       }
       const queryHash = hashQuery(effectiveQuery);
-      const claimHash = buildClaimHash(item.snippet);
+      const claimHash = buildClaimHash(item.identitySnippet);
       const key = buildEntryKey({
         path: item.path,
         startLine: item.startLine,
@@ -1612,21 +1703,62 @@ function buildPromotionSection(
   candidates: PromotionCandidate[],
   nowMs: number,
   timezone?: string,
+  maxPromotedSnippetTokens = DEFAULT_MEMORY_DEEP_DREAMING_MAX_PROMOTED_SNIPPET_TOKENS,
 ): string {
   const sectionDate = formatMemoryDreamingDay(nowMs, timezone);
   const lines = ["", `## Promoted From Short-Term Memory (${sectionDate})`, ""];
 
   for (const candidate of candidates) {
     const source = `${candidate.path}:${candidate.startLine}-${candidate.endLine}`;
-    const snippet = candidate.snippet || "(no snippet captured)";
+    const metadata = `[score=${candidate.score.toFixed(3)} recalls=${candidate.recallCount} avg=${candidate.avgScore.toFixed(3)} source=${source}]`;
     lines.push(`<!-- ${PROMOTION_MARKER_PREFIX}${candidate.key} -->`);
+    // Cap only the visible MEMORY.md text. The recall store keeps the full
+    // rehydrated snippet so ranking, provenance, and dream narratives remain
+    // tied to the source entry instead of this presentation budget.
     lines.push(
-      `- ${snippet.replace(/^- +/, "")} [score=${candidate.score.toFixed(3)} recalls=${candidate.recallCount} avg=${candidate.avgScore.toFixed(3)} source=${source}]`,
+      `- ${formatPromotedSnippetForMemory(candidate.snippet, maxPromotedSnippetTokens)} ${metadata}`,
     );
   }
 
   lines.push("");
   return lines.join("\n");
+}
+
+function resolvePromotedSnippetCharLimit(maxTokens: number): number {
+  const tokenLimit = toFiniteNonNegativeInt(
+    maxTokens,
+    DEFAULT_MEMORY_DEEP_DREAMING_MAX_PROMOTED_SNIPPET_TOKENS,
+  );
+  // This is an inexpensive display-size guard, not a tokenizer contract.
+  return tokenLimit * PROMOTED_SNIPPET_CHARS_PER_TOKEN_ESTIMATE;
+}
+
+function truncatePromotedSnippet(snippet: string, maxTokens: number): string {
+  const limit = resolvePromotedSnippetCharLimit(maxTokens);
+  if (limit === 0 || snippet.length <= limit) {
+    return snippet;
+  }
+  const hardLimit = snippet.slice(0, limit);
+  const sentenceBoundary = Math.max(
+    hardLimit.lastIndexOf(". "),
+    hardLimit.lastIndexOf("! "),
+    hardLimit.lastIndexOf("? "),
+  );
+  const wordBoundary = hardLimit.lastIndexOf(" ");
+  const cutAt =
+    sentenceBoundary >= Math.floor(limit * 0.55)
+      ? sentenceBoundary + 1
+      : wordBoundary >= Math.floor(limit * 0.65)
+        ? wordBoundary
+        : limit;
+  return `${hardLimit.slice(0, cutAt).trimEnd()}...`;
+}
+
+function formatPromotedSnippetForMemory(rawSnippet: string, maxTokens: number): string {
+  const normalized = normalizeSnippet(rawSnippet || "(no snippet captured)")
+    .replace(/^[-*+] +/, "")
+    .trim();
+  return truncatePromotedSnippet(normalized || "(no snippet captured)", maxTokens);
 }
 
 function withTrailingNewline(content: string): string {
@@ -1638,7 +1770,10 @@ function withTrailingNewline(content: string): string {
 
 function extractPromotionMarkers(memoryText: string): Set<string> {
   const markers = new Set<string>();
-  const matches = memoryText.matchAll(/<!--\s*openclaw-memory-promotion:([^\n]+?)\s*-->/gi);
+  // Marker keys include source paths, so spaces are valid. Capture until the
+  // comment close; otherwise a path like "memory/project alpha/..." is missed
+  // and the same candidate can be appended again.
+  const matches = memoryText.matchAll(/<!--\s*openclaw-memory-promotion:([^\n]*?)\s*-->/gi);
   for (const match of matches) {
     const key = match[1]?.trim();
     if (key) {
@@ -1742,7 +1877,12 @@ export async function applyShortTermPromotions(
 
     let compactedDates: string[] = [];
     if (toAppend.length > 0) {
-      const section = buildPromotionSection(toAppend, nowMs, options.timezone);
+      const section = buildPromotionSection(
+        toAppend,
+        nowMs,
+        options.timezone,
+        options.maxPromotedSnippetTokens,
+      );
       const budgetChars =
         typeof options.memoryFileMaxChars === "number" &&
         Number.isFinite(options.memoryFileMaxChars)
@@ -1823,11 +1963,44 @@ export async function auditShortTermPromotionArtifacts(params: {
   const storeLabel = resolveShortTermRecallStoreLabel(workspaceDir);
   const issues: ShortTermAuditIssue[] = [];
   const nowIso = new Date().toISOString();
-  const store = await readShortTermRecallState(workspaceDir, nowIso);
+  const rawEntries = await readDreamingWorkspaceMap<unknown>(
+    MEMORY_CORE_SHORT_TERM_RECALL_NAMESPACE,
+    workspaceDir,
+  );
+  const meta = await readDreamingWorkspaceValue<{ updatedAt?: string }>(
+    MEMORY_CORE_SHORT_TERM_META_NAMESPACE,
+    workspaceDir,
+    "recall",
+  );
+  const rawEntryCount = Object.keys(rawEntries).length;
+  const store = normalizeStore(
+    { version: 1, updatedAt: meta?.updatedAt ?? nowIso, entries: rawEntries },
+    nowIso,
+  );
+  const normalizedEntryCount = Object.keys(store.entries).length;
+  const invalidEntryCount = Math.max(0, rawEntryCount - normalizedEntryCount);
+  if (invalidEntryCount > 0) {
+    issues.push({
+      severity: "warn",
+      code: "recall-store-invalid",
+      message: `Short-term recall store contains ${invalidEntryCount} invalid entr${invalidEntryCount === 1 ? "y" : "ies"}.`,
+      fixable: true,
+    });
+  }
+  if (normalizedEntryCount > SHORT_TERM_RECALL_MAX_ENTRIES) {
+    issues.push({
+      severity: "warn",
+      code: "recall-store-over-limit",
+      message: `Short-term recall store contains ${normalizedEntryCount} entries; only the newest ${SHORT_TERM_RECALL_MAX_ENTRIES} are kept at runtime.`,
+      fixable: true,
+    });
+  }
+  enforceShortTermRecallSnippetCap(store);
+  enforceShortTermRecallStoreRetention(store);
   const entries = Object.values(store.entries);
   const entryCount = entries.length;
-  const exists = entryCount > 0;
-  const updatedAt = entryCount > 0 ? store.updatedAt : undefined;
+  const exists = rawEntryCount > 0;
+  const updatedAt = rawEntryCount > 0 ? store.updatedAt : undefined;
   const promotedCount = entries.filter((entry) => Boolean(entry.promotedAt)).length;
   const spacedEntryCount = entries.filter((entry) => (entry.recallDays?.length ?? 0) > 1).length;
   const conceptTaggedEntryCount = entries.filter(
@@ -1841,7 +2014,6 @@ export async function auditShortTermPromotionArtifacts(params: {
             .map((entry) => entry.conceptTags ?? []),
         )
       : undefined;
-  const invalidEntryCount = 0;
 
   let qmd: ShortTermAuditSummary["qmd"];
   if (params.qmd) {
@@ -1909,10 +2081,25 @@ export async function repairShortTermPromotionArtifacts(params: {
   let rewroteStore = false;
   let archivedDreamSessionCorpus = false;
   let dreamArchiveDir: string | undefined;
-  const removedInvalidEntries = 0;
+  let removedInvalidEntries = 0;
+  let removedOverflowEntries = 0;
 
   await withShortTermLock(workspaceDir, async () => {
-    const normalized = await readShortTermRecallState(workspaceDir, nowIso);
+    const rawEntries = await readDreamingWorkspaceMap<unknown>(
+      MEMORY_CORE_SHORT_TERM_RECALL_NAMESPACE,
+      workspaceDir,
+    );
+    const meta = await readDreamingWorkspaceValue<{ updatedAt?: string }>(
+      MEMORY_CORE_SHORT_TERM_META_NAMESPACE,
+      workspaceDir,
+      "recall",
+    );
+    const rawEntryCount = Object.keys(rawEntries).length;
+    const normalized = normalizeStore(
+      { version: 1, updatedAt: meta?.updatedAt ?? nowIso, entries: rawEntries },
+      nowIso,
+    );
+    removedInvalidEntries = Math.max(0, rawEntryCount - Object.keys(normalized.entries).length);
     const nextEntries = Object.fromEntries(
       Object.entries(normalized.entries).map(([key, entry]) => {
         const conceptTags = deriveConceptTags({ path: entry.path, snippet: entry.snippet });
@@ -1938,7 +2125,13 @@ export async function repairShortTermPromotionArtifacts(params: {
       updatedAt: normalized.updatedAt,
       entries: nextEntries,
     };
-    if (JSON.stringify(comparableStore.entries) !== JSON.stringify(normalized.entries)) {
+    enforceShortTermRecallSnippetCap(comparableStore);
+    removedOverflowEntries = enforceShortTermRecallStoreRetention(comparableStore);
+    if (
+      removedInvalidEntries > 0 ||
+      removedOverflowEntries > 0 ||
+      JSON.stringify(comparableStore.entries) !== JSON.stringify(normalized.entries)
+    ) {
       await writeShortTermRecallState(workspaceDir, {
         ...comparableStore,
         updatedAt: nowIso,
@@ -1975,6 +2168,7 @@ export async function repairShortTermPromotionArtifacts(params: {
   return {
     changed: rewroteStore || archivedDreamSessionCorpus,
     removedInvalidEntries,
+    removedOverflowEntries,
     rewroteStore,
     ...(archivedDreamSessionCorpus ? { archivedDreamSessionCorpus } : {}),
     ...(dreamArchiveDir ? { dreamArchiveDir } : {}),
@@ -2037,4 +2231,6 @@ export const __testing = {
   totalSignalCountForEntry,
   isContaminatedDreamingSnippet,
   lineRangeOverlapsDreamingFence,
+  SHORT_TERM_RECALL_MAX_ENTRIES,
+  SHORT_TERM_RECALL_MAX_SNIPPET_CHARS,
 };

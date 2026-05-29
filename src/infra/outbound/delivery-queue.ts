@@ -11,6 +11,7 @@ export {
 export type {
   QueuedDelivery,
   QueuedDeliveryPayload,
+  QueuedReplyPayloadSendingHook,
   QueuedRenderedMessageBatchPlan,
 } from "./delivery-queue-storage.js";
 export {

@@ -22,6 +22,7 @@ import type { Insertable, Selectable } from "kysely";
 import { formatErrorMessage } from "../../infra/errors.js";
 import { executeSqliteQuerySync, getNodeSqliteKysely } from "../../infra/kysely-sync.js";
 import { resolveProxyFetchFromEnv } from "../../infra/net/proxy-fetch.js";
+import { parseStrictFiniteNumber } from "../../infra/parse-finite-number.js";
 import { sqliteBooleanInteger, sqliteIntegerBoolean } from "../../infra/sqlite-row-values.js";
 import { createSubsystemLogger } from "../../logging/subsystem.js";
 import type { DB as OpenClawStateKyselyDatabase } from "../../state/openclaw-state-db.generated.js";
@@ -270,10 +271,10 @@ function parseModel(model: OpenRouterApiModel): OpenRouterModelCapabilities {
       model.max_output_tokens ??
       8192,
     cost: {
-      input: Number.parseFloat(model.pricing?.prompt || "0") * 1_000_000,
-      output: Number.parseFloat(model.pricing?.completion || "0") * 1_000_000,
-      cacheRead: Number.parseFloat(model.pricing?.input_cache_read || "0") * 1_000_000,
-      cacheWrite: Number.parseFloat(model.pricing?.input_cache_write || "0") * 1_000_000,
+      input: (parseStrictFiniteNumber(model.pricing?.prompt) ?? 0) * 1_000_000,
+      output: (parseStrictFiniteNumber(model.pricing?.completion) ?? 0) * 1_000_000,
+      cacheRead: (parseStrictFiniteNumber(model.pricing?.input_cache_read) ?? 0) * 1_000_000,
+      cacheWrite: (parseStrictFiniteNumber(model.pricing?.input_cache_write) ?? 0) * 1_000_000,
     },
   };
 }

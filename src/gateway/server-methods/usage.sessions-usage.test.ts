@@ -178,6 +178,63 @@ describe("sessions.usage", () => {
     );
 
     const sessions = expectSuccessfulSessionsUsage(respond);
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0].key).toBe("agent:main:s-main");
+    expect(sessions[0].agentId).toBe("main");
+  });
+
+  it("uses explicit all-agent scope for list-style usage queries", async () => {
+    const respond = await runSessionsUsage({ ...BASE_USAGE_RANGE, agentScope: "all" });
+
+    expect(vi.mocked(loadCombinedSessionEntriesForGateway)).toHaveBeenCalledWith(
+      TEST_RUNTIME_CONFIG,
+      {},
+    );
+    expect(vi.mocked(discoverAllSessions)).toHaveBeenCalledTimes(2);
+    expect(
+      vi
+        .mocked(discoverAllSessions)
+        .mock.calls.map((call) => (call[0] as { agentId?: string }).agentId),
+    ).toEqual(["main", "opus"]);
+
+    const sessions = expectSuccessfulSessionsUsage(respond);
+    expect(sessions.map((session) => session.key)).toEqual([
+      "agent:opus:s-opus",
+      "agent:main:s-main",
+    ]);
+    expect(sessions.map((session) => session.agentId)).toEqual(["opus", "main"]);
+  });
+
+  it("rejects all-agent scope with a specific agent or key", async () => {
+    const withAgent = await runSessionsUsage({
+      ...BASE_USAGE_RANGE,
+      agentId: "opus",
+      agentScope: "all",
+    });
+    const withKey = await runSessionsUsage({
+      ...BASE_USAGE_RANGE,
+      key: "agent:opus:s-opus",
+      agentScope: "all",
+    });
+
+    expect(mockArg(withAgent, 0, 0)).toBe(false);
+    expect(mockArg(withKey, 0, 0)).toBe(false);
+    expect(vi.mocked(discoverAllSessions)).not.toHaveBeenCalled();
+  });
+
+  it("uses the requested agent for list-style usage queries", async () => {
+    const respond = await runSessionsUsage({ ...BASE_USAGE_RANGE, agentId: "opus" });
+
+    expect(vi.mocked(loadCombinedSessionEntriesForGateway)).toHaveBeenCalledWith(
+      TEST_RUNTIME_CONFIG,
+      { agentId: "opus" },
+    );
+    expect(vi.mocked(discoverAllSessions)).toHaveBeenCalledTimes(1);
+    expect((mockArg(vi.mocked(discoverAllSessions), 0, 0) as { agentId?: string }).agentId).toBe(
+      "opus",
+    );
+
+    const sessions = expectSuccessfulSessionsUsage(respond);
     expect(sessions).toHaveLength(2);
 
     // Sorted by most recent first (mtime=200 -> opus first).

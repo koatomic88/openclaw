@@ -11,8 +11,13 @@ import {
   loadAuthProfileStoreWithoutExternalProfiles,
 } from "../agents/auth-profiles/store.js";
 import type { AuthProfileStore } from "../agents/auth-profiles/types.js";
+import {
+  COPILOT_INTEGRATION_ID,
+  buildCopilotIdeHeaders,
+} from "../agents/copilot-dynamic-headers.js";
 import { resolveEnvApiKey } from "../agents/model-auth-env.js";
 import type { OpenClawConfig } from "../config/config.js";
+import { parseStrictNonNegativeInteger } from "../infra/parse-finite-number.js";
 import { createPluginStateSyncKeyedStore } from "../plugin-state/plugin-state-store.js";
 import {
   normalizeLowercaseStringOrEmpty,
@@ -101,22 +106,20 @@ export {
   DEFAULT_OAUTH_REFRESH_MARGIN_MS,
   hasUsableOAuthCredential,
 } from "../agents/auth-profiles/credential-state.js";
+export {
+  COPILOT_EDITOR_PLUGIN_VERSION,
+  COPILOT_EDITOR_VERSION,
+  COPILOT_GITHUB_API_VERSION,
+  COPILOT_INTEGRATION_ID,
+  COPILOT_USER_AGENT,
+  buildCopilotIdeHeaders,
+} from "../agents/copilot-dynamic-headers.js";
 
 const COPILOT_TOKEN_URL = "https://api.github.com/copilot_internal/v2/token";
 const COPILOT_TOKEN_CACHE_PLUGIN_ID = "github-copilot";
 const COPILOT_TOKEN_CACHE_NAMESPACE = "token-cache";
 const COPILOT_TOKEN_CACHE_KEY = "default";
 
-/** @deprecated GitHub Copilot provider-owned helper; do not use from third-party plugins. */
-export const COPILOT_EDITOR_VERSION = "vscode/1.107.0";
-/** @deprecated GitHub Copilot provider-owned helper; do not use from third-party plugins. */
-export const COPILOT_USER_AGENT = "GitHubCopilotChat/0.35.0";
-/** @deprecated GitHub Copilot provider-owned helper; do not use from third-party plugins. */
-export const COPILOT_EDITOR_PLUGIN_VERSION = "copilot-chat/0.35.0";
-/** @deprecated GitHub Copilot provider-owned helper; do not use from third-party plugins. */
-export const COPILOT_GITHUB_API_VERSION = "2025-04-01";
-/** @deprecated GitHub Copilot provider-owned helper; do not use from third-party plugins. */
-export const COPILOT_INTEGRATION_ID = "vscode-chat";
 /** @deprecated GitHub Copilot provider-owned helper; do not use from third-party plugins. */
 export const DEFAULT_COPILOT_API_BASE_URL = "https://api.individual.githubcopilot.com";
 
@@ -127,21 +130,6 @@ export type CachedCopilotToken = {
   updatedAt: number;
   integrationId?: string;
 };
-
-/** @deprecated GitHub Copilot provider-owned helper; do not use from third-party plugins. */
-export function buildCopilotIdeHeaders(
-  params: {
-    includeApiVersion?: boolean;
-  } = {},
-): Record<string, string> {
-  return {
-    "Accept-Encoding": "identity",
-    "Editor-Version": COPILOT_EDITOR_VERSION,
-    "Editor-Plugin-Version": COPILOT_EDITOR_PLUGIN_VERSION,
-    "User-Agent": COPILOT_USER_AGENT,
-    ...(params.includeApiVersion ? { "X-Github-Api-Version": COPILOT_GITHUB_API_VERSION } : {}),
-  };
-}
 
 function isCopilotTokenUsable(cache: CachedCopilotToken, now = Date.now()): boolean {
   return cache.integrationId === COPILOT_INTEGRATION_ID && cache.expiresAt - now > 5 * 60 * 1000;
@@ -196,9 +184,8 @@ function parseCopilotTokenResponse(value: unknown): {
   if (typeof expiresAt === "number" && Number.isFinite(expiresAt)) {
     expiresAtMs = expiresAt < 100_000_000_000 ? expiresAt * 1000 : expiresAt;
   } else if (typeof expiresAt === "string" && expiresAt.trim().length > 0) {
-    const trimmed = expiresAt.trim();
-    const parsed = /^\d+$/.test(trimmed) ? Number(trimmed) : Number.NaN;
-    if (!Number.isSafeInteger(parsed)) {
+    const parsed = parseStrictNonNegativeInteger(expiresAt);
+    if (parsed === undefined) {
       throw new Error("Copilot token response has invalid expires_at");
     }
     expiresAtMs = parsed < 100_000_000_000 ? parsed * 1000 : parsed;

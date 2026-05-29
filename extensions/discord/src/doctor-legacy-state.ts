@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { ChannelDoctorLegacyStateMigrationPlan } from "openclaw/plugin-sdk/channel-contract";
+import type { ChannelLegacyStateMigrationPlan } from "openclaw/plugin-sdk/channel-contract";
 import { upsertPluginStateMigrationEntry } from "openclaw/plugin-sdk/migration-runtime";
+import { detectDiscordLegacyStateMigrations as detectDiscordModelPickerLegacyStateMigrations } from "./monitor/model-picker-preferences-migrations.js";
 import { normalizePersistedBinding } from "./monitor/thread-bindings.state.js";
 import type { PersistedThreadBindingsPayload } from "./monitor/thread-bindings.types.js";
 
@@ -13,56 +14,6 @@ function fileExists(filePath: string): boolean {
   } catch {
     return false;
   }
-}
-
-function sanitizePreferenceEntry(value: unknown):
-  | {
-      recent: string[];
-      updatedAt: string;
-    }
-  | undefined {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return undefined;
-  }
-  const record = value as Record<string, unknown>;
-  const recent = Array.isArray(record.recent)
-    ? record.recent.filter(
-        (item): item is string => typeof item === "string" && item.trim().length > 0,
-      )
-    : [];
-  return {
-    recent,
-    updatedAt: typeof record.updatedAt === "string" ? record.updatedAt : "",
-  };
-}
-
-function importModelPickerPreferences(sourcePath: string, env: NodeJS.ProcessEnv): number {
-  const parsed = JSON.parse(fs.readFileSync(sourcePath, "utf8")) as unknown;
-  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-    throw new Error("Discord model-picker preferences must contain an object");
-  }
-  const payload = parsed as Record<string, unknown>;
-  if (payload.version !== 1 || !payload.entries || typeof payload.entries !== "object") {
-    throw new Error("Discord model-picker preferences must be version 1");
-  }
-  let imported = 0;
-  for (const [key, value] of Object.entries(payload.entries as Record<string, unknown>)) {
-    const entry = sanitizePreferenceEntry(value);
-    if (!key.trim() || !entry) {
-      continue;
-    }
-    upsertPluginStateMigrationEntry({
-      pluginId: DISCORD_PLUGIN_ID,
-      namespace: "model-picker-preferences",
-      key,
-      value: entry,
-      createdAt: Date.parse(entry.updatedAt) || Date.now(),
-      env,
-    });
-    imported++;
-  }
-  fs.rmSync(sourcePath, { force: true });
-  return imported;
 }
 
 function importCommandDeployHashes(sourcePath: string, env: NodeJS.ProcessEnv): number {
@@ -131,9 +82,9 @@ function importThreadBindings(sourcePath: string, env: NodeJS.ProcessEnv): numbe
 function discordPluginStatePlan(params: {
   label: string;
   sourcePath: string;
-  namespace: "model-picker-preferences" | "command-deploy-hashes" | "thread-bindings";
+  namespace: "command-deploy-hashes" | "thread-bindings";
   importSource: (sourcePath: string, env: NodeJS.ProcessEnv) => number;
-}): ChannelDoctorLegacyStateMigrationPlan {
+}): ChannelLegacyStateMigrationPlan {
   return {
     kind: "custom",
     label: params.label,
@@ -153,19 +104,8 @@ function discordPluginStatePlan(params: {
 
 export function detectDiscordLegacyStateMigrations(params: {
   stateDir: string;
-}): ChannelDoctorLegacyStateMigrationPlan[] {
-  const plans: ChannelDoctorLegacyStateMigrationPlan[] = [];
-  const preferencesPath = path.join(params.stateDir, "discord", "model-picker-preferences.json");
-  if (fileExists(preferencesPath)) {
-    plans.push(
-      discordPluginStatePlan({
-        label: "Discord model-picker preferences",
-        sourcePath: preferencesPath,
-        namespace: "model-picker-preferences",
-        importSource: importModelPickerPreferences,
-      }),
-    );
-  }
+}): ChannelLegacyStateMigrationPlan[] {
+  const plans = [...(detectDiscordModelPickerLegacyStateMigrations(params) ?? [])];
   const commandDeployPath = path.join(params.stateDir, "discord", "command-deploy-cache.json");
   if (fileExists(commandDeployPath)) {
     plans.push(

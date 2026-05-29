@@ -3,8 +3,8 @@ import { formatErrorMessage } from "../../infra/errors.js";
 import type { TextContent } from "../../llm/types.js";
 import { emitSessionTranscriptUpdate } from "../../sessions/transcript-events.js";
 import { normalizeLowercaseStringOrEmpty } from "../../shared/string-coerce.js";
-import type { AgentMessage } from "../agent-core-contract.js";
 import { resolveAgentContextLimits } from "../agent-scope.js";
+import type { AgentMessage } from "../runtime/index.js";
 import {
   persistTranscriptStateMutationForSession,
   persistTranscriptStateMutationForSessionSync,
@@ -336,33 +336,51 @@ export function truncateOversizedToolResultsInMessages(
   messages: AgentMessage[],
   contextWindowTokens: number,
   maxCharsOverride?: number,
+  aggregateMaxCharsOverride?: number,
 ): { messages: AgentMessage[]; truncatedCount: number } {
   const maxChars = Math.max(
     1,
     maxCharsOverride ?? calculateMaxToolResultChars(contextWindowTokens),
   );
-  let truncatedCount = 0;
-
-  const result = messages.map((msg) => {
-    if ((msg as { role?: string }).role !== "toolResult") {
-      return msg;
-    }
-    const textLength = getToolResultTextLength(msg);
-    if (textLength <= maxChars) {
-      return msg;
-    }
-    truncatedCount++;
-    return truncateToolResultMessage(msg, maxChars);
+  const aggregateBudgetChars = calculateRecoveryAggregateToolResultChars(
+    contextWindowTokens,
+    maxChars,
+    aggregateMaxCharsOverride,
+  );
+  const branch = messages.map((message, index) => ({
+    id: `message-${index}`,
+    type: "message",
+    message,
+  }));
+  const plan = buildToolResultReplacementPlan({
+    branch,
+    maxChars,
+    aggregateBudgetChars,
+    minKeepChars: RECOVERY_MIN_KEEP_CHARS,
   });
+  if (plan.replacements.length === 0) {
+    return { messages, truncatedCount: 0 };
+  }
 
-  return { messages: result, truncatedCount };
+  const replacementIds = new Set(plan.replacements.map((replacement) => replacement.entryId));
+  const replacedBranch = applyToolResultReplacementsToBranch(branch, plan.replacements);
+  return {
+    messages: replacedBranch.map((entry) => entry.message as AgentMessage),
+    truncatedCount: replacementIds.size,
+  };
 }
 
 function calculateRecoveryAggregateToolResultChars(
   contextWindowTokens: number,
   maxCharsOverride?: number,
+  aggregateMaxCharsOverride?: number,
 ): number {
-  return Math.max(1, maxCharsOverride ?? calculateMaxToolResultChars(contextWindowTokens));
+  return Math.max(
+    1,
+    aggregateMaxCharsOverride ??
+      maxCharsOverride ??
+      calculateMaxToolResultChars(contextWindowTokens),
+  );
 }
 
 export type ToolResultReductionPotential = {
@@ -433,9 +451,10 @@ function buildAggregateToolResultReplacements(params: {
   let remainingReduction = totalChars - params.aggregateBudgetChars;
   const replacements: Array<{ entryId: string; message: AgentMessage }> = [];
 
+  // Spend aggregate reduction on older entries first so fresh tool output stays intact.
   for (const candidate of candidates.toSorted((a, b) => {
     if (a.index !== b.index) {
-      return b.index - a.index;
+      return a.index - b.index;
     }
     return b.textLength - a.textLength;
   })) {
@@ -590,6 +609,7 @@ export function estimateToolResultReductionPotential(params: {
   messages: AgentMessage[];
   contextWindowTokens: number;
   maxCharsOverride?: number;
+  aggregateMaxCharsOverride?: number;
 }): ToolResultReductionPotential {
   const { messages, contextWindowTokens } = params;
   const maxChars = Math.max(
@@ -599,6 +619,7 @@ export function estimateToolResultReductionPotential(params: {
   const aggregateBudgetChars = calculateRecoveryAggregateToolResultChars(
     contextWindowTokens,
     maxChars,
+    params.aggregateMaxCharsOverride,
   );
   const branch = messages.map((message, index) => ({
     id: `message-${index}`,
@@ -643,6 +664,7 @@ async function truncateOversizedToolResultsInTranscriptState(params: {
   state: TranscriptState;
   contextWindowTokens: number;
   maxCharsOverride?: number;
+  aggregateMaxCharsOverride?: number;
   agentId: string;
   path?: string;
   sessionId: string;
@@ -657,6 +679,7 @@ async function truncateOversizedToolResultsInTranscriptState(params: {
   const aggregateBudgetChars = calculateRecoveryAggregateToolResultChars(
     contextWindowTokens,
     maxChars,
+    params.aggregateMaxCharsOverride,
   );
   const branch = state.getBranch() as ToolResultBranchEntry[];
 
@@ -715,6 +738,7 @@ function truncateOversizedToolResultsInTranscriptStateSync(params: {
   state: TranscriptState;
   contextWindowTokens: number;
   maxCharsOverride?: number;
+  aggregateMaxCharsOverride?: number;
   agentId: string;
   path?: string;
   sessionId: string;
@@ -729,6 +753,7 @@ function truncateOversizedToolResultsInTranscriptStateSync(params: {
   const aggregateBudgetChars = calculateRecoveryAggregateToolResultChars(
     contextWindowTokens,
     maxChars,
+    params.aggregateMaxCharsOverride,
   );
   const branch = state.getBranch() as ToolResultBranchEntry[];
 
@@ -786,6 +811,7 @@ function truncateOversizedToolResultsInTranscriptStateSync(params: {
 export async function truncateOversizedToolResultsInSession(params: {
   contextWindowTokens: number;
   maxCharsOverride?: number;
+  aggregateMaxCharsOverride?: number;
   agentId: string;
   path?: string;
   sessionId: string;
@@ -803,6 +829,7 @@ export async function truncateOversizedToolResultsInSession(params: {
       state,
       contextWindowTokens,
       maxCharsOverride: params.maxCharsOverride,
+      aggregateMaxCharsOverride: params.aggregateMaxCharsOverride,
       agentId: params.agentId,
       path: params.path,
       sessionId: params.sessionId,
@@ -818,6 +845,7 @@ export async function truncateOversizedToolResultsInSession(params: {
 export function truncateOversizedToolResultsInSessionSync(params: {
   contextWindowTokens: number;
   maxCharsOverride?: number;
+  aggregateMaxCharsOverride?: number;
   agentId: string;
   path?: string;
   sessionId: string;
@@ -837,6 +865,7 @@ export function truncateOversizedToolResultsInSessionSync(params: {
       maxCharsOverride: params.maxCharsOverride,
       agentId: params.agentId,
       path: params.path,
+      aggregateMaxCharsOverride: params.aggregateMaxCharsOverride,
       sessionId: params.sessionId,
       sessionKey: params.sessionKey,
     });

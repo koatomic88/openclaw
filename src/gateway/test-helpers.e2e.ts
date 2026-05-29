@@ -1,5 +1,6 @@
 import { writeFile } from "node:fs/promises";
 import { WebSocket } from "ws";
+import { PROTOCOL_VERSION } from "../../packages/gateway-protocol/src/index.js";
 import { clearConfigCache, clearRuntimeConfigSnapshot } from "../config/config.js";
 import {
   type DeviceIdentity,
@@ -18,7 +19,6 @@ import {
 } from "../utils/message-channel.js";
 import { GatewayClient } from "./client.js";
 import { buildDeviceAuthPayloadV3 } from "./device-auth.js";
-import { PROTOCOL_VERSION } from "./protocol/index.js";
 import { startGatewayServer } from "./server.js";
 
 export async function getFreeGatewayPort(): Promise<number> {

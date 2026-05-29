@@ -242,7 +242,8 @@ describe("plugin scheduled turns", () => {
   });
 
   it("builds payloads accepted by the real cron.add protocol validator", async () => {
-    const { validateCronAddParams } = await import("../../gateway/protocol/index.js");
+    const { validateCronAddParams } =
+      await import("../../../packages/gateway-protocol/src/index.js");
     workflowMocks.callGatewayTool.mockImplementation(async (method: string, _opts, body) => {
       if (method === "cron.add") {
         expect(validateCronAddParams(body)).toBe(true);
