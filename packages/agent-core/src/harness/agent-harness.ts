@@ -1,4 +1,4 @@
-// packages/agent-core/src/harness agent harness helpers and runtime behavior.
+// High-level harness that coordinates sessions, compaction, resources, tools, and agent-loop runs.
 import { runAgentLoop } from "../agent-loop.js";
 import { type AssistantMessage, type ImageContent, type Model, type UserMessage } from "../llm.js";
 import { type AgentCoreRuntimeDeps, resolveAgentCoreStreamFn } from "../runtime-deps.js";
@@ -205,7 +205,7 @@ interface AgentHarnessTurnState<
   activeTools: TTool[];
 }
 
-/** Public class implementing Agent Harness behavior for packages/agent-core. */
+/** Stateful facade for running agent turns against a persisted session tree. */
 export class AgentHarness<
   TSkill extends Skill = Skill,
   TPromptTemplate extends PromptTemplate = PromptTemplate,
