@@ -1,4 +1,4 @@
-// Shared types for packages/agent-core/src/harness types behavior.
+// Public harness contracts for execution environments, sessions, events, and options.
 import type { AgentEvent, AgentMessage, AgentTool, QueueMode, ThinkingLevel } from "../index.js";
 import type {
   ImageContent,
@@ -207,7 +207,7 @@ export class BranchSummaryError extends Error {
   }
 }
 
-/** Public type describing Session Error Code for packages/agent-core. */
+/** Harness contract for Session Error Code. */
 export type SessionErrorCode =
   | "not_found"
   | "invalid_session"
@@ -228,7 +228,7 @@ export class SessionError extends Error {
   }
 }
 
-/** Public type describing Agent Harness Error Code for packages/agent-core. */
+/** Harness contract for Agent Harness Error Code. */
 export type AgentHarnessErrorCode =
   | "busy"
   | "invalid_state"
@@ -364,7 +364,7 @@ export interface Shell {
 /** Filesystem and process execution environment used by the harness. */
 export interface ExecutionEnv extends FileSystem, Shell {}
 
-/** Public type describing Session Tree Entry Base for packages/agent-core. */
+/** Harness contract for Session Tree Entry Base. */
 export interface SessionTreeEntryBase {
   type: string;
   id: string;
@@ -372,26 +372,26 @@ export interface SessionTreeEntryBase {
   timestamp: string;
 }
 
-/** Public type describing Message Entry for packages/agent-core. */
+/** Harness contract for Message Entry. */
 export interface MessageEntry extends SessionTreeEntryBase {
   type: "message";
   message: AgentMessage;
 }
 
-/** Public type describing Thinking Level Change Entry for packages/agent-core. */
+/** Harness contract for Thinking Level Change Entry. */
 export interface ThinkingLevelChangeEntry extends SessionTreeEntryBase {
   type: "thinking_level_change";
   thinkingLevel: string;
 }
 
-/** Public type describing Model Change Entry for packages/agent-core. */
+/** Harness contract for Model Change Entry. */
 export interface ModelChangeEntry extends SessionTreeEntryBase {
   type: "model_change";
   provider: string;
   modelId: string;
 }
 
-/** Public type describing Compaction Entry for packages/agent-core. */
+/** Harness contract for Compaction Entry. */
 export interface CompactionEntry<T = unknown> extends SessionTreeEntryBase {
   type: "compaction";
   summary: string;
@@ -401,7 +401,7 @@ export interface CompactionEntry<T = unknown> extends SessionTreeEntryBase {
   fromHook?: boolean;
 }
 
-/** Public type describing Branch Summary Entry for packages/agent-core. */
+/** Harness contract for Branch Summary Entry. */
 export interface BranchSummaryEntry<T = unknown> extends SessionTreeEntryBase {
   type: "branch_summary";
   fromId: string;
@@ -410,14 +410,14 @@ export interface BranchSummaryEntry<T = unknown> extends SessionTreeEntryBase {
   fromHook?: boolean;
 }
 
-/** Public type describing Custom Entry for packages/agent-core. */
+/** Harness contract for Custom Entry. */
 export interface CustomEntry<T = unknown> extends SessionTreeEntryBase {
   type: "custom";
   customType: string;
   data?: T;
 }
 
-/** Public type describing Custom Message Entry for packages/agent-core. */
+/** Harness contract for Custom Message Entry. */
 export interface CustomMessageEntry<T = unknown> extends SessionTreeEntryBase {
   type: "custom_message";
   customType: string;
@@ -426,26 +426,26 @@ export interface CustomMessageEntry<T = unknown> extends SessionTreeEntryBase {
   display: boolean;
 }
 
-/** Public type describing Label Entry for packages/agent-core. */
+/** Harness contract for Label Entry. */
 export interface LabelEntry extends SessionTreeEntryBase {
   type: "label";
   targetId: string;
   label: string | undefined;
 }
 
-/** Public type describing Session Info Entry for packages/agent-core. */
+/** Harness contract for Session Info Entry. */
 export interface SessionInfoEntry extends SessionTreeEntryBase {
   type: "session_info"; // legacy name, kept for backwards compatibility
   name?: string;
 }
 
-/** Public type describing Leaf Entry for packages/agent-core. */
+/** Harness contract for Leaf Entry. */
 export interface LeafEntry extends SessionTreeEntryBase {
   type: "leaf";
   targetId: string | null;
 }
 
-/** Public type describing Session Tree Entry for packages/agent-core. */
+/** Harness contract for Session Tree Entry. */
 export type SessionTreeEntry =
   | MessageEntry
   | ThinkingLevelChangeEntry
@@ -458,27 +458,27 @@ export type SessionTreeEntry =
   | SessionInfoEntry
   | LeafEntry;
 
-/** Public type describing Session Context for packages/agent-core. */
+/** Harness contract for Session Context. */
 export interface SessionContext {
   messages: AgentMessage[];
   thinkingLevel: string;
   model: { provider: string; modelId: string } | null;
 }
 
-/** Public type describing Session Metadata for packages/agent-core. */
+/** Harness contract for Session Metadata. */
 export interface SessionMetadata {
   id: string;
   createdAt: string;
 }
 
-/** Public type describing Jsonl Session Metadata for packages/agent-core. */
+/** Harness contract for Jsonl Session Metadata. */
 export interface JsonlSessionMetadata extends SessionMetadata {
   cwd: string;
   path: string;
   parentSessionPath?: string;
 }
 
-/** Public type describing Session Storage for packages/agent-core. */
+/** Harness contract for Session Storage. */
 export interface SessionStorage<TMetadata extends SessionMetadata = SessionMetadata> {
   getMetadata(): Promise<TMetadata>;
   getLeafId(): Promise<string | null>;
@@ -495,22 +495,22 @@ export interface SessionStorage<TMetadata extends SessionMetadata = SessionMetad
   getEntries(): Promise<SessionTreeEntry[]>;
 }
 
-/** Re-exported public API for packages/agent-core, starting with Session. */
+/** Re-export the concrete Session facade alongside storage/repo contracts. */
 export type { Session } from "./session/session.js";
 
-/** Public type describing Session Create Options for packages/agent-core. */
+/** Harness contract for Session Create Options. */
 export interface SessionCreateOptions {
   id?: string;
 }
 
-/** Public type describing Session Fork Options for packages/agent-core. */
+/** Harness contract for Session Fork Options. */
 export interface SessionForkOptions {
   entryId?: string;
   position?: "before" | "at";
   id?: string;
 }
 
-/** Public type describing Session Repo for packages/agent-core. */
+/** Harness contract for Session Repo. */
 export interface SessionRepo<
   TMetadata extends SessionMetadata = SessionMetadata,
   TCreateOptions extends SessionCreateOptions = SessionCreateOptions,
@@ -526,35 +526,35 @@ export interface SessionRepo<
   ): Promise<Session<TMetadata>>;
 }
 
-/** Public type describing Jsonl Session Create Options for packages/agent-core. */
+/** Harness contract for Jsonl Session Create Options. */
 export interface JsonlSessionCreateOptions extends SessionCreateOptions {
   cwd: string;
   parentSessionPath?: string;
 }
 
-/** Public type describing Jsonl Session List Options for packages/agent-core. */
+/** Harness contract for Jsonl Session List Options. */
 export interface JsonlSessionListOptions {
   cwd?: string;
 }
 
-/** Public type describing Jsonl Session Repo Api for packages/agent-core. */
+/** Harness contract for Jsonl Session Repo Api. */
 export interface JsonlSessionRepoApi extends SessionRepo<
   JsonlSessionMetadata,
   JsonlSessionCreateOptions,
   JsonlSessionListOptions
 > {}
 
-/** Public type describing Agent Harness Phase for packages/agent-core. */
+/** Harness contract for Agent Harness Phase. */
 export type AgentHarnessPhase = "idle" | "turn" | "compaction" | "branch_summary" | "retry";
 
-/** Public type describing Pending Session Write for packages/agent-core. */
+/** Harness contract for Pending Session Write. */
 export type PendingSessionWrite = SessionTreeEntry extends infer TEntry
   ? TEntry extends SessionTreeEntry
     ? Omit<TEntry, "id" | "parentId" | "timestamp">
     : never
   : never;
 
-/** Public type describing Queue Update Event for packages/agent-core. */
+/** Harness contract for Queue Update Event. */
 export interface QueueUpdateEvent {
   type: "queue_update";
   steer: AgentMessage[];
@@ -562,26 +562,26 @@ export interface QueueUpdateEvent {
   nextTurn: AgentMessage[];
 }
 
-/** Public type describing Save Point Event for packages/agent-core. */
+/** Harness contract for Save Point Event. */
 export interface SavePointEvent {
   type: "save_point";
   hadPendingMutations: boolean;
 }
 
-/** Public type describing Abort Event for packages/agent-core. */
+/** Harness contract for Abort Event. */
 export interface AbortEvent {
   type: "abort";
   clearedSteer: AgentMessage[];
   clearedFollowUp: AgentMessage[];
 }
 
-/** Public type describing Settled Event for packages/agent-core. */
+/** Harness contract for Settled Event. */
 export interface SettledEvent {
   type: "settled";
   nextTurnCount: number;
 }
 
-/** Public type describing Before Agent Start Event for packages/agent-core. */
+/** Harness contract for Before Agent Start Event. */
 export interface BeforeAgentStartEvent<
   TSkill extends Skill = Skill,
   TPromptTemplate extends PromptTemplate = PromptTemplate,
@@ -593,13 +593,13 @@ export interface BeforeAgentStartEvent<
   resources: AgentHarnessResources<TSkill, TPromptTemplate>;
 }
 
-/** Public type describing Context Event for packages/agent-core. */
+/** Harness contract for Context Event. */
 export interface ContextEvent {
   type: "context";
   messages: AgentMessage[];
 }
 
-/** Public type describing Before Provider Request Event for packages/agent-core. */
+/** Harness contract for Before Provider Request Event. */
 export interface BeforeProviderRequestEvent {
   type: "before_provider_request";
   model: Model;
@@ -607,21 +607,21 @@ export interface BeforeProviderRequestEvent {
   streamOptions: AgentHarnessStreamOptions;
 }
 
-/** Public type describing Before Provider Payload Event for packages/agent-core. */
+/** Harness contract for Before Provider Payload Event. */
 export interface BeforeProviderPayloadEvent {
   type: "before_provider_payload";
   model: Model;
   payload: unknown;
 }
 
-/** Public type describing After Provider Response Event for packages/agent-core. */
+/** Harness contract for After Provider Response Event. */
 export interface AfterProviderResponseEvent {
   type: "after_provider_response";
   status: number;
   headers: Record<string, string>;
 }
 
-/** Public type describing Tool Call Event for packages/agent-core. */
+/** Harness contract for Tool Call Event. */
 export interface ToolCallEvent {
   type: "tool_call";
   toolCallId: string;
@@ -629,7 +629,7 @@ export interface ToolCallEvent {
   input: Record<string, unknown>;
 }
 
-/** Public type describing Tool Result Event for packages/agent-core. */
+/** Harness contract for Tool Result Event. */
 export interface ToolResultEvent {
   type: "tool_result";
   toolCallId: string;
@@ -640,7 +640,7 @@ export interface ToolResultEvent {
   isError: boolean;
 }
 
-/** Public type describing Session Before Compact Event for packages/agent-core. */
+/** Harness contract for Session Before Compact Event. */
 export interface SessionBeforeCompactEvent {
   type: "session_before_compact";
   preparation: CompactionPreparation;
@@ -649,21 +649,21 @@ export interface SessionBeforeCompactEvent {
   signal: AbortSignal;
 }
 
-/** Public type describing Session Compact Event for packages/agent-core. */
+/** Harness contract for Session Compact Event. */
 export interface SessionCompactEvent {
   type: "session_compact";
   compactionEntry: CompactionEntry;
   fromHook: boolean;
 }
 
-/** Public type describing Session Before Tree Event for packages/agent-core. */
+/** Harness contract for Session Before Tree Event. */
 export interface SessionBeforeTreeEvent {
   type: "session_before_tree";
   preparation: TreePreparation;
   signal: AbortSignal;
 }
 
-/** Public type describing Session Tree Event for packages/agent-core. */
+/** Harness contract for Session Tree Event. */
 export interface SessionTreeEvent {
   type: "session_tree";
   newLeafId: string | null;
@@ -672,7 +672,7 @@ export interface SessionTreeEvent {
   fromHook?: boolean;
 }
 
-/** Public type describing Model Select Event for packages/agent-core. */
+/** Harness contract for Model Select Event. */
 export interface ModelSelectEvent {
   type: "model_select";
   model: Model;
@@ -680,14 +680,14 @@ export interface ModelSelectEvent {
   source: "set" | "restore";
 }
 
-/** Public type describing Thinking Level Select Event for packages/agent-core. */
+/** Harness contract for Thinking Level Select Event. */
 export interface ThinkingLevelSelectEvent {
   type: "thinking_level_select";
   level: ThinkingLevel;
   previousLevel: ThinkingLevel;
 }
 
-/** Public type describing Resources Update Event for packages/agent-core. */
+/** Harness contract for Resources Update Event. */
 export interface ResourcesUpdateEvent<
   TSkill extends Skill = Skill,
   TPromptTemplate extends PromptTemplate = PromptTemplate,
@@ -697,7 +697,7 @@ export interface ResourcesUpdateEvent<
   previousResources: AgentHarnessResources<TSkill, TPromptTemplate>;
 }
 
-/** Public type describing Agent Harness Own Event for packages/agent-core. */
+/** Harness contract for Agent Harness Own Event. */
 export type AgentHarnessOwnEvent<
   TSkill extends Skill = Skill,
   TPromptTemplate extends PromptTemplate = PromptTemplate,
@@ -721,40 +721,40 @@ export type AgentHarnessOwnEvent<
   | ThinkingLevelSelectEvent
   | ResourcesUpdateEvent<TSkill, TPromptTemplate>;
 
-/** Public type describing Agent Harness Event for packages/agent-core. */
+/** Harness contract for Agent Harness Event. */
 export type AgentHarnessEvent<
   TSkill extends Skill = Skill,
   TPromptTemplate extends PromptTemplate = PromptTemplate,
 > = AgentEvent | AgentHarnessOwnEvent<TSkill, TPromptTemplate>;
 
-/** Public type describing Before Agent Start Result for packages/agent-core. */
+/** Harness contract for Before Agent Start Result. */
 export interface BeforeAgentStartResult {
   messages?: AgentMessage[];
   systemPrompt?: string;
 }
 
-/** Public type describing Context Result for packages/agent-core. */
+/** Harness contract for Context Result. */
 export interface ContextResult {
   messages: AgentMessage[];
 }
 
-/** Public type describing Before Provider Request Result for packages/agent-core. */
+/** Harness contract for Before Provider Request Result. */
 export interface BeforeProviderRequestResult {
   streamOptions?: AgentHarnessStreamOptionsPatch;
 }
 
-/** Public type describing Before Provider Payload Result for packages/agent-core. */
+/** Harness contract for Before Provider Payload Result. */
 export interface BeforeProviderPayloadResult {
   payload: unknown;
 }
 
-/** Public type describing Tool Call Result for packages/agent-core. */
+/** Harness contract for Tool Call Result. */
 export interface ToolCallResult {
   block?: boolean;
   reason?: string;
 }
 
-/** Public type describing Tool Result Patch for packages/agent-core. */
+/** Harness contract for Tool Result Patch. */
 export interface ToolResultPatch {
   content?: Array<TextContent | ImageContent>;
   details?: unknown;
@@ -762,13 +762,13 @@ export interface ToolResultPatch {
   terminate?: boolean;
 }
 
-/** Public type describing Session Before Compact Result for packages/agent-core. */
+/** Harness contract for Session Before Compact Result. */
 export interface SessionBeforeCompactResult {
   cancel?: boolean;
   compaction?: CompactResult;
 }
 
-/** Public type describing Session Before Tree Result for packages/agent-core. */
+/** Harness contract for Session Before Tree Result. */
 export interface SessionBeforeTreeResult {
   cancel?: boolean;
   summary?: { summary: string; details?: unknown };
@@ -777,7 +777,7 @@ export interface SessionBeforeTreeResult {
   label?: string;
 }
 
-/** Public type describing Agent Harness Event Result Map for packages/agent-core. */
+/** Harness contract for Agent Harness Event Result Map. */
 export type AgentHarnessEventResultMap = {
   before_agent_start: BeforeAgentStartResult | undefined;
   context: ContextResult | undefined;
@@ -799,18 +799,18 @@ export type AgentHarnessEventResultMap = {
   settled: undefined;
 };
 
-/** Public type describing Agent Harness Prompt Options for packages/agent-core. */
+/** Harness contract for Agent Harness Prompt Options. */
 export interface AgentHarnessPromptOptions {
   images?: ImageContent[];
 }
 
-/** Public type describing Abort Result for packages/agent-core. */
+/** Harness contract for Abort Result. */
 export interface AbortResult {
   clearedSteer: AgentMessage[];
   clearedFollowUp: AgentMessage[];
 }
 
-/** Public type describing Compact Result for packages/agent-core. */
+/** Harness contract for Compact Result. */
 export interface CompactResult {
   summary: string;
   firstKeptEntryId: string;
@@ -818,21 +818,21 @@ export interface CompactResult {
   details?: unknown;
 }
 
-/** Public type describing Navigate Tree Result for packages/agent-core. */
+/** Harness contract for Navigate Tree Result. */
 export interface NavigateTreeResult {
   cancelled: boolean;
   editorText?: string;
   summaryEntry?: BranchSummaryEntry;
 }
 
-/** Public type describing Compaction Settings for packages/agent-core. */
+/** Harness contract for Compaction Settings. */
 export interface CompactionSettings {
   enabled: boolean;
   reserveTokens: number;
   keepRecentTokens: number;
 }
 
-/** Public type describing Compaction Preparation for packages/agent-core. */
+/** Harness contract for Compaction Preparation. */
 export interface CompactionPreparation {
   firstKeptEntryId: string;
   messagesToSummarize: AgentMessage[];
@@ -844,14 +844,14 @@ export interface CompactionPreparation {
   settings: CompactionSettings;
 }
 
-/** Public type describing File Operations for packages/agent-core. */
+/** Harness contract for File Operations. */
 export interface FileOperations {
   read: Set<string>;
   written: Set<string>;
   edited: Set<string>;
 }
 
-/** Public type describing Tree Preparation for packages/agent-core. */
+/** Harness contract for Tree Preparation. */
 export interface TreePreparation {
   targetId: string;
   oldLeafId: string | null;
@@ -863,7 +863,7 @@ export interface TreePreparation {
   label?: string;
 }
 
-/** Public type describing Generate Branch Summary Options for packages/agent-core. */
+/** Harness contract for Generate Branch Summary Options. */
 export interface GenerateBranchSummaryOptions {
   model: Model;
   apiKey: string;
@@ -876,14 +876,14 @@ export interface GenerateBranchSummaryOptions {
   reserveTokens?: number;
 }
 
-/** Public type describing Branch Summary Result for packages/agent-core. */
+/** Harness contract for Branch Summary Result. */
 export interface BranchSummaryResult {
   summary: string;
   readFiles: string[];
   modifiedFiles: string[];
 }
 
-/** Public type describing Agent Harness Options for packages/agent-core. */
+/** Harness contract for Agent Harness Options. */
 export interface AgentHarnessOptions<
   TSkill extends Skill = Skill,
   TPromptTemplate extends PromptTemplate = PromptTemplate,
@@ -920,5 +920,5 @@ export interface AgentHarnessOptions<
   followUpMode?: QueueMode;
 }
 
-/** Re-exported public API for packages/agent-core, starting with Agent Harness. */
+/** Re-export the concrete AgentHarness facade alongside event and option contracts. */
 export type { AgentHarness } from "./agent-harness.js";
