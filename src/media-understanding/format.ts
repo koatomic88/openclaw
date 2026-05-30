@@ -1,10 +1,10 @@
-// media-understanding format helpers and runtime behavior.
+// Formatting helpers for inserting media-understanding output into chat text.
 import type { MediaUnderstandingOutput } from "./types.js";
 
 const MEDIA_PLACEHOLDER_RE = /^<media:[^>]+>(\s*\([^)]*\))?$/i;
 const MEDIA_PLACEHOLDER_TOKEN_RE = /^<media:[^>]+>(\s*\([^)]*\))?\s*/i;
 
-/** Reused helper for extract Media User Text behavior in src/media-understanding. */
+/** Extract user-authored text after removing a leading media placeholder token. */
 export function extractMediaUserText(body?: string): string | undefined {
   const trimmed = body?.trim() ?? "";
   if (!trimmed) {
@@ -31,7 +31,7 @@ function formatSection(
   return lines.join("\n");
 }
 
-/** Reused helper for format Media Understanding Body behavior in src/media-understanding. */
+/** Format image, audio, and video understanding results into a combined message body. */
 export function formatMediaUnderstandingBody(params: {
   body?: string;
   outputs: MediaUnderstandingOutput[];
@@ -93,7 +93,7 @@ export function formatMediaUnderstandingBody(params: {
   return sections.join("\n\n").trim();
 }
 
-/** Reused helper for format Audio Transcripts behavior in src/media-understanding. */
+/** Format one or more audio transcripts for display or echo responses. */
 export function formatAudioTranscripts(outputs: MediaUnderstandingOutput[]): string {
   if (outputs.length === 1) {
     return outputs[0].text;
