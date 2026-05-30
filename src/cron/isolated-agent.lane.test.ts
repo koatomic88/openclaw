@@ -1,35 +1,18 @@
-import "./isolated-agent.mocks.js";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { clearAllBootstrapSnapshots } from "../agents/bootstrap-cache.js";
-import { resetAgentRunContextForTest } from "../infra/agent-events.js";
-import { createCliDeps, mockAgentPayloads } from "./isolated-agent.delivery.test-helpers.js";
-import { runCronIsolatedAgentTurn } from "./isolated-agent.js";
+import { describe, expect, it } from "vitest";
+import { resolveCronAgentLane } from "../agents/lanes.js";
 import {
-  makeCfg,
-  makeJob,
-  seedCronSessionRows,
-  withTempCronHome,
-} from "./isolated-agent.test-harness.js";
-import { runEmbeddedAgentMock } from "./isolated-agent/run.test-harness.js";
+  makeIsolatedAgentTurnJob,
+  makeIsolatedAgentTurnParams,
+  setupRunCronIsolatedAgentTurnSuite,
+} from "./isolated-agent/run.suite-helpers.js";
+import {
+  loadRunCronIsolatedAgentTurn,
+  mockRunCronFallbackPassthrough,
+  resolveCronAgentLaneMock,
+  runEmbeddedAgentMock,
+} from "./isolated-agent/run.test-harness.js";
 
-const envSnapshot = {
-  HOME: process.env.HOME,
-  USERPROFILE: process.env.USERPROFILE,
-  HOMEDRIVE: process.env.HOMEDRIVE,
-  HOMEPATH: process.env.HOMEPATH,
-  OPENCLAW_HOME: process.env.OPENCLAW_HOME,
-  OPENCLAW_STATE_DIR: process.env.OPENCLAW_STATE_DIR,
-} as const;
-
-function restoreSnapshotEnv() {
-  for (const [key, value] of Object.entries(envSnapshot)) {
-    if (value === undefined) {
-      delete process.env[key];
-    } else {
-      process.env[key] = value;
-    }
-  }
-}
+const runCronIsolatedAgentTurn = await loadRunCronIsolatedAgentTurn();
 
 function lastEmbeddedLane(): string | undefined {
   const params = runEmbeddedAgentMock.mock.calls.at(-1)?.[0];
@@ -40,49 +23,26 @@ function lastEmbeddedLane(): string | undefined {
 }
 
 async function runLaneCase(lane?: string) {
-  return withTempCronHome(async (home) => {
-    await seedCronSessionRows(home, {
-      "agent:main:main": {
-        sessionId: "main-session",
-        updatedAt: Date.now(),
-        lastChannel: "webchat",
-        lastTo: "",
-      },
-    });
-    mockAgentPayloads([{ text: "ok" }]);
+  resolveCronAgentLaneMock.mockImplementation(resolveCronAgentLane);
+  mockRunCronFallbackPassthrough();
 
-    await runCronIsolatedAgentTurn({
-      cfg: makeCfg(home),
-      deps: createCliDeps(),
-      job: { ...makeJob({ kind: "agentTurn", message: "do it" }), delivery: { mode: "none" } },
+  await runCronIsolatedAgentTurn(
+    makeIsolatedAgentTurnParams({
+      job: makeIsolatedAgentTurnJob({
+        delivery: { mode: "none" },
+        payload: { kind: "agentTurn", message: "do it" },
+      }),
       message: "do it",
       sessionKey: "cron:job-1",
       ...(lane === undefined ? {} : { lane }),
-    });
+    }),
+  );
 
-    return lastEmbeddedLane();
-  });
+  return lastEmbeddedLane();
 }
 
 describe("runCronIsolatedAgentTurn lane selection", () => {
-  beforeEach(() => {
-    runEmbeddedAgentMock.mockClear();
-  });
-
-  afterEach(() => {
-    // Shared-worker runs can start collecting the next file before the generic
-    // runner cleanup resets env and session-store globals.
-    restoreSnapshotEnv();
-    vi.doUnmock("../agents/embedded-agent.js");
-    vi.doUnmock("../agents/model-catalog.js");
-    vi.doUnmock("../agents/model-selection.js");
-    vi.doUnmock("../agents/subagent-announce.js");
-    vi.doUnmock("../gateway/call.js");
-    resetAgentRunContextForTest();
-    clearAllBootstrapSnapshots();
-    vi.restoreAllMocks();
-    vi.resetModules();
-  });
+  setupRunCronIsolatedAgentTurnSuite();
 
   it("moves the cron lane to cron-nested for embedded runs", async () => {
     expect(await runLaneCase("cron")).toBe("cron-nested");

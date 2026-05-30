@@ -470,5 +470,5 @@ export function shouldRunConfigPreflightFromPath(path: string[]): boolean {
 }
 
 export function shouldRunConfigPreflight(argv: string[]): boolean {
-  return shouldRunConfigPreflightFromPath(getCommandPath(argv, 2));
+  return shouldRunConfigPreflightFromPath(getCommandPathWithRootOptions(argv, 2));
 }
