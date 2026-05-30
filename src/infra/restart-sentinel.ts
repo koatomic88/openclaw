@@ -1,4 +1,4 @@
-// infra restart sentinel helpers and runtime behavior.
+/** Persists restart/update handoff state so the restarted gateway can report outcome. */
 import fs from "node:fs/promises";
 import path from "node:path";
 import { formatCliCommand } from "../cli/command-format.js";
@@ -7,14 +7,14 @@ import { isRecord as isPlainRecord } from "../shared/record-coerce.js";
 import { resolveRuntimeServiceVersion } from "../version.js";
 import { writeJson } from "./json-files.js";
 
-/** Shared type for Restart Sentinel Log in src/infra. */
+/** Captured tail output from a restart or update step. */
 export type RestartSentinelLog = {
   stdoutTail?: string | null;
   stderrTail?: string | null;
   exitCode?: number | null;
 };
 
-/** Shared type for Restart Sentinel Step in src/infra. */
+/** One command step recorded during restart/update orchestration. */
 export type RestartSentinelStep = {
   name: string;
   command: string;
@@ -23,7 +23,7 @@ export type RestartSentinelStep = {
   log?: RestartSentinelLog | null;
 };
 
-/** Shared type for Restart Sentinel Stats in src/infra. */
+/** Structured restart/update details used for post-restart reporting. */
 export type RestartSentinelStats = {
   mode?: string;
   root?: string;
@@ -35,7 +35,7 @@ export type RestartSentinelStats = {
   durationMs?: number | null;
 };
 
-/** Shared type for Restart Sentinel Continuation in src/infra. */
+/** Follow-up action to emit after the gateway consumes a successful sentinel. */
 export type RestartSentinelContinuation =
   | {
       kind: "systemEvent";
@@ -46,7 +46,7 @@ export type RestartSentinelContinuation =
       message: string;
     };
 
-/** Shared type for Restart Sentinel Payload in src/infra. */
+/** Versioned payload written before restart and consumed after startup. */
 export type RestartSentinelPayload = {
   kind: "config-apply" | "config-auto-recovery" | "config-patch" | "update" | "restart";
   status: "ok" | "error" | "skipped";
@@ -66,19 +66,19 @@ export type RestartSentinelPayload = {
   stats?: RestartSentinelStats | null;
 };
 
-/** Shared type for Restart Sentinel in src/infra. */
+/** On-disk restart sentinel wrapper with schema version. */
 export type RestartSentinel = {
   version: 1;
   payload: RestartSentinelPayload;
 };
 
-/** Reused constant for DEFAULT RESTART SUCCESS CONTINUATION MESSAGE behavior in src/infra. */
+/** Default agent-turn continuation when a session restart succeeds. */
 export const DEFAULT_RESTART_SUCCESS_CONTINUATION_MESSAGE =
   "The gateway restart completed successfully. Tell the user OpenClaw restarted successfully and continue any pending work.";
 
 const SENTINEL_FILENAME = "restart-sentinel.json";
 
-/** Reused helper for format Doctor Non Interactive Hint behavior in src/infra. */
+/** Format the doctor follow-up command for surfaces that cannot run approvals. */
 export function formatDoctorNonInteractiveHint(
   env: Record<string, string | undefined> = process.env as Record<string, string | undefined>,
 ): string {
@@ -88,12 +88,12 @@ export function formatDoctorNonInteractiveHint(
   )} in a terminal or approvals-capable OpenClaw surface.`;
 }
 
-/** Reused helper for resolve Restart Sentinel Path behavior in src/infra. */
+/** Resolve the state-file path used for restart sentinel handoff. */
 export function resolveRestartSentinelPath(env: NodeJS.ProcessEnv = process.env): string {
   return path.join(resolveStateDir(env), SENTINEL_FILENAME);
 }
 
-/** Reused helper for write Restart Sentinel behavior in src/infra. */
+/** Write a restart sentinel payload with private state-directory permissions. */
 export async function writeRestartSentinel(
   payload: RestartSentinelPayload,
   env: NodeJS.ProcessEnv = process.env,
@@ -127,7 +127,7 @@ async function rewriteRestartSentinel(
   };
 }
 
-/** Reused helper for finalize Update Restart Sentinel Running Version behavior in src/infra. */
+/** Record the running version after an update restart succeeds. */
 export async function finalizeUpdateRestartSentinelRunningVersion(
   version = resolveRuntimeServiceVersion(process.env),
   env: NodeJS.ProcessEnv = process.env,
@@ -147,7 +147,7 @@ export async function finalizeUpdateRestartSentinelRunningVersion(
   }, env);
 }
 
-/** Reused helper for mark Update Restart Sentinel Failure behavior in src/infra. */
+/** Mark an update sentinel as failed and suppress success continuation. */
 export async function markUpdateRestartSentinelFailure(
   reason: string,
   env: NodeJS.ProcessEnv = process.env,
@@ -168,7 +168,7 @@ export async function markUpdateRestartSentinelFailure(
   }, env);
 }
 
-/** Reused helper for remove Restart Sentinel File behavior in src/infra. */
+/** Remove a sentinel file, ignoring races with startup cleanup. */
 export async function removeRestartSentinelFile(filePath: string | null | undefined) {
   if (!filePath) {
     return;
@@ -176,7 +176,7 @@ export async function removeRestartSentinelFile(filePath: string | null | undefi
   await fs.unlink(filePath).catch(() => {});
 }
 
-/** Reused helper for build Restart Success Continuation behavior in src/infra. */
+/** Build the post-restart continuation only when a session can receive it. */
 export function buildRestartSuccessContinuation(params: {
   sessionKey?: string;
   continuationMessage?: string | null;
@@ -190,7 +190,7 @@ export function buildRestartSuccessContinuation(params: {
     : null;
 }
 
-/** Reused helper for read Restart Sentinel behavior in src/infra. */
+/** Read the sentinel, deleting malformed or incompatible files. */
 export async function readRestartSentinel(
   env: NodeJS.ProcessEnv = process.env,
 ): Promise<RestartSentinel | null> {
@@ -214,7 +214,7 @@ export async function readRestartSentinel(
   }
 }
 
-/** Reused helper for has Restart Sentinel behavior in src/infra. */
+/** Check whether a sentinel handoff file exists without consuming it. */
 export async function hasRestartSentinel(env: NodeJS.ProcessEnv = process.env): Promise<boolean> {
   try {
     await fs.access(resolveRestartSentinelPath(env));
@@ -224,7 +224,7 @@ export async function hasRestartSentinel(env: NodeJS.ProcessEnv = process.env): 
   }
 }
 
-/** Reused helper for consume Restart Sentinel behavior in src/infra. */
+/** Read and remove the sentinel so restart reporting runs once. */
 export async function consumeRestartSentinel(
   env: NodeJS.ProcessEnv = process.env,
 ): Promise<RestartSentinel | null> {
@@ -237,7 +237,7 @@ export async function consumeRestartSentinel(
   return parsed;
 }
 
-/** Reused helper for format Restart Sentinel Message behavior in src/infra. */
+/** Format the user/operator message from a consumed sentinel payload. */
 export function formatRestartSentinelMessage(payload: RestartSentinelPayload): string {
   const message = payload.message?.trim();
   if (message && (!payload.stats || payload.kind === "config-auto-recovery")) {
@@ -257,7 +257,7 @@ export function formatRestartSentinelMessage(payload: RestartSentinelPayload): s
   return lines.join("\n");
 }
 
-/** Reused helper for summarize Restart Sentinel behavior in src/infra. */
+/** Build the one-line restart/update outcome summary. */
 export function summarizeRestartSentinel(payload: RestartSentinelPayload): string {
   if (payload.kind === "config-auto-recovery") {
     return "Gateway auto-recovery";
@@ -268,7 +268,7 @@ export function summarizeRestartSentinel(payload: RestartSentinelPayload): strin
   return `Gateway restart ${kind} ${status}${mode}`.trim();
 }
 
-/** Reused helper for trim Log Tail behavior in src/infra. */
+/** Keep only the tail of large command logs stored in sentinel stats. */
 export function trimLogTail(input?: string | null, maxChars = 8000) {
   if (!input) {
     return null;
