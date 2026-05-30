@@ -121,6 +121,78 @@ describe("maybeRepairLegacyFlatAuthProfileStores", () => {
     expect(JSON.parse(fs.readFileSync(`${authPath}.legacy-flat.223.bak`, "utf8"))).toEqual(legacy);
   });
 
+  it('imports canonical stores with non-canonical "api_key" fields into SQLite', async () => {
+    const state = await makeTestState();
+    const legacy = {
+      version: 1,
+      profiles: {
+        "openrouter:default": {
+          type: "api_key",
+          provider: "openrouter",
+          api_key: "sk-openrouter",
+        },
+      },
+    };
+    const authPath = writeLegacyAuthProfiles(state, legacy);
+
+    const result = await maybeRepairLegacyFlatAuthProfileStores({
+      cfg: {},
+      prompter: makePrompter(true),
+      now: () => 224,
+    });
+
+    expect(result.detected).toEqual([authPath]);
+    expect(result.warnings).toStrictEqual([]);
+    expect(fs.existsSync(authPath)).toBe(false);
+    expect(loadPersistedAuthProfileStore(state.agentDir())).toEqual({
+      version: 1,
+      profiles: {
+        "openrouter:default": {
+          type: "api_key",
+          provider: "openrouter",
+          key: "sk-openrouter",
+        },
+      },
+    });
+    expect(JSON.parse(fs.readFileSync(`${authPath}.legacy-flat.224.bak`, "utf8"))).toEqual(legacy);
+  });
+
+  it('imports canonical stores with SecretRef "api_key" fields into SQLite', async () => {
+    const state = await makeTestState();
+    const legacy = {
+      version: 1,
+      profiles: {
+        "openrouter:default": {
+          type: "api_key",
+          provider: "openrouter",
+          api_key: { source: "env", provider: "default", id: "OPENROUTER_API_KEY" },
+        },
+      },
+    };
+    const authPath = writeLegacyAuthProfiles(state, legacy);
+
+    const result = await maybeRepairLegacyFlatAuthProfileStores({
+      cfg: {},
+      prompter: makePrompter(true),
+      now: () => 225,
+    });
+
+    expect(result.detected).toEqual([authPath]);
+    expect(result.warnings).toStrictEqual([]);
+    expect(fs.existsSync(authPath)).toBe(false);
+    expect(loadPersistedAuthProfileStore(state.agentDir())).toEqual({
+      version: 1,
+      profiles: {
+        "openrouter:default": {
+          type: "api_key",
+          provider: "openrouter",
+          keyRef: { source: "env", provider: "default", id: "OPENROUTER_API_KEY" },
+        },
+      },
+    });
+    expect(JSON.parse(fs.readFileSync(`${authPath}.legacy-flat.225.bak`, "utf8"))).toEqual(legacy);
+  });
+
   it("imports retired auth.json stores into SQLite and removes the source", async () => {
     const state = await makeTestState();
     const agentDir = state.agentDir();

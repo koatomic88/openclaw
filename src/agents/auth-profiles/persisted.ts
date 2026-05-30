@@ -172,6 +172,9 @@ function normalizeRawCredentialEntry(
   if (!("key" in entry) && typeof entry["apiKey"] === "string") {
     entry["key"] = entry["apiKey"];
   }
+  if (!("key" in entry) && !("keyRef" in entry) && "api_key" in entry) {
+    entry["key"] = entry["api_key"];
+  }
   normalizeSecretBackedField({ entry, valueField: "key", refField: "keyRef" });
   normalizeSecretBackedField({ entry, valueField: "token", refField: "tokenRef" });
   if (entry.type === "api_key") {
