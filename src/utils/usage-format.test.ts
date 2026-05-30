@@ -517,9 +517,9 @@ describe("usage-format", () => {
       })?.input,
     ).toBe(9);
 
-    await fs.writeFile(
-      path.join(agentDir, "models.json"),
-      JSON.stringify({
+    writeStoredModelsConfigRaw(
+      agentDir,
+      `${JSON.stringify({
         providers: {
           "demo-metadata-json": {
             models: [
@@ -531,8 +531,7 @@ describe("usage-format", () => {
             ],
           },
         },
-      }),
-      "utf8",
+      })}\n`,
     );
 
     expect(
@@ -572,7 +571,7 @@ describe("usage-format", () => {
     ).toBe(9);
   });
 
-  it("retries models.json after an initial missing read", async () => {
+  it("retries stored model catalog after an initial missing read", async () => {
     expect(
       resolveModelCostConfig({
         provider: "demo-late",
@@ -580,9 +579,9 @@ describe("usage-format", () => {
       }),
     ).toBeUndefined();
 
-    await fs.writeFile(
-      path.join(agentDir, "models.json"),
-      JSON.stringify({
+    writeStoredModelsConfigRaw(
+      agentDir,
+      `${JSON.stringify({
         providers: {
           "demo-late": {
             models: [
@@ -593,8 +592,7 @@ describe("usage-format", () => {
             ],
           },
         },
-      }),
-      "utf8",
+      })}\n`,
     );
 
     expect(
@@ -605,10 +603,10 @@ describe("usage-format", () => {
     ).toBe(1);
   });
 
-  it("does not poll models.json stats after the process-local cost index is loaded", async () => {
-    await fs.writeFile(
-      path.join(agentDir, "models.json"),
-      JSON.stringify({
+  it("does not poll filesystem stats after the process-local cost index is loaded", async () => {
+    writeStoredModelsConfigRaw(
+      agentDir,
+      `${JSON.stringify({
         providers: {
           "demo-stat": {
             models: [
@@ -619,8 +617,7 @@ describe("usage-format", () => {
             ],
           },
         },
-      }),
-      "utf8",
+      })}\n`,
     );
 
     expect(
