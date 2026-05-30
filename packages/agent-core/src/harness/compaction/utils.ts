@@ -1,4 +1,4 @@
-// packages/agent-core/src/harness/compaction utils helpers and runtime behavior.
+// Shared compaction helpers for file-operation tracking and conversation serialization.
 import type { Message } from "../../llm.js";
 import type { AgentMessage } from "../../types.js";
 
