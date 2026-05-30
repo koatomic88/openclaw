@@ -115,9 +115,16 @@ function tableHasColumn(db: DatabaseSync, tableName: string, columnName: string)
   return rows.some((row) => row.name === columnName);
 }
 
+function tableExists(db: DatabaseSync, tableName: string): boolean {
+  const row = db
+    .prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ? LIMIT 1")
+    .get(tableName) as { "1"?: unknown } | undefined;
+  return Boolean(row);
+}
+
 function ensureColumn(db: DatabaseSync, tableName: string, columnSql: string): void {
   const columnName = columnSql.trim().split(/\s+/, 1)[0];
-  if (!columnName || tableHasColumn(db, tableName, columnName)) {
+  if (!columnName || !tableExists(db, tableName) || tableHasColumn(db, tableName, columnName)) {
     return;
   }
   db.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnSql};`);
@@ -128,10 +135,12 @@ function ensureAdditiveStateColumns(db: DatabaseSync): void {
   ensureColumn(db, "node_pairing_pending", "client_mode TEXT");
   ensureColumn(db, "node_pairing_paired", "client_id TEXT");
   ensureColumn(db, "node_pairing_paired", "client_mode TEXT");
+  ensureColumn(db, "agent_model_catalogs", "relative_path TEXT NOT NULL DEFAULT ''");
 }
 
 function ensureSchema(db: DatabaseSync, pathname: string): void {
   assertSupportedSchemaVersion(db, pathname);
+  ensureAdditiveStateColumns(db);
   db.exec(OPENCLAW_STATE_SCHEMA_SQL);
   ensureAdditiveStateColumns(db);
   db.exec(`PRAGMA user_version = ${OPENCLAW_STATE_SCHEMA_VERSION};`);
