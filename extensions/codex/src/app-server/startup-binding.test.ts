@@ -65,7 +65,7 @@ describe("Codex app-server startup binding", () => {
         agents: {
           defaults: {
             compaction: {
-              truncateAfterCompaction: true,
+              rotateAfterCompaction: true,
             },
           },
         },
@@ -95,7 +95,7 @@ describe("Codex app-server startup binding", () => {
         agents: {
           defaults: {
             compaction: {
-              truncateAfterCompaction: true,
+              rotateAfterCompaction: true,
               maxActiveTranscriptBytes: "1k",
             },
           },
@@ -128,7 +128,7 @@ describe("Codex app-server startup binding", () => {
         agents: {
           defaults: {
             compaction: {
-              truncateAfterCompaction: true,
+              rotateAfterCompaction: true,
               maxActiveTranscriptBytes: 1_000,
             },
           },
@@ -174,7 +174,7 @@ describe("Codex app-server startup binding", () => {
         agents: {
           defaults: {
             compaction: {
-              truncateAfterCompaction: true,
+              rotateAfterCompaction: true,
               maxActiveTranscriptBytes: "1mb",
             },
           },
@@ -220,7 +220,7 @@ describe("Codex app-server startup binding", () => {
         agents: {
           defaults: {
             compaction: {
-              truncateAfterCompaction: true,
+              rotateAfterCompaction: true,
               maxActiveTranscriptBytes: "1mb",
             },
           },
@@ -275,7 +275,7 @@ describe("Codex app-server startup binding", () => {
         agents: {
           defaults: {
             compaction: {
-              truncateAfterCompaction: true,
+              rotateAfterCompaction: true,
               maxActiveTranscriptBytes: "1mb",
             },
           },
@@ -320,7 +320,7 @@ describe("Codex app-server startup binding", () => {
         agents: {
           defaults: {
             compaction: {
-              truncateAfterCompaction: true,
+              rotateAfterCompaction: true,
               maxActiveTranscriptBytes: "1mb",
             },
           },
@@ -353,7 +353,7 @@ describe("Codex app-server startup binding", () => {
         agents: {
           defaults: {
             compaction: {
-              truncateAfterCompaction: true,
+              rotateAfterCompaction: true,
               maxActiveTranscriptBytes: 1_000,
             },
           },
@@ -385,7 +385,7 @@ describe("Codex app-server startup binding", () => {
         agents: {
           defaults: {
             compaction: {
-              truncateAfterCompaction: true,
+              rotateAfterCompaction: true,
               maxActiveTranscriptBytes: 1_000,
             },
           },

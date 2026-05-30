@@ -3,6 +3,8 @@ import path from "node:path";
 import {
   abortAgentHarnessRun,
   embeddedAgentLog,
+  listTrajectoryRuntimeEvents,
+  loadSqliteSessionTranscriptEvents,
   openTranscriptSessionManagerForSession,
   onAgentEvent,
   type AgentEventPayload,
@@ -125,12 +127,29 @@ function openTestTranscriptSession(params: { sessionFile: string; workspaceDir: 
   });
 }
 
+function appServerTestBindingIdentity(sessionId = "session-1") {
+  return {
+    sessionKey: `agent:main:${sessionId}`,
+    sessionId,
+  };
+}
+
+function readTranscriptRawForTest(sessionFile: string, sessionId = "session-1"): string {
+  return loadSqliteSessionTranscriptEvents({
+    agentId: "main",
+    path: sessionFile,
+    sessionId,
+  })
+    .map((entry) => JSON.stringify(entry.event))
+    .join("\n");
+}
+
 async function writeExistingBinding(
-  sessionFile: string,
+  _sessionFile: string,
   workspaceDir: string,
   overrides: Partial<Parameters<typeof writeCodexAppServerBinding>[1]> = {},
 ) {
-  await writeCodexAppServerBinding(sessionFile, {
+  await writeCodexAppServerBinding(appServerTestBindingIdentity(), {
     threadId: "thread-existing",
     cwd: workspaceDir,
     model: "gpt-5.4-codex",
@@ -947,14 +966,14 @@ describe("runCodexAppServerAttempt", () => {
       "features.code_mode": true,
       "features.code_mode_only": false,
     });
-    const binding = await readCodexAppServerBinding(sessionFile);
+    const binding = await readCodexAppServerBinding(appServerTestBindingIdentity());
     expect(binding?.mcpServersFingerprint).toBe("mcp-v1");
   });
 
   it("starts a new Codex thread when the MCP server fingerprint changes", async () => {
     const sessionFile = path.join(tempDir, "session.jsonl");
     const workspaceDir = path.join(tempDir, "workspace");
-    await writeCodexAppServerBinding(sessionFile, {
+    await writeCodexAppServerBinding(appServerTestBindingIdentity(), {
       threadId: "old-thread",
       cwd: workspaceDir,
       dynamicToolsFingerprint: JSON.stringify([]),
@@ -985,7 +1004,7 @@ describe("runCodexAppServerAttempt", () => {
   it("starts a no-MCP Codex thread when MCP config is evaluated empty", async () => {
     const sessionFile = path.join(tempDir, "session.jsonl");
     const workspaceDir = path.join(tempDir, "workspace");
-    await writeCodexAppServerBinding(sessionFile, {
+    await writeCodexAppServerBinding(appServerTestBindingIdentity(), {
       threadId: "old-thread",
       cwd: workspaceDir,
       dynamicToolsFingerprint: JSON.stringify([]),
@@ -1010,7 +1029,9 @@ describe("runCodexAppServerAttempt", () => {
     expect(request.mock.calls.map(([method]) => method)).toEqual(["thread/start"]);
     expect(binding.threadId).toBe("new-thread");
     expect(binding.mcpServersFingerprint).toBeUndefined();
-    expect((await readCodexAppServerBinding(sessionFile))?.mcpServersFingerprint).toBeUndefined();
+    expect(
+      (await readCodexAppServerBinding(appServerTestBindingIdentity()))?.mcpServersFingerprint,
+    ).toBeUndefined();
   });
 
   it("scopes Codex developer reply instructions to message-tool-only delivery", () => {
@@ -1106,12 +1127,10 @@ describe("runCodexAppServerAttempt", () => {
     expect(inputText).toContain("Current user request:\nhello");
     const [llmInputPayload] = mockCall(llmInput, "llm_input") as [{ prompt?: string }, unknown];
     expect(llmInputPayload.prompt).toBe(inputText);
-    const trajectoryEvents = (
-      await fs.readFile(path.join(tempDir, "trajectory", "session-1.jsonl"), "utf8")
-    )
-      .trim()
-      .split("\n")
-      .map((line) => JSON.parse(line) as { data?: { prompt?: string }; type?: string });
+    const trajectoryEvents = listTrajectoryRuntimeEvents({
+      agentId: "main",
+      sessionId: "session-1",
+    });
     expect(trajectoryEvents.find((event) => event.type === "context.compiled")?.data?.prompt).toBe(
       inputText,
     );
@@ -1166,7 +1185,7 @@ describe("runCodexAppServerAttempt", () => {
     const run = runCodexAppServerAttempt(params);
     await harness.waitForMethod("turn/start");
     await vi.waitFor(async () => {
-      const raw = await fs.readFile(sessionFile, "utf8");
+      const raw = readTranscriptRawForTest(sessionFile);
       expect(raw).toContain('"role":"user"');
       expect(raw).toContain('"content":"external channel prompt"');
       expect(raw).toContain('"idempotencyKey":"codex-app-server:thread-1:turn-1:prompt"');
@@ -1181,13 +1200,13 @@ describe("runCodexAppServerAttempt", () => {
       );
     });
 
-    const rawBeforeCompletion = await fs.readFile(sessionFile, "utf8");
+    const rawBeforeCompletion = readTranscriptRawForTest(sessionFile);
     expect(rawBeforeCompletion).not.toContain('"role":"assistant"');
 
     await harness.completeTurn({ threadId: "thread-1", turnId: "turn-1" });
     await run;
 
-    const rawAfterCompletion = await fs.readFile(sessionFile, "utf8");
+    const rawAfterCompletion = readTranscriptRawForTest(sessionFile);
     expect(rawAfterCompletion.match(/"role":"user"/gu)).toHaveLength(1);
     expect(onUserMessagePersisted).toHaveBeenCalledTimes(1);
   });
@@ -1664,7 +1683,13 @@ describe("runCodexAppServerAttempt", () => {
     expect(hookContext.sessionId).toBe("session-1");
     const threadStart = harness.requests.find((request) => request.method === "thread/start");
     const threadStartParams = threadStart?.params as { developerInstructions?: string } | undefined;
-    expect(threadStartParams?.developerInstructions).toContain("pre system\n\ncustom codex system");
+    const wrappedPluginSystemContext = (text: string) =>
+      `---\n\nOpenClaw plugin-injected system context. This block is not workspace file content.\n\n${text}\n\n---`;
+    expect(threadStartParams?.developerInstructions).toContain(
+      `${wrappedPluginSystemContext("pre system")}\n\ncustom codex system\n\n${wrappedPluginSystemContext(
+        "post system",
+      )}`,
+    );
     const turnStart = harness.requests.find((request) => request.method === "turn/start");
     const turnStartParams = turnStart?.params as
       | { input?: Array<{ text?: string; text_elements?: unknown[]; type?: string }> }
@@ -1706,17 +1731,19 @@ describe("runCodexAppServerAttempt", () => {
     const sessionFile = path.join(tempDir, "session.jsonl");
     const workspaceDir = path.join(tempDir, "workspace");
     await writeExistingBinding(sessionFile, workspaceDir, { dynamicToolsFingerprint: "[]" });
-    const binding = await readCodexAppServerBinding(sessionFile);
+    const binding = await readCodexAppServerBinding(appServerTestBindingIdentity());
     const bindingUpdatedAt = Date.parse(binding?.updatedAt ?? "");
     if (!Number.isFinite(bindingUpdatedAt)) {
       throw new Error("expected valid Codex binding timestamp");
     }
+    await vi.waitFor(() => expect(Date.now()).toBeGreaterThan(bindingUpdatedAt), fastWait);
+    const messageStartedAt = Date.now();
     const sessionManager = openTestTranscriptSession({ sessionFile, workspaceDir });
     sessionManager.appendMessage(
-      userMessage("we were discussing the Sonnet leak screenshots", bindingUpdatedAt + 1_000),
+      userMessage("we were discussing the Sonnet leak screenshots", messageStartedAt),
     );
     sessionManager.appendMessage(
-      assistantMessage("David Ondrej was mentioned in that prior thread", bindingUpdatedAt + 2_000),
+      assistantMessage("David Ondrej was mentioned in that prior thread", messageStartedAt + 1),
     );
     const harness = createResumeHarness();
     const params = createParams(sessionFile, workspaceDir);
@@ -1745,24 +1772,21 @@ describe("runCodexAppServerAttempt", () => {
     const sessionFile = path.join(tempDir, "session.jsonl");
     const workspaceDir = path.join(tempDir, "workspace");
     await writeExistingBinding(sessionFile, workspaceDir, { dynamicToolsFingerprint: "[]" });
-    const oldBindingUpdatedAt = Date.now() - 60_000;
-    const bindingPath = `${sessionFile}.codex-app-server.json`;
-    const bindingPayload = JSON.parse(await fs.readFile(bindingPath, "utf8")) as Record<
-      string,
-      unknown
-    >;
-    bindingPayload.updatedAt = new Date(oldBindingUpdatedAt).toISOString();
-    await fs.writeFile(bindingPath, `${JSON.stringify(bindingPayload, null, 2)}\n`);
+    const binding = await readCodexAppServerBinding(appServerTestBindingIdentity());
+    const bindingUpdatedAt = Date.parse(binding?.updatedAt ?? "");
+    if (!Number.isFinite(bindingUpdatedAt)) {
+      throw new Error("expected valid Codex binding timestamp");
+    }
+    await vi.waitFor(() => expect(Date.now()).toBeGreaterThan(bindingUpdatedAt), fastWait);
+    const messageStartedAt = Date.now();
     const sessionManager = openTestTranscriptSession({ sessionFile, workspaceDir });
     sessionManager.appendMessage(
-      userMessage("we were discussing the Sonnet leak screenshots", oldBindingUpdatedAt + 1_000),
+      userMessage("we were discussing the Sonnet leak screenshots", messageStartedAt),
     );
     sessionManager.appendMessage(
-      assistantMessage(
-        "David Ondrej was mentioned in that prior thread",
-        oldBindingUpdatedAt + 2_000,
-      ),
+      assistantMessage("David Ondrej was mentioned in that prior thread", messageStartedAt),
     );
+    await vi.waitFor(() => expect(Date.now()).toBeGreaterThan(messageStartedAt), fastWait);
 
     const firstHarness = createResumeHarness();
     const firstParams = createParams(sessionFile, workspaceDir);
@@ -2547,7 +2571,7 @@ describe("runCodexAppServerAttempt", () => {
       "turn/start",
       "thread/unsubscribe",
     ]);
-    const binding = await readCodexAppServerBinding(sessionFile);
+    const binding = await readCodexAppServerBinding(appServerTestBindingIdentity());
     expect(binding?.threadId).toBe("thread-existing");
   });
 
@@ -2574,7 +2598,7 @@ describe("runCodexAppServerAttempt", () => {
       "turn/start",
       "thread/unsubscribe",
     ]);
-    const binding = await readCodexAppServerBinding(sessionFile);
+    const binding = await readCodexAppServerBinding(appServerTestBindingIdentity());
     expect(binding?.threadId).toBe("thread-existing");
   });
 
@@ -3706,7 +3730,7 @@ describe("runCodexAppServerAttempt", () => {
       agents: {
         defaults: {
           compaction: {
-            truncateAfterCompaction: true,
+            rotateAfterCompaction: true,
             maxActiveTranscriptBytes: "1mb",
           },
         },
@@ -3722,7 +3746,7 @@ describe("runCodexAppServerAttempt", () => {
 
     expect(requests.map((entry) => entry.method)).toContain("thread/start");
     expect(requests.map((entry) => entry.method)).not.toContain("thread/resume");
-    const savedBinding = await readCodexAppServerBinding(sessionFile);
+    const savedBinding = await readCodexAppServerBinding(appServerTestBindingIdentity());
     expect(savedBinding?.threadId).toBe("thread-1");
   });
 
@@ -3771,7 +3795,7 @@ describe("runCodexAppServerAttempt", () => {
       agents: {
         defaults: {
           compaction: {
-            truncateAfterCompaction: true,
+            rotateAfterCompaction: true,
             maxActiveTranscriptBytes: "1mb",
           },
         },
@@ -3791,7 +3815,7 @@ describe("runCodexAppServerAttempt", () => {
     expect(requests.map((entry) => entry.method)).toContain("thread/start");
     expect(requests.map((entry) => entry.method)).not.toContain("thread/resume");
     expect(seenAuthProfileIds).toEqual(["openai-codex:work"]);
-    const savedBinding = await readCodexAppServerBinding(sessionFile);
+    const savedBinding = await readCodexAppServerBinding(appServerTestBindingIdentity());
     expect(savedBinding?.authProfileId).toBe("openai-codex:work");
     expect(savedBinding?.threadId).toBe("thread-1");
   });

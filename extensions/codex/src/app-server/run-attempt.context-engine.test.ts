@@ -8,7 +8,10 @@ import {
   type AgentMessage,
   type HarnessContextEngine as ContextEngine,
 } from "openclaw/plugin-sdk/agent-harness-runtime";
-import { replaceSqliteSessionTranscriptEvents } from "openclaw/plugin-sdk/session-store-runtime";
+import {
+  replaceSqliteSessionTranscriptEvents,
+  upsertSessionEntry,
+} from "openclaw/plugin-sdk/session-store-runtime";
 import {
   closeOpenClawAgentDatabasesForTest,
   closeOpenClawStateDatabaseForTest,
@@ -631,7 +634,7 @@ describe("runCodexAppServerAttempt context-engine lifecycle", () => {
         agents: {
           defaults: {
             compaction: {
-              truncateAfterCompaction: true,
+              rotateAfterCompaction: true,
               maxActiveTranscriptBytes,
             },
           },
@@ -656,44 +659,44 @@ describe("runCodexAppServerAttempt context-engine lifecycle", () => {
   );
 
   it("projects mirrored history when an oversized thread-bootstrap binding has no active context engine", async () => {
-    const sessionFile = path.join(tempDir, "session.jsonl");
+    const sessionId = "session-1";
     const workspaceDir = path.join(tempDir, "workspace");
     const agentDir = path.join(tempDir, "agent");
-    const sessionManager = openTestTranscriptSession({
-      sessionId: "session-1",
-      sessionFile,
-      workspaceDir,
-    });
-    sessionManager.appendMessage(
-      userMessage("previous stale-bootstrap request", Date.now()) as never,
-    );
-    sessionManager.appendMessage(
-      assistantMessage("previous stale-bootstrap answer", Date.now() + 1) as never,
-    );
-    await writeCodexAppServerBinding(sessionFile, {
-      threadId: "thread-stale-bootstrap",
-      cwd: workspaceDir,
-      dynamicToolsFingerprint: "[]",
-      contextEngine: {
-        schemaVersion: 1,
-        engineId: "lossless-claw",
-        policyFingerprint:
-          '{"schemaVersion":1,"engineId":"lossless-claw","ownsCompaction":true,"projectionMaxChars":24000}',
-        projection: {
-          schemaVersion: 1,
-          mode: "thread_bootstrap",
-          epoch: "epoch-stale",
-        },
+    seedSessionTranscript(sessionId, [
+      userMessage("previous stale-bootstrap request", Date.now()),
+      assistantMessage("previous stale-bootstrap answer", Date.now() + 1),
+    ]);
+    upsertSessionEntry({
+      agentId: "main",
+      sessionKey: `agent:main:${sessionId}`,
+      entry: {
+        sessionId,
+        updatedAt: Date.now(),
+        totalTokens: 12_000,
+        totalTokensFresh: true,
       },
     });
-    await fs.writeFile(
-      path.join(path.dirname(sessionFile), "sessions.json"),
-      JSON.stringify({
-        "agent:main:session-1": {
-          sessionFile,
-          totalTokens: 12_000,
+    await writeCodexAppServerBinding(
+      {
+        sessionKey: `agent:main:${sessionId}`,
+        sessionId,
+      },
+      {
+        threadId: "thread-stale-bootstrap",
+        cwd: workspaceDir,
+        dynamicToolsFingerprint: "[]",
+        contextEngine: {
+          schemaVersion: 1,
+          engineId: "lossless-claw",
+          policyFingerprint:
+            '{"schemaVersion":1,"engineId":"lossless-claw","ownsCompaction":true,"projectionMaxChars":24000}',
+          projection: {
+            schemaVersion: 1,
+            mode: "thread_bootstrap",
+            epoch: "epoch-stale",
+          },
         },
-      }),
+      },
     );
     const rolloutDir = path.join(agentDir, "codex-home", "sessions");
     await fs.mkdir(rolloutDir, { recursive: true });
@@ -719,13 +722,13 @@ describe("runCodexAppServerAttempt context-engine lifecycle", () => {
       }
       return undefined;
     });
-    const params = createParams(sessionFile, workspaceDir);
+    const params = createParams(sessionId, workspaceDir);
     params.agentDir = agentDir;
     params.config = {
       agents: {
         defaults: {
           compaction: {
-            truncateAfterCompaction: true,
+            rotateAfterCompaction: true,
             maxActiveTranscriptBytes: "1mb",
           },
         },
@@ -976,7 +979,7 @@ describe("runCodexAppServerAttempt context-engine lifecycle", () => {
     expect(savedBinding?.contextEngine?.projection).toBeUndefined();
   });
 
-  it("retries a resumed context-engine thread on a fresh Codex thread after early context overflow", async () => {
+  it("retries a resumed context-engine thread on a fresh Codex thread without plugin compaction", async () => {
     const sessionId = "session-1";
     const successorSessionId = "session-1-compacted";
     const workspaceDir = path.join(tempDir, "workspace");
@@ -1077,36 +1080,14 @@ describe("runCodexAppServerAttempt context-engine lifecycle", () => {
     const result = await run;
 
     expect(result.assistantTexts).toContain("fresh answer");
-    expect(compact).toHaveBeenCalledWith(
-      expect.objectContaining({
-        sessionId: "session-1",
-        sessionKey: "agent:main:session-1",
-        transcriptScope: { agentId: "main", sessionId },
-        tokenBudget: 400_000,
-        currentTokenCount: 400_000,
-        compactionTarget: "threshold",
-        force: true,
-      }),
-    );
-    expect(assemble).toHaveBeenCalledTimes(2);
-    const retryAssembleParams = assemble.mock.calls[1]?.[0];
-    expect(retryAssembleParams?.messages.map((message) => message.role)).toEqual(["assistant"]);
-    const retryAssembleMessageTexts = retryAssembleParams?.messages.map((message) => {
-      if (!("content" in message) || !Array.isArray(message.content)) {
-        return "";
-      }
-      const firstContent = message.content[0];
-      return typeof firstContent === "object" && firstContent !== null && "text" in firstContent
-        ? firstContent.text
-        : "";
-    });
-    expect(retryAssembleMessageTexts).toEqual(["successor compacted context"]);
+    expect(compact).not.toHaveBeenCalled();
+    expect(assemble).toHaveBeenCalledTimes(1);
     const retryInputText = getRequestInputTextAt(harness, -1);
-    expect(retryInputText).toContain("successor compacted context");
-    expect(retryInputText).not.toContain("pre-compaction context");
+    expect(retryInputText).toBe("hello");
+    expect(retryInputText).not.toContain("successor compacted context");
     const savedBinding = await readCodexAppServerBinding({
       sessionKey: `agent:main:${sessionId}`,
-      sessionId: successorSessionId,
+      sessionId,
     });
     expect(savedBinding?.threadId).toBe("thread-fresh");
     expect(savedBinding?.contextEngine?.engineId).toBe("lossless-claw");
