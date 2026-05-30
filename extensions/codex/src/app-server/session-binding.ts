@@ -155,6 +155,10 @@ function normalizeCodexAppServerBinding(
         : undefined,
     mcpServersFingerprint:
       typeof parsed.mcpServersFingerprint === "string" ? parsed.mcpServersFingerprint : undefined,
+    nativeHookRelayGeneration:
+      typeof parsed.nativeHookRelayGeneration === "string"
+        ? parsed.nativeHookRelayGeneration
+        : undefined,
     pluginAppsFingerprint:
       typeof parsed.pluginAppsFingerprint === "string" ? parsed.pluginAppsFingerprint : undefined,
     pluginAppsInputFingerprint:

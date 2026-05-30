@@ -1,6 +1,7 @@
 import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import {
+  codexAppServerTestBindingIdentity,
   createParams,
   setupRunAttemptTestHooks,
   tempDir,
@@ -244,7 +245,7 @@ describe("Codex app-server thread lifecycle bindings", () => {
   it("starts a fresh Codex thread for legacy context-engine sidecars without metadata", async () => {
     const sessionFile = path.join(tempDir, "session.jsonl");
     const workspaceDir = path.join(tempDir, "workspace");
-    await writeCodexAppServerBinding(sessionFile, {
+    await writeCodexAppServerBinding(codexAppServerTestBindingIdentity(), {
       threadId: "thread-existing",
       cwd: workspaceDir,
       model: "gpt-5.4-codex",
@@ -280,7 +281,7 @@ describe("Codex app-server thread lifecycle bindings", () => {
       rotatedContextEngineBinding: true,
     });
     expect(request.mock.calls.map(([method]) => method)).toEqual(["thread/start"]);
-    const savedBinding = await readCodexAppServerBinding(sessionFile);
+    const savedBinding = await readCodexAppServerBinding(codexAppServerTestBindingIdentity());
     expect(savedBinding?.contextEngine?.engineId).toBe("lossless-claw");
     expect(savedBinding?.contextEngine?.policyFingerprint).toContain('"contextTokenBudget":400000');
   });
@@ -294,7 +295,7 @@ describe("Codex app-server thread lifecycle bindings", () => {
       policyFingerprint:
         '{"schemaVersion":1,"engineId":"lossless-claw","ownsCompaction":true,"contextTokenBudget":400000,"projectionMaxChars":1000000}',
     };
-    await writeCodexAppServerBinding(sessionFile, {
+    await writeCodexAppServerBinding(codexAppServerTestBindingIdentity(), {
       threadId: "thread-existing",
       cwd: workspaceDir,
       model: "gpt-5.4-codex",
@@ -333,7 +334,7 @@ describe("Codex app-server thread lifecycle bindings", () => {
   it("starts a fresh Codex thread when context-engine sidecar metadata is no longer active", async () => {
     const sessionFile = path.join(tempDir, "session.jsonl");
     const workspaceDir = path.join(tempDir, "workspace");
-    await writeCodexAppServerBinding(sessionFile, {
+    await writeCodexAppServerBinding(codexAppServerTestBindingIdentity(), {
       threadId: "thread-existing",
       cwd: workspaceDir,
       model: "gpt-5.4-codex",
@@ -369,14 +370,14 @@ describe("Codex app-server thread lifecycle bindings", () => {
       rotatedContextEngineBinding: true,
     });
     expect(request.mock.calls.map(([method]) => method)).toEqual(["thread/start"]);
-    const savedBinding = await readCodexAppServerBinding(sessionFile);
+    const savedBinding = await readCodexAppServerBinding(codexAppServerTestBindingIdentity());
     expect(savedBinding?.contextEngine).toBeUndefined();
   });
 
   it("starts a fresh Codex thread when context-engine policy metadata changes", async () => {
     const sessionFile = path.join(tempDir, "session.jsonl");
     const workspaceDir = path.join(tempDir, "workspace");
-    await writeCodexAppServerBinding(sessionFile, {
+    await writeCodexAppServerBinding(codexAppServerTestBindingIdentity(), {
       threadId: "thread-existing",
       cwd: workspaceDir,
       model: "gpt-5.4-codex",
@@ -425,7 +426,7 @@ describe("Codex app-server thread lifecycle bindings", () => {
       rotatedContextEngineBinding: true,
     });
     expect(request.mock.calls.map(([method]) => method)).toEqual(["thread/start"]);
-    const savedBinding = await readCodexAppServerBinding(sessionFile);
+    const savedBinding = await readCodexAppServerBinding(codexAppServerTestBindingIdentity());
     expect(savedBinding?.contextEngine?.policyFingerprint).toContain('"engineVersion":"1.0.1"');
     expect(savedBinding?.contextEngine?.policyFingerprint).toContain(
       '"turnMaintenanceMode":"foreground"',
@@ -456,7 +457,8 @@ describe("Codex app-server thread lifecycle bindings", () => {
       dynamicTools: [createMessageDynamicTool("Send and manage messages.")],
       appServer,
     });
-    const fingerprint = (await readCodexAppServerBinding(sessionFile))?.dynamicToolsFingerprint;
+    const fingerprint = (await readCodexAppServerBinding(codexAppServerTestBindingIdentity()))
+      ?.dynamicToolsFingerprint;
     await startOrResumeThread({
       client: { request } as never,
       params,
@@ -472,7 +474,7 @@ describe("Codex app-server thread lifecycle bindings", () => {
       appServer,
     });
 
-    const binding = await readCodexAppServerBinding(sessionFile);
+    const binding = await readCodexAppServerBinding(codexAppServerTestBindingIdentity());
     expect(binding?.dynamicToolsFingerprint).toBe(fingerprint);
     expect(binding?.threadId).toBe("thread-1");
     expect(request.mock.calls.map(([method]) => method)).toEqual([
@@ -486,7 +488,7 @@ describe("Codex app-server thread lifecycle bindings", () => {
     const sessionFile = path.join(tempDir, "session.jsonl");
     const workspaceDir = path.join(tempDir, "workspace");
     const pluginAppPolicyContext = createPluginAppPolicyContext();
-    await writeCodexAppServerBinding(sessionFile, {
+    await writeCodexAppServerBinding(codexAppServerTestBindingIdentity(), {
       threadId: "thread-existing",
       cwd: workspaceDir,
       model: "gpt-5.4-codex",
@@ -545,7 +547,7 @@ describe("Codex app-server thread lifecycle bindings", () => {
         build: buildDenyAllPluginThreadConfig,
       },
     });
-    const savedAfterDeny = await readCodexAppServerBinding(sessionFile);
+    const savedAfterDeny = await readCodexAppServerBinding(codexAppServerTestBindingIdentity());
 
     expect(savedAfterDeny?.threadId).toBe("thread-existing");
     expect(savedAfterDeny?.pluginAppsFingerprint).toBe("plugin-apps-config-1");
@@ -578,7 +580,7 @@ describe("Codex app-server thread lifecycle bindings", () => {
         },
       },
     });
-    const savedAfterAllowed = await readCodexAppServerBinding(sessionFile);
+    const savedAfterAllowed = await readCodexAppServerBinding(codexAppServerTestBindingIdentity());
     expect(savedAfterAllowed?.threadId).toBe("thread-existing");
     expect(savedAfterAllowed?.pluginAppsFingerprint).toBe("plugin-apps-config-1");
     expect(savedAfterAllowed?.pluginAppsInputFingerprint).toBe("plugin-apps-input-1");
@@ -588,7 +590,7 @@ describe("Codex app-server thread lifecycle bindings", () => {
   it("preserves the binding when the app-server closes during thread resume", async () => {
     const sessionFile = path.join(tempDir, "session.jsonl");
     const workspaceDir = path.join(tempDir, "workspace");
-    await writeCodexAppServerBinding(sessionFile, {
+    await writeCodexAppServerBinding(codexAppServerTestBindingIdentity(), {
       threadId: "thread-existing",
       cwd: workspaceDir,
       model: "gpt-5.4-codex",
@@ -614,7 +616,7 @@ describe("Codex app-server thread lifecycle bindings", () => {
     ).rejects.toThrow("codex app-server client is closed");
 
     expect(request.mock.calls.map(([method]) => method)).toEqual(["thread/resume"]);
-    const binding = await readCodexAppServerBinding(sessionFile);
+    const binding = await readCodexAppServerBinding(codexAppServerTestBindingIdentity());
     expect(binding?.threadId).toBe("thread-existing");
   });
 
@@ -711,7 +713,7 @@ describe("Codex app-server thread lifecycle bindings", () => {
       hooks: { PreToolUse: [] },
       ...createPluginAppConfigPatch(),
     });
-    const binding = await readCodexAppServerBinding(sessionFile);
+    const binding = await readCodexAppServerBinding(codexAppServerTestBindingIdentity());
     expect(binding?.threadId).toBe("thread-plugins");
     expect(binding?.pluginAppsFingerprint).toBe("plugin-apps-config-1");
     expect(binding?.pluginAppsInputFingerprint).toBe("plugin-apps-input-1");
@@ -866,7 +868,7 @@ describe("Codex app-server thread lifecycle bindings", () => {
   it("starts a new plugin app thread when full binding revalidation removes an app", async () => {
     const sessionFile = path.join(tempDir, "session.jsonl");
     const workspaceDir = path.join(tempDir, "workspace");
-    await writeCodexAppServerBinding(sessionFile, {
+    await writeCodexAppServerBinding(codexAppServerTestBindingIdentity(), {
       threadId: "thread-existing",
       cwd: workspaceDir,
       model: "gpt-5.4-codex",
@@ -930,7 +932,7 @@ describe("Codex app-server thread lifecycle bindings", () => {
         },
       },
     });
-    const binding = await readCodexAppServerBinding(sessionFile);
+    const binding = await readCodexAppServerBinding(codexAppServerTestBindingIdentity());
     expect(binding?.threadId).toBe("thread-revalidated");
     expect(binding?.pluginAppsFingerprint).toBe("plugin-apps-empty");
     expect(binding?.pluginAppPolicyContext).toEqual(emptyPolicyContext);
@@ -940,7 +942,7 @@ describe("Codex app-server thread lifecycle bindings", () => {
     const sessionFile = path.join(tempDir, "session.jsonl");
     const workspaceDir = path.join(tempDir, "workspace");
     const pluginAppPolicyContext = createPluginAppPolicyContext();
-    await writeCodexAppServerBinding(sessionFile, {
+    await writeCodexAppServerBinding(codexAppServerTestBindingIdentity(), {
       threadId: "thread-existing",
       cwd: workspaceDir,
       model: "gpt-5.4-codex",
@@ -981,7 +983,7 @@ describe("Codex app-server thread lifecycle bindings", () => {
       "features.code_mode": true,
       "features.code_mode_only": false,
     });
-    const binding = await readCodexAppServerBinding(sessionFile);
+    const binding = await readCodexAppServerBinding(codexAppServerTestBindingIdentity());
     expect(binding?.threadId).toBe("thread-existing");
     expect(binding?.pluginAppsFingerprint).toBe("plugin-apps-config-1");
     expect(binding?.pluginAppsInputFingerprint).toBe("plugin-apps-input-1");
@@ -991,7 +993,7 @@ describe("Codex app-server thread lifecycle bindings", () => {
   it("rebuilds an empty plugin app binding after app inventory recovers", async () => {
     const sessionFile = path.join(tempDir, "session.jsonl");
     const workspaceDir = path.join(tempDir, "workspace");
-    await writeCodexAppServerBinding(sessionFile, {
+    await writeCodexAppServerBinding(codexAppServerTestBindingIdentity(), {
       threadId: "thread-existing",
       cwd: workspaceDir,
       model: "gpt-5.4-codex",
@@ -1040,7 +1042,7 @@ describe("Codex app-server thread lifecycle bindings", () => {
       "features.code_mode": true,
       "features.code_mode_only": false,
     });
-    const binding = await readCodexAppServerBinding(sessionFile);
+    const binding = await readCodexAppServerBinding(codexAppServerTestBindingIdentity());
     expect(binding?.threadId).toBe("thread-recovered");
     expect(binding?.pluginAppsFingerprint).toBe("plugin-apps-config-1");
     expect(binding?.pluginAppPolicyContext).toEqual(pluginAppPolicyContext);
@@ -1050,7 +1052,7 @@ describe("Codex app-server thread lifecycle bindings", () => {
     const sessionFile = path.join(tempDir, "session.jsonl");
     const workspaceDir = path.join(tempDir, "workspace");
     const emptyPolicyContext = { fingerprint: "plugin-policy-empty", apps: {}, pluginAppIds: {} };
-    await writeCodexAppServerBinding(sessionFile, {
+    await writeCodexAppServerBinding(codexAppServerTestBindingIdentity(), {
       threadId: "thread-existing",
       cwd: workspaceDir,
       model: "gpt-5.4-codex",
@@ -1110,7 +1112,7 @@ describe("Codex app-server thread lifecycle bindings", () => {
   it("rebuilds a partial plugin app binding after another plugin recovers", async () => {
     const sessionFile = path.join(tempDir, "session.jsonl");
     const workspaceDir = path.join(tempDir, "workspace");
-    await writeCodexAppServerBinding(sessionFile, {
+    await writeCodexAppServerBinding(codexAppServerTestBindingIdentity(), {
       threadId: "thread-existing",
       cwd: workspaceDir,
       model: "gpt-5.4-codex",
@@ -1160,7 +1162,7 @@ describe("Codex app-server thread lifecycle bindings", () => {
       "features.code_mode": true,
       "features.code_mode_only": false,
     });
-    const binding = await readCodexAppServerBinding(sessionFile);
+    const binding = await readCodexAppServerBinding(codexAppServerTestBindingIdentity());
     expect(binding?.threadId).toBe("thread-recovered");
     expect(binding?.pluginAppsFingerprint).toBe("plugin-apps-config-2");
     expect(binding?.pluginAppPolicyContext).toEqual(recoveredPolicyContext);
@@ -1169,7 +1171,7 @@ describe("Codex app-server thread lifecycle bindings", () => {
   it("rebuilds a partial plugin app binding after another app from the same plugin recovers", async () => {
     const sessionFile = path.join(tempDir, "session.jsonl");
     const workspaceDir = path.join(tempDir, "workspace");
-    await writeCodexAppServerBinding(sessionFile, {
+    await writeCodexAppServerBinding(codexAppServerTestBindingIdentity(), {
       threadId: "thread-existing",
       cwd: workspaceDir,
       model: "gpt-5.4-codex",
@@ -1224,7 +1226,7 @@ describe("Codex app-server thread lifecycle bindings", () => {
       "features.code_mode": true,
       "features.code_mode_only": false,
     });
-    const binding = await readCodexAppServerBinding(sessionFile);
+    const binding = await readCodexAppServerBinding(codexAppServerTestBindingIdentity());
     expect(binding?.threadId).toBe("thread-recovered");
     expect(binding?.pluginAppsFingerprint).toBe("plugin-apps-config-calendar-2");
     expect(binding?.pluginAppPolicyContext).toEqual(recoveredPolicyContext);
@@ -1233,7 +1235,7 @@ describe("Codex app-server thread lifecycle bindings", () => {
   it("starts a new configured thread for legacy bindings missing plugin app metadata", async () => {
     const sessionFile = path.join(tempDir, "session.jsonl");
     const workspaceDir = path.join(tempDir, "workspace");
-    await writeCodexAppServerBinding(sessionFile, {
+    await writeCodexAppServerBinding(codexAppServerTestBindingIdentity(), {
       threadId: "thread-existing",
       cwd: workspaceDir,
       model: "gpt-5.4-codex",
@@ -1277,7 +1279,7 @@ describe("Codex app-server thread lifecycle bindings", () => {
       "features.code_mode": true,
       "features.code_mode_only": false,
     });
-    const binding = await readCodexAppServerBinding(sessionFile);
+    const binding = await readCodexAppServerBinding(codexAppServerTestBindingIdentity());
     expect(binding?.threadId).toBe("thread-plugins");
     expect(binding?.pluginAppsFingerprint).toBe("plugin-apps-config-1");
     expect(binding?.pluginAppPolicyContext).toEqual(pluginAppPolicyContext);
@@ -1318,7 +1320,7 @@ describe("Codex app-server thread lifecycle bindings", () => {
   it("preserves the bound auth profile when resume params omit authProfileId", async () => {
     const sessionFile = path.join(tempDir, "session.jsonl");
     const workspaceDir = path.join(tempDir, "workspace");
-    await writeCodexAppServerBinding(sessionFile, {
+    await writeCodexAppServerBinding(codexAppServerTestBindingIdentity(), {
       threadId: "thread-existing",
       cwd: workspaceDir,
       model: "gpt-5.4-codex",

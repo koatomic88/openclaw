@@ -120,6 +120,18 @@ export function createParams(sessionFile: string, workspaceDir: string): Embedde
   } as EmbeddedRunAttemptParams;
 }
 
+export function codexAppServerTestBindingIdentity(
+  params: Pick<EmbeddedRunAttemptParams, "sessionKey" | "sessionId"> = {
+    sessionKey: "agent:main:session-1",
+    sessionId: "session-1",
+  },
+) {
+  return {
+    sessionKey: params.sessionKey,
+    sessionId: params.sessionId,
+  };
+}
+
 export function createCodexRuntimePlanFixture(): NonNullable<
   EmbeddedRunAttemptParams["runtimePlan"]
 > {
