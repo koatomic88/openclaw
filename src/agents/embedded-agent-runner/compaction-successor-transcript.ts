@@ -16,7 +16,7 @@ type ReadonlySessionManagerForRotation = Pick<
   "buildSessionContext" | "getBranch" | "getCwd" | "getEntries" | "getHeader"
 >;
 
-/** Shared type for Compaction Transcript Rotation in src/agents/embedded-agent-runner. */
+/** Outcome returned after attempting to write a compacted successor transcript. */
 export type CompactionTranscriptRotation = {
   rotated: boolean;
   reason?: string;
@@ -27,12 +27,12 @@ export type CompactionTranscriptRotation = {
   entriesWritten?: number;
 };
 
-/** Reused helper for should Rotate Compaction Transcript behavior in src/agents/embedded-agent-runner. */
+/** Reads the config flag that enables truncating transcripts after compaction. */
 export function shouldRotateCompactionTranscript(config?: OpenClawConfig): boolean {
   return config?.agents?.defaults?.compaction?.truncateAfterCompaction === true;
 }
 
-/** Reused helper for rotate Transcript After Compaction behavior in src/agents/embedded-agent-runner. */
+/** Writes a successor transcript starting at the latest compaction boundary. */
 export async function rotateTranscriptAfterCompaction(params: {
   sessionManager: ReadonlySessionManagerForRotation;
   sessionFile: string;
@@ -86,7 +86,7 @@ export async function rotateTranscriptAfterCompaction(params: {
   };
 }
 
-/** Reused helper for rotate Transcript File After Compaction behavior in src/agents/embedded-agent-runner. */
+/** Loads a transcript file and rotates it after its latest compaction entry. */
 export async function rotateTranscriptFileAfterCompaction(params: {
   sessionFile: string;
   now?: () => Date;
