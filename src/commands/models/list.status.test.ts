@@ -603,7 +603,7 @@ describe("modelsStatusCommand auth overview", () => {
       const payload = parseFirstJsonLog(localRuntime);
       const openai = requireProvider(payload.auth.providers, "openai");
       expect(openai.effective).toEqual({
-        kind: "models.json",
+        kind: "model_catalog",
         detail: "marker(oauth:openai-codex)",
       });
       expect(payload.auth.runtimeAuthRoutes).toEqual([

@@ -37,7 +37,11 @@ vi.mock("../cli/deps.js", () => ({
 }));
 
 vi.mock("../config/sessions.js", () => ({
+  getSessionEntry: ({ sessionKey }: { sessionKey: string }) =>
+    loadSessionEntryMock(sessionKey).entry,
+  listSessionEntries: () => [],
   resolveAgentMainSessionKey: () => "agent:main:main",
+  upsertSessionEntry: vi.fn(),
 }));
 
 vi.mock("../agents/agent-scope.js", () => ({
@@ -98,9 +102,8 @@ vi.mock("../gateway/session-utils.js", () => ({
     entries: {},
   }),
   loadSessionEntry: (sessionKey: string) => ({
-    cfg: {},
-    canonicalKey: sessionKey,
-    entry: {},
+    ...loadSessionEntryMock(sessionKey),
+    databasePath: "/tmp/openclaw-agent.sqlite",
   }),
   readSessionMessagesAsync: async () => [],
   resolveGatewaySessionDatabaseTarget: ({ key }: { key: string }) => ({

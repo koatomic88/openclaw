@@ -45,7 +45,7 @@ vi.mock("../../channels/plugins/bundled.js", () => {
   }
 
   return {
-    listBundledChannelDoctorSessionMigrationSurfaces: vi.fn(() => [
+    listBundledChannelLegacySessionSurfaces: vi.fn(() => [
       {
         isLegacyGroupSessionKey: (key: string) => /^group:mobile-/i.test(key.trim()),
         canonicalizeLegacySessionKey: ({ key, agentId }: { key: string; agentId: string }) =>
@@ -54,7 +54,7 @@ vi.mock("../../channels/plugins/bundled.js", () => {
             : null,
       },
     ]),
-    listBundledChannelDoctorLegacyStateDetectors: vi.fn(() => [
+    listBundledChannelLegacyStateMigrationDetectors: vi.fn(() => [
       ({ oauthDir }: { oauthDir: string }) => {
         let entries: fsSync.Dirent[] = [];
         try {

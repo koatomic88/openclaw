@@ -484,7 +484,7 @@ export class EmbeddedTuiBackend implements TuiBackend {
       store,
       storeKey: target.canonicalKey,
       patch: opts,
-      loadGatewayModelCatalog,
+      loadGatewayModelCatalog: () => loadEmbeddedTuiModelCatalog(cfg),
     });
     if (!applied.ok) {
       throw new Error(applied.error.message);
