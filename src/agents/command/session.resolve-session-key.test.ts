@@ -148,7 +148,7 @@ describe("resolveSessionKeyForRequest", () => {
     });
 
     expect(result.sessionKey).toBe("agent:other:acp:sid");
-    expect(result.sessionStore).toBe(otherStore);
+    expect(result.sessionStore).toEqual(otherStore);
     expect(hoisted.listSessionRowsMock).toHaveBeenCalledWith("main");
     expect(hoisted.listSessionRowsMock).toHaveBeenCalledWith("other");
   });

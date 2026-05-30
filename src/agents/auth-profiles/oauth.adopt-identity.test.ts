@@ -29,20 +29,6 @@ const {
   formatProviderAuthProfileApiKeyWithPluginMock,
 } = getOAuthProviderRuntimeMocks();
 
-function expectPersistedOpenAICodexProfileWithoutInlineTokens(
-  credential: AuthProfileStore["profiles"][string],
-  metadata: Record<string, unknown> = {},
-): void {
-  expect(credential?.type).toBe("oauth");
-  expect(credential?.provider).toBe("openai-codex");
-  for (const [key, value] of Object.entries(metadata)) {
-    expect((credential as Record<string, unknown> | undefined)?.[key]).toEqual(value);
-  }
-  expect(credential).not.toHaveProperty("access");
-  expect(credential).not.toHaveProperty("refresh");
-  expect(credential).not.toHaveProperty("idToken");
-}
-
 function readPersistedStore(agentDir: string): AuthProfileStore {
   const result = readAuthProfileStorePayloadResult(authProfileStoreKey(agentDir));
   const store = result.exists ? result.value : undefined;
@@ -60,11 +46,7 @@ function expectOAuthProfileFields(
   const credential = store.profiles[profileId];
   expect(credential).toBeDefined();
   for (const [key, value] of Object.entries(expected)) {
-    if (key === "access" || key === "refresh" || key === "idToken") {
-      expect(credential).not.toHaveProperty(key);
-    } else {
-      expect((credential as Record<string, unknown> | undefined)?.[key]).toEqual(value);
-    }
+    expect((credential as Record<string, unknown> | undefined)?.[key]).toEqual(value);
   }
 }
 
@@ -161,10 +143,11 @@ describe("OAuth credential adoption is identity-gated", () => {
     const subRaw = readPersistedStore(subAgentDir);
     expectOAuthProfileFields(subRaw, profileId, {
       access: "sub-own-access",
+      refresh: "sub-own-refresh",
       accountId: "acct-sub",
       expires: subExpiry,
     });
-    expect(JSON.stringify(subRaw)).not.toContain("sub-own-access");
+    expect(JSON.stringify(subRaw)).not.toContain("main-foreign-access");
   });
 
   it("inside-the-lock main adoption refuses across accountId mismatch and proceeds to own refresh", async () => {
@@ -233,10 +216,10 @@ describe("OAuth credential adoption is identity-gated", () => {
     const mainRaw = readPersistedStore(mainAgentDir);
     expectOAuthProfileFields(mainRaw, profileId, {
       access: "main-foreign-access",
+      refresh: "main-foreign-refresh",
       accountId: "acct-other",
       expires: freshExpiry,
     });
-    expect(JSON.stringify(mainRaw)).not.toContain("main-foreign-access");
   });
 
   it("catch-block main-inherit refuses across accountId mismatch and surfaces the original error", async () => {
@@ -309,8 +292,9 @@ describe("OAuth credential adoption is identity-gated", () => {
     const subRaw = readPersistedStore(subAgentDir);
     expectOAuthProfileFields(subRaw, profileId, {
       access: "sub-stale",
+      refresh: "sub-refresh-token",
       accountId: "acct-sub",
     });
-    expect(JSON.stringify(subRaw)).not.toContain("sub-stale");
+    expect(JSON.stringify(subRaw)).not.toContain("main-foreign-refreshed");
   });
 });

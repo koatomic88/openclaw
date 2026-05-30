@@ -14,6 +14,8 @@ import { closeOpenClawStateDatabaseForTest } from "../../state/openclaw-state-db
 import { saveAuthProfileStore } from "../auth-profiles/store.js";
 import type { EmbeddedAgentRunResult, EmbeddedPiRunResult } from "../embedded-agent.js";
 import { FailoverError } from "../failover-error.js";
+import { clearAgentHarnesses, registerAgentHarness } from "../harness/registry.js";
+import type { AgentHarness } from "../harness/types.js";
 import { persistCliTurnTranscript, runAgentAttempt } from "./attempt-execution.js";
 
 const runCliAgentMock = vi.hoisted(() => vi.fn());
@@ -154,12 +156,27 @@ function firstEmbeddedAgentArg(callIndex = 0) {
   return requireMockArg(runEmbeddedAgentMock, callIndex, "embedded OpenClaw agent argument");
 }
 
+function registerCodexHarnessForPolicy(): void {
+  registerAgentHarness({
+    id: "codex",
+    label: "Codex test harness",
+    supports: ({ provider }) =>
+      provider === "openai" || provider === "openai-codex"
+        ? { supported: true }
+        : { supported: false },
+    runAttempt: async (): Promise<never> => {
+      throw new Error("test policy harness should not execute");
+    },
+  } satisfies AgentHarness);
+}
+
 describe("CLI attempt execution", () => {
   let tmpDir: string;
 
   beforeEach(async () => {
     tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-cli-attempt-"));
     vi.stubEnv("OPENCLAW_STATE_DIR", tmpDir);
+    clearAgentHarnesses();
     runCliAgentMock.mockReset();
     runEmbeddedAgentMock.mockReset();
   });
@@ -171,6 +188,7 @@ describe("CLI attempt execution", () => {
       process.env.HOME = ORIGINAL_HOME;
     }
     closeOpenClawStateDatabaseForTest();
+    clearAgentHarnesses();
     vi.unstubAllEnvs();
     await fs.rm(tmpDir, { recursive: true, force: true });
   });
@@ -615,14 +633,10 @@ describe("CLI attempt execution", () => {
       config: {},
       embeddedAssistantGapFill: true,
     });
-    const sessionFile = updatedFirst?.sessionFile;
-    if (typeof sessionFile !== "string") {
-      throw new Error("Expected CLI transcript session file.");
-    }
-
-    await fs.appendFile(
-      sessionFile,
-      `${JSON.stringify({
+    appendSqliteSessionTranscriptEvent({
+      agentId: "main",
+      sessionId: sessionEntry.sessionId,
+      event: {
         type: "custom",
         customType: "openclaw.cache-ttl",
         timestamp: new Date().toISOString(),
@@ -630,9 +644,8 @@ describe("CLI attempt execution", () => {
           provider: "anthropic",
           modelId: "claude-haiku-4-5-20251001",
         },
-      })}\n`,
-      "utf-8",
-    );
+      },
+    });
 
     await persistCliTurnTranscript({
       body: "still ignored",
@@ -647,7 +660,7 @@ describe("CLI attempt execution", () => {
       embeddedAssistantGapFill: true,
     });
 
-    const messages = await readSessionMessages(sessionFile);
+    const messages = await readSessionMessages(sessionEntry.sessionId);
     expect(messages).toHaveLength(1);
     expectRecordFields(requireRecord(messages[0], "assistant message"), {
       role: "assistant",
@@ -1376,6 +1389,7 @@ describe("embedded attempt harness pinning", () => {
   });
 
   it("auto-forwards OpenAI Codex auth profiles to default Codex harness runs", async () => {
+    registerCodexHarnessForPolicy();
     const sessionEntry: SessionEntry = {
       sessionId: "codex-auth-session",
       updatedAt: Date.now(),
