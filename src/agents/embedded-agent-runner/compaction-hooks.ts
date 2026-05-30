@@ -80,7 +80,7 @@ function syncPostCompactionSessionMemory(params: {
   return Promise.resolve();
 }
 
-/** Reused helper for run Post Compaction Side Effects behavior in src/agents/embedded-agent-runner. */
+/** Emits transcript updates and optionally syncs memory indexes after compaction. */
 export async function runPostCompactionSideEffects(params: {
   config?: OpenClawConfig;
   sessionKey?: string;
@@ -99,7 +99,7 @@ export async function runPostCompactionSideEffects(params: {
   });
 }
 
-/** Shared type for Compaction Hook Runner in src/agents/embedded-agent-runner. */
+/** Adapter surface for plugin hook runners that observe compaction lifecycle events. */
 export type CompactionHookRunner = {
   hasHooks?: (hookName?: string) => boolean;
   runBeforeCompaction?: (
@@ -129,7 +129,7 @@ export type CompactionHookRunner = {
   ) => Promise<void> | void;
 };
 
-/** Reused helper for as Compaction Hook Runner behavior in src/agents/embedded-agent-runner. */
+/** Narrows the global hook runner to just the compaction lifecycle methods. */
 export function asCompactionHookRunner(
   hookRunner: ReturnType<typeof getGlobalHookRunner> | null | undefined,
 ): CompactionHookRunner | null {
@@ -158,7 +158,7 @@ function estimateTokenCountSafe(
   }
 }
 
-/** Reused helper for build Before Compaction Hook Metrics behavior in src/agents/embedded-agent-runner. */
+/** Builds before-compaction counts and token estimates for hooks and diagnostics. */
 export function buildBeforeCompactionHookMetrics(params: {
   originalMessages: AgentMessage[];
   currentMessages: AgentMessage[];
@@ -175,7 +175,7 @@ export function buildBeforeCompactionHookMetrics(params: {
   };
 }
 
-/** Reused helper for run Before Compaction Hooks behavior in src/agents/embedded-agent-runner. */
+/** Runs internal and plugin before-compaction hooks without failing compaction. */
 export async function runBeforeCompactionHooks(params: {
   hookRunner?: CompactionHookRunner | null;
   sessionId: string;
@@ -245,7 +245,7 @@ export async function runBeforeCompactionHooks(params: {
   };
 }
 
-/** Reused helper for estimate Tokens After Compaction behavior in src/agents/embedded-agent-runner. */
+/** Estimates post-compaction tokens and rejects obviously inflated counts. */
 export function estimateTokensAfterCompaction(params: {
   messagesAfter: AgentMessage[];
   observedTokenCount?: number;
@@ -267,7 +267,7 @@ export function estimateTokensAfterCompaction(params: {
   return tokensAfter;
 }
 
-/** Reused helper for run After Compaction Hooks behavior in src/agents/embedded-agent-runner. */
+/** Runs internal and plugin after-compaction hooks without failing compaction. */
 export async function runAfterCompactionHooks(params: {
   hookRunner?: CompactionHookRunner | null;
   sessionId: string;
