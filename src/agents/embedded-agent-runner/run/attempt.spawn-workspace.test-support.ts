@@ -29,6 +29,8 @@ import type { WorkspaceBootstrapFile } from "../../workspace.js";
 
 type SubscribeEmbeddedAgentSessionFn =
   typeof import("../../embedded-agent-subscribe.js").subscribeEmbeddedAgentSession;
+type AcquireSessionWriteLockFn =
+  typeof import("../../session-write-lock.js").acquireSessionWriteLock;
 type ShouldPreemptivelyCompactBeforePromptFn =
   typeof import("./preemptive-compaction.js").shouldPreemptivelyCompactBeforePrompt;
 
@@ -71,6 +73,7 @@ type AttemptSpawnWorkspaceHoisted = {
   materializeBundleMcpToolsForRunMock: AsyncUnknownMock;
   createBundleLspToolRuntimeMock: AsyncUnknownMock;
   subscribeEmbeddedAgentSessionMock: Mock<SubscribeEmbeddedAgentSessionFn>;
+  acquireSessionWriteLockMock: Mock<AcquireSessionWriteLockFn>;
   installToolResultContextGuardMock: UnknownMock;
   installContextEngineLoopHookMock: UnknownMock;
   flushPendingToolResultsAfterIdleMock: AsyncUnknownMock;
@@ -152,6 +155,9 @@ const hoisted = vi.hoisted((): AttemptSpawnWorkspaceHoisted => {
   const subscribeEmbeddedAgentSessionMock = vi.fn<SubscribeEmbeddedAgentSessionFn>(() =>
     createSubscriptionMock(),
   );
+  const acquireSessionWriteLockMock = vi.fn<AcquireSessionWriteLockFn>(async () => ({
+    release: async () => {},
+  }));
   const resolveBootstrapContextForRunMock = vi.fn<() => Promise<BootstrapContext>>(async () => ({
     bootstrapFiles: [],
     contextFiles: [],
@@ -217,6 +223,7 @@ const hoisted = vi.hoisted((): AttemptSpawnWorkspaceHoisted => {
     materializeBundleMcpToolsForRunMock,
     createBundleLspToolRuntimeMock,
     subscribeEmbeddedAgentSessionMock,
+    acquireSessionWriteLockMock,
     installToolResultContextGuardMock,
     installContextEngineLoopHookMock,
     flushPendingToolResultsAfterIdleMock,
@@ -461,6 +468,14 @@ vi.mock("../tool-schema-runtime.js", () => ({
 
 vi.mock("../../transcript-state-repair.js", () => ({
   repairTranscriptSessionStateIfNeeded: async () => {},
+}));
+
+vi.mock("../../session-write-lock.js", () => ({
+  acquireSessionWriteLock: (params: Parameters<AcquireSessionWriteLockFn>[0]) =>
+    hoisted.acquireSessionWriteLockMock(params),
+  resolveSessionWriteLockAcquireTimeoutMs: () => 60000,
+  resolveSessionWriteLockOptions: () => ({ timeoutMs: 60000, staleMs: 1_800_000, maxHoldMs: 1 }),
+  resolveSessionLockMaxHoldFromTimeout: () => 1,
 }));
 
 vi.mock("../tool-result-context-guard.js", async () => {
@@ -950,6 +965,9 @@ export function resetEmbeddedAttemptHarness(
   hoisted.subscribeEmbeddedAgentSessionMock
     .mockReset()
     .mockImplementation(() => createSubscriptionMock());
+  hoisted.acquireSessionWriteLockMock.mockReset().mockResolvedValue({
+    release: async () => {},
+  });
   hoisted.installToolResultContextGuardMock.mockReset().mockReturnValue(() => {});
   hoisted.installContextEngineLoopHookMock.mockReset().mockReturnValue(() => {});
   hoisted.flushPendingToolResultsAfterIdleMock.mockReset().mockResolvedValue(undefined);
