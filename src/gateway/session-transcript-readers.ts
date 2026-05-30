@@ -58,6 +58,17 @@ function normalizeTailEntryString(value: unknown): string | undefined {
   return typeof value === "string" && value.trim().length > 0 ? value : undefined;
 }
 
+function parseTranscriptTimestampMs(value: unknown): number | undefined {
+  if (typeof value === "number") {
+    return Number.isFinite(value) && value >= 0 ? Math.floor(value) : undefined;
+  }
+  if (typeof value !== "string" || !value.trim()) {
+    return undefined;
+  }
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
+}
+
 function loadScopedTranscriptEvents(params: {
   agentId?: string;
   path?: string;
@@ -212,9 +223,11 @@ function parsedSessionEntryToMessage(parsed: unknown, seq: number): unknown {
   }
   const entry = parsed as Record<string, unknown>;
   if (entry.message) {
+    const recordTimestampMs = parseTranscriptTimestampMs(entry.timestamp);
     return attachOpenClawTranscriptMeta(entry.message, {
       ...(typeof entry.id === "string" ? { id: entry.id } : {}),
       seq,
+      ...(recordTimestampMs !== undefined ? { recordTimestampMs } : {}),
     });
   }
   if (entry.type === "compaction") {

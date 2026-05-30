@@ -122,11 +122,15 @@ describe("artifacts RPC handlers", () => {
     expect(artifact?.id).toMatch(/^artifact_/);
     expect(artifact).not.toHaveProperty("data");
     expect(hoisted.visitSessionMessagesAsync).toHaveBeenCalledWith(
-      "sess-main",
-      "/tmp/sessions.json",
-      "/tmp/sess-main.jsonl",
+      {
+        agentId: "main",
+        sessionId: "sess-main",
+      },
       expect.any(Function),
-      expect.objectContaining({ cache: "skip" }),
+      expect.objectContaining({
+        mode: "full",
+        reason: "artifact query transcript scan",
+      }),
     );
   });
 
