@@ -27,6 +27,7 @@ vi.mock("../plugins/doctor-contract-registry.js", () => ({
 
 vi.mock("../plugins/plugin-metadata-snapshot.js", () => ({
   loadPluginMetadataSnapshot: loadPluginMetadataSnapshotMock,
+  resolvePluginMetadataSnapshot: loadPluginMetadataSnapshotMock,
 }));
 
 import { validateConfigObjectRaw } from "./validation.js";

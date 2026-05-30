@@ -29,15 +29,19 @@ vi.mock("../plugins/plugin-registry.js", () => ({
   loadPluginManifestRegistryForPluginRegistry: loadPluginManifestRegistry,
 }));
 
-vi.mock("../plugins/plugin-metadata-snapshot.js", () => ({
-  loadPluginMetadataSnapshot: () => {
+vi.mock("../plugins/plugin-metadata-snapshot.js", () => {
+  const loadSnapshot = () => {
     const registry = loadPluginManifestRegistry();
     return {
       plugins: registry.plugins,
       manifestRegistry: registry,
     };
-  },
-}));
+  };
+  return {
+    loadPluginMetadataSnapshot: loadSnapshot,
+    resolvePluginMetadataSnapshot: loadSnapshot,
+  };
+});
 
 import { buildTrajectoryArtifacts, buildTrajectoryRunMetadata } from "./metadata.js";
 

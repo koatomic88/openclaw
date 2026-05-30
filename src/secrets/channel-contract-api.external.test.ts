@@ -21,6 +21,7 @@ const {
 
 vi.mock("../plugins/plugin-metadata-snapshot.js", () => ({
   loadPluginMetadataSnapshot: loadPluginMetadataSnapshotMock,
+  resolvePluginMetadataSnapshot: loadPluginMetadataSnapshotMock,
 }));
 
 vi.mock("../plugins/public-surface-loader.js", () => ({
