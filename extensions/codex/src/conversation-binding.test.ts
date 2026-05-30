@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import type { ExecApprovalsFile } from "openclaw/plugin-sdk/exec-approvals-runtime";
+import { closeOpenClawStateDatabaseForTest } from "openclaw/plugin-sdk/sqlite-runtime";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const sharedClientMocks = vi.hoisted(() => ({
@@ -115,6 +116,7 @@ describe("codex conversation binding", () => {
   });
 
   afterEach(async () => {
+    closeOpenClawStateDatabaseForTest();
     sharedClientMocks.getSharedCodexAppServerClient.mockReset();
     execApprovalsRuntimeMocks.loadExecApprovals.mockReset();
     execApprovalsRuntimeMocks.loadExecApprovals.mockReturnValue({ version: 1, agents: {} });
@@ -490,11 +492,8 @@ describe("codex conversation binding", () => {
   });
 
   it("blocks bound Codex app-server turns when the current OpenClaw session is sandboxed", async () => {
-    const sessionFile = path.join(tempDir, "session.jsonl");
-    await fs.writeFile(
-      `${sessionFile}.codex-app-server.json`,
-      JSON.stringify({ schemaVersion: 1, threadId: "thread-1", cwd: tempDir }),
-    );
+    const sessionId = "sandboxed-session";
+    await seedCodexBinding(sessionId, { threadId: "thread-1", cwd: tempDir });
 
     const result = await handleCodexConversationInboundClaim(
       {
@@ -518,7 +517,7 @@ describe("codex conversation binding", () => {
           data: {
             kind: "codex-app-server-session",
             version: 1,
-            sessionFile,
+            sessionId,
             workspaceDir: tempDir,
           },
         },
@@ -540,11 +539,8 @@ describe("codex conversation binding", () => {
   });
 
   it("blocks bound Codex app-server turns when exec host=node is active", async () => {
-    const sessionFile = path.join(tempDir, "session.jsonl");
-    await fs.writeFile(
-      `${sessionFile}.codex-app-server.json`,
-      JSON.stringify({ schemaVersion: 1, threadId: "thread-1", cwd: tempDir }),
-    );
+    const sessionId = "node-session";
+    await seedCodexBinding(sessionId, { threadId: "thread-1", cwd: tempDir });
 
     const result = await handleCodexConversationInboundClaim(
       {
@@ -568,7 +564,7 @@ describe("codex conversation binding", () => {
           data: {
             kind: "codex-app-server-session",
             version: 1,
-            sessionFile,
+            sessionId,
             workspaceDir: tempDir,
           },
         },
@@ -763,17 +759,13 @@ describe("codex conversation binding", () => {
   });
 
   it("does not silently decline auto-mode approvals during missing thread recovery", async () => {
-    const sessionFile = path.join(tempDir, "session.jsonl");
-    await fs.writeFile(
-      `${sessionFile}.codex-app-server.json`,
-      JSON.stringify({
-        schemaVersion: 1,
-        threadId: "thread-old",
-        cwd: tempDir,
-        approvalPolicy: "never",
-        sandbox: "danger-full-access",
-      }),
-    );
+    const sessionId = "auto-mode-recovery";
+    await seedCodexBinding(sessionId, {
+      threadId: "thread-old",
+      cwd: tempDir,
+      approvalPolicy: "never",
+      sandbox: "danger-full-access",
+    });
     const requests: Array<{ method: string; params: Record<string, unknown> }> = [];
     const notificationHandlers: Array<(notification: Record<string, unknown>) => void> = [];
     sharedClientMocks.getSharedCodexAppServerClient.mockResolvedValue({
@@ -836,7 +828,7 @@ describe("codex conversation binding", () => {
           data: {
             kind: "codex-app-server-session",
             version: 1,
-            sessionFile,
+            sessionId,
             workspaceDir: tempDir,
           },
         },
@@ -861,7 +853,7 @@ describe("codex conversation binding", () => {
   });
 
   it("creates a fresh thread when recovery finds the binding already cleared", async () => {
-    const sessionFile = path.join(tempDir, "session.jsonl");
+    const sessionId = "cleared-binding";
     const requests: Array<{ method: string; params: Record<string, unknown> }> = [];
     const notificationHandlers: Array<(notification: Record<string, unknown>) => void> = [];
     sharedClientMocks.getSharedCodexAppServerClient.mockResolvedValue({
@@ -921,7 +913,7 @@ describe("codex conversation binding", () => {
           data: {
             kind: "codex-app-server-session",
             version: 1,
-            sessionFile,
+            sessionId,
             workspaceDir: tempDir,
           },
         },
@@ -933,10 +925,9 @@ describe("codex conversation binding", () => {
     expect(requests.map((request) => request.method)).toEqual(["thread/start", "turn/start"]);
     expect(requests[1]?.params.threadId).toBe("thread-new");
     expect(requests[1]?.params.personality).toBe("none");
-    const savedBinding = JSON.parse(
-      await fs.readFile(`${sessionFile}.codex-app-server.json`, "utf8"),
-    );
-    expect(savedBinding.threadId).toBe("thread-new");
+    await expect(readCodexAppServerBinding(sessionId)).resolves.toMatchObject({
+      threadId: "thread-new",
+    });
   });
 
   it("passes sandbox state when resolving bound turn policy", async () => {
@@ -948,17 +939,13 @@ describe("codex conversation binding", () => {
       ].join("\n"),
     );
     resolveSandboxContextMock.mockResolvedValue({ enabled: true });
-    const sessionFile = path.join(tempDir, "session.jsonl");
-    await fs.writeFile(
-      `${sessionFile}.codex-app-server.json`,
-      JSON.stringify({
-        schemaVersion: 1,
-        threadId: "thread-1",
-        cwd: tempDir,
-        approvalPolicy: "never",
-        sandbox: "danger-full-access",
-      }),
-    );
+    const sessionId = "agent-main-session-1";
+    await seedCodexBinding(sessionId, {
+      threadId: "thread-1",
+      cwd: tempDir,
+      approvalPolicy: "never",
+      sandbox: "danger-full-access",
+    });
     let notificationHandler: ((notification: unknown) => void) | undefined;
     const turnStartParams: Record<string, unknown>[] = [];
     sharedClientMocks.getSharedCodexAppServerClient.mockResolvedValue({
@@ -1012,7 +999,7 @@ describe("codex conversation binding", () => {
           data: {
             kind: "codex-app-server-session",
             version: 1,
-            sessionFile,
+            sessionId,
             workspaceDir: tempDir,
           },
         },
