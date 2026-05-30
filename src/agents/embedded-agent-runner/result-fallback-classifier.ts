@@ -56,7 +56,7 @@ function classifyHarnessResult(params: {
   }
 }
 
-/** Reused helper for classify Embedded Agent Run Result For Model Fallback behavior in src/agents/embedded-agent-runner. */
+/** Classifies empty/reasoning-only terminal results that should try model fallback. */
 export function classifyEmbeddedAgentRunResultForModelFallback(params: {
   provider: string;
   model: string;
