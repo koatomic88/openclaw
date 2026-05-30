@@ -79,21 +79,27 @@ function buildInboundMessage(params: {
   selfE164?: string;
 }) {
   return {
-    id: params.id,
+    event: {
+      id: params.id,
+      timestamp: params.timestamp,
+    },
+    payload: {
+      body: params.body ?? "hello",
+    },
+    platform: {
+      chatJid: params.chatId,
+      recipientJid: params.to ?? "+2000",
+      senderE164: params.senderE164,
+      senderName: params.senderName,
+      selfE164: params.selfE164,
+      sendComposing: vi.fn().mockResolvedValue(undefined),
+      reply: vi.fn().mockResolvedValue(createAcceptedWhatsAppSendResult("text", "r1")),
+      sendMedia: vi.fn().mockResolvedValue(createAcceptedWhatsAppSendResult("media", "m1")),
+    },
     from: params.from,
     conversationId: params.conversationId,
-    to: params.to ?? "+2000",
-    body: params.body ?? "hello",
-    timestamp: params.timestamp,
     chatType: params.chatType,
-    chatId: params.chatId,
     accountId: params.accountId ?? "default",
-    senderE164: params.senderE164,
-    senderName: params.senderName,
-    selfE164: params.selfE164,
-    sendComposing: vi.fn().mockResolvedValue(undefined),
-    reply: vi.fn().mockResolvedValue(createAcceptedWhatsAppSendResult("text", "r1")),
-    sendMedia: vi.fn().mockResolvedValue(createAcceptedWhatsAppSendResult("media", "m1")),
   };
 }
 

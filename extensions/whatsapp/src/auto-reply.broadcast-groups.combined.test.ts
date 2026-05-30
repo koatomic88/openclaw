@@ -226,18 +226,24 @@ describe("broadcast groups", () => {
     const { onMessage: capturedOnMessage } = await monitorWebChannelWithCapture(resolver);
 
     await capturedOnMessage({
-      id: "m1",
+      event: {
+        id: "m1",
+        timestamp: Date.now(),
+      },
+      payload: {
+        body: "hello",
+      },
+      platform: {
+        chatJid: "direct:+1000",
+        recipientJid: "+2000",
+        sendComposing,
+        reply,
+        sendMedia,
+      },
       from: "+1000",
       conversationId: "+1000",
-      to: "+2000",
       accountId: "default",
-      body: "hello",
-      timestamp: Date.now(),
       chatType: "direct",
-      chatId: "direct:+1000",
-      sendComposing,
-      reply,
-      sendMedia,
     });
 
     expect(resolver).toHaveBeenCalledTimes(2);

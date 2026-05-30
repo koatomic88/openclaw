@@ -52,22 +52,33 @@ describe("web auto-reply", () => {
       dispatch: async (
         id = "msg1",
         overrides?: Partial<
-          Pick<WebInboundMessage, "from" | "conversationId" | "to" | "accountId" | "chatId">
+          Pick<WebInboundMessage, "from" | "conversationId" | "accountId"> & {
+            recipientJid: string;
+            chatJid: string;
+          }
         >,
       ) => {
+        const from = overrides?.from ?? "+1";
+        const conversationId = overrides?.conversationId ?? from;
+        const chatJid = overrides?.chatJid ?? from;
         await onMessage({
-          body: "hello",
-          from: "+1",
-          conversationId: "+1",
-          to: "+2",
-          accountId: "default",
+          event: {
+            id,
+          },
+          payload: {
+            body: "hello",
+          },
+          platform: {
+            chatJid,
+            recipientJid: overrides?.recipientJid ?? "+2",
+            sendComposing,
+            reply,
+            sendMedia: params.sendMedia,
+          },
+          from,
+          conversationId,
+          accountId: overrides?.accountId ?? "default",
           chatType: "direct",
-          chatId: "+1",
-          ...overrides,
-          id,
-          sendComposing,
-          reply,
-          sendMedia: params.sendMedia,
         } as WebInboundMessage);
       },
     };
@@ -202,7 +213,7 @@ describe("web auto-reply", () => {
           await dispatch(`msg-${fmt.name}-${index}`, {
             from: `+1${index}`,
             conversationId: `conv-${index}`,
-            chatId: `conv-${index}`,
+            chatJid: `conv-${index}`,
           });
           expect(sendMedia).toHaveBeenCalledTimes(beforeCalls + 1);
           const payload = imagePayloadAt(sendMedia, beforeCalls);

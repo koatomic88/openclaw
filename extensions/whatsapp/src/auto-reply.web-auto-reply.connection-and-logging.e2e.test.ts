@@ -1066,17 +1066,23 @@ describe("web auto-reply connection", () => {
     const capturedOnMessage = requireOnMessage(capture.getOnMessage());
 
     await capturedOnMessage({
-      body: "hello",
+      event: {
+        id: "msg1",
+      },
+      payload: {
+        body: "hello",
+      },
+      platform: {
+        chatJid: "+1",
+        recipientJid: "+2",
+        sendComposing: vi.fn(),
+        reply: vi.fn(),
+        sendMedia: vi.fn(),
+      },
       from: "+1",
       conversationId: "+1",
-      to: "+2",
       accountId: "default",
       chatType: "direct",
-      chatId: "+1",
-      id: "msg1",
-      sendComposing: vi.fn(),
-      reply: vi.fn(),
-      sendMedia: vi.fn(),
     });
 
     const content = await fs.readFile(logPath, "utf-8");
@@ -1116,18 +1122,24 @@ describe("web auto-reply connection", () => {
       false,
       async ({ onMessage }) => {
         await onMessage({
-          id: "m1",
+          event: {
+            id: "m1",
+            timestamp: Date.now(),
+          },
+          payload: {
+            body: "hello",
+          },
+          platform: {
+            chatJid: "direct:+1000",
+            recipientJid: "+2000",
+            sendComposing,
+            reply,
+            sendMedia,
+          },
           from: "+1000",
           conversationId: "+1000",
-          to: "+2000",
-          body: "hello",
-          timestamp: Date.now(),
           chatType: "direct",
-          chatId: "direct:+1000",
           accountId: "default",
-          sendComposing,
-          reply,
-          sendMedia,
         });
         return createMockWebListener();
       },

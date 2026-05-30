@@ -23,17 +23,23 @@ function acceptedSendResult(kind: "media" | "text", id: string): WhatsAppSendRes
 
 function createMessage(overrides: Partial<WebInboundMessage> = {}): WebInboundMessage {
   return {
-    id: "msg-1",
+    event: {
+      id: "msg-1",
+    },
+    payload: {
+      body: "hello",
+    },
+    platform: {
+      chatJid: "15551234567@s.whatsapp.net",
+      recipientJid: "15559876543",
+      sendComposing: async () => {},
+      reply: async () => acceptedSendResult("text", "r1"),
+      sendMedia: async () => acceptedSendResult("media", "m1"),
+    },
     from: "15551234567",
     conversationId: "15551234567",
-    to: "15559876543",
     accountId: "default",
-    body: "hello",
     chatType: "direct",
-    chatId: "15551234567@s.whatsapp.net",
-    sendComposing: async () => {},
-    reply: async () => acceptedSendResult("text", "r1"),
-    sendMedia: async () => acceptedSendResult("media", "m1"),
     ...overrides,
   };
 }

@@ -10,18 +10,29 @@ import { applyGroupGating, type GroupHistoryEntry } from "./group-gating.js";
 
 function makeGroupAudioMsg(): WebInboundMsg {
   return {
-    id: "msg-1",
+    event: {
+      id: "msg-1",
+      timestamp: 1700000000,
+    },
+    payload: {
+      body: "<media:audio>",
+      media: {
+        type: "audio/ogg; codecs=opus",
+        path: "/tmp/voice.ogg",
+      },
+    },
+    platform: {
+      chatJid: "1203630@g.us",
+      recipientJid: "+15550000001",
+      sender: { e164: "+15550000002", name: "Alice" },
+      sendComposing: async () => {},
+      reply: async () => ({ kind: "text", providerAccepted: true }) as never,
+      sendMedia: async () => ({ kind: "media", providerAccepted: true }) as never,
+    },
     from: "1203630@g.us",
-    to: "+15550000001",
-    body: "<media:audio>",
-    chatId: "1203630@g.us",
-    chatType: "group",
     conversationId: "1203630@g.us",
-    mediaType: "audio/ogg; codecs=opus",
-    mediaPath: "/tmp/voice.ogg",
-    timestamp: 1700000000,
+    chatType: "group",
     accountId: "default",
-    sender: { e164: "+15550000002", name: "Alice" },
   } as WebInboundMsg;
 }
 
