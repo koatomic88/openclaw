@@ -4,10 +4,12 @@ import path from "node:path";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { authProfileStoreKey } from "../agents/auth-profiles/persisted.js";
 import {
+  readAuthProfileStatePayloadResult,
   readAuthProfileStorePayloadResult,
   writeAuthProfileStorePayload,
   type AuthProfilePayloadValue,
 } from "../agents/auth-profiles/sqlite-storage.js";
+import { authProfileStateKey } from "../agents/auth-profiles/state.js";
 import {
   buildTalkTestProviderConfig,
   TALK_TEST_PROVIDER_API_KEY_PATH,
@@ -116,6 +118,16 @@ function readAuthStoreFixture(fixture: ApplyFixture): AuthProfilePayloadValue {
   });
   if (!result.exists || result.value === undefined) {
     throw new Error("Expected auth profile store fixture to exist.");
+  }
+  return result.value;
+}
+
+function readAuthStateFixture(fixture: ApplyFixture): AuthProfilePayloadValue {
+  const result = readAuthProfileStatePayloadResult(authProfileStateKey(fixture.authStoreAgentDir), {
+    env: fixture.env,
+  });
+  if (!result.exists || result.value === undefined) {
+    throw new Error("Expected auth profile state fixture to exist.");
   }
   return result.value;
 }
@@ -545,7 +557,8 @@ describe("secrets apply", () => {
 
   it("preserves unrelated oauth profiles while applying auth-profile key ref targets", async () => {
     const codexOAuthRef = {
-      id: "codex-sidecar-ref",
+      source: "openclaw-credentials",
+      id: "0123456789abcdef0123456789abcdef",
       provider: "openai-codex",
     };
     writeAuthStoreFixture(fixture, {
@@ -626,11 +639,15 @@ describe("secrets apply", () => {
       email: "codex@example.invalid",
     });
     expect(nextAuthStore.profiles["anthropic:claude-cli"]).toEqual({
+      type: "oauth",
       provider: "claude-cli",
-      mode: "oauth",
     });
-    expect(nextAuthStore.order?.["openai-codex"]).toEqual(["openai-codex:sidecar"]);
-    expect(nextAuthStore.lastGood?.["claude-cli"]).toBe("anthropic:claude-cli");
+    const nextAuthState = readAuthStateFixture(fixture) as {
+      order?: Record<string, string[]>;
+      lastGood?: Record<string, string>;
+    };
+    expect(nextAuthState.order?.["openai-codex"]).toEqual(["openai-codex:sidecar"]);
+    expect(nextAuthState.lastGood?.["claude-cli"]).toBe("anthropic:claude-cli");
   });
 
   it("creates a new auth-profiles mapping when provider metadata is supplied", async () => {

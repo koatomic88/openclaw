@@ -10,12 +10,20 @@ import {
   coercePersistedAuthProfileStore,
 } from "../agents/auth-profiles/persisted.js";
 import {
+  deleteAuthProfileStatePayload,
   deleteAuthProfileStorePayload,
+  readAuthProfileStatePayloadResult,
   readAuthProfileStorePayloadResult,
+  writeAuthProfileStatePayload,
   writeAuthProfileStorePayload,
+  writeAuthProfileStorePayloadInTransaction,
   type AuthProfilePayloadReadResult,
   type AuthProfilePayloadValue,
 } from "../agents/auth-profiles/sqlite-storage.js";
+import {
+  authProfileStateKey,
+  savePersistedAuthProfileStateInTransaction,
+} from "../agents/auth-profiles/state.js";
 import { normalizeProviderId } from "../agents/model-selection.js";
 import {
   replaceConfigFile,
@@ -26,6 +34,7 @@ import {
 import type { ConfigWriteOptions } from "../config/io.js";
 import { coerceSecretRef, type SecretProviderConfig } from "../config/types.secrets.js";
 import { normalizeAgentId } from "../routing/session-key.js";
+import { runOpenClawStateWriteTransaction } from "../state/openclaw-state-db.js";
 import { resolveOpenClawStateSqlitePath } from "../state/openclaw-state-db.paths.js";
 import { resolveConfigDir, resolveUserPath } from "../utils.js";
 import { iterateAuthProfileCredentials } from "./auth-profiles-scan.js";
@@ -91,7 +100,10 @@ type MutableAuthProfileStore = Record<string, unknown> & {
   profiles: Record<string, unknown>;
 };
 
-type AuthStoreSnapshot = AuthProfilePayloadReadResult;
+type AuthStoreSnapshot = {
+  store: AuthProfilePayloadReadResult;
+  state: AuthProfilePayloadReadResult;
+};
 
 export type SecretsApplyResult = {
   mode: "dry-run" | "write";
@@ -751,13 +763,27 @@ function persistProjectedAuthProfileStore(params: {
   store: Record<string, unknown>;
   env: NodeJS.ProcessEnv;
 }): void {
+  const raw = readPersistedAuthProfileStoreObject(params);
   const coerced = coercePersistedAuthProfileStore(params.store) ?? {
     version: AUTH_STORE_VERSION,
     profiles: {},
   };
-  writeAuthProfileStorePayload(
-    authProfileStoreKey(params.agentDir),
-    buildPersistedAuthProfileSecretsStore(coerced) as unknown as AuthProfilePayloadValue,
+  const updatedAt = Date.now();
+  const payload = buildPersistedAuthProfileSecretsStore(coerced, undefined, {
+    existingRaw: raw,
+  }) as unknown as AuthProfilePayloadValue;
+  runOpenClawStateWriteTransaction(
+    (database) => {
+      writeAuthProfileStorePayloadInTransaction(
+        database,
+        authProfileStoreKey(params.agentDir, params.env),
+        payload,
+        updatedAt,
+      );
+      savePersistedAuthProfileStateInTransaction(database, coerced, params.agentDir, updatedAt, {
+        env: params.env,
+      });
+    },
     { env: params.env },
   );
 }
@@ -770,10 +796,14 @@ function captureAuthStoreSnapshot(params: {
   if (params.snapshots.has(params.agentDir)) {
     return;
   }
-  params.snapshots.set(
-    params.agentDir,
-    readAuthProfileStorePayloadResult(authProfileStoreKey(params.agentDir), { env: params.env }),
-  );
+  params.snapshots.set(params.agentDir, {
+    store: readAuthProfileStorePayloadResult(authProfileStoreKey(params.agentDir, params.env), {
+      env: params.env,
+    }),
+    state: readAuthProfileStatePayloadResult(authProfileStateKey(params.agentDir, params.env), {
+      env: params.env,
+    }),
+  });
 }
 
 function restoreAuthStoreSnapshot(params: {
@@ -781,13 +811,25 @@ function restoreAuthStoreSnapshot(params: {
   snapshot: AuthStoreSnapshot;
   env: NodeJS.ProcessEnv;
 }): void {
-  const key = authProfileStoreKey(params.agentDir);
-  if (!params.snapshot.exists || params.snapshot.value === undefined) {
-    deleteAuthProfileStorePayload(key, { env: params.env });
+  const storeKey = authProfileStoreKey(params.agentDir, params.env);
+  const storeSnapshot = params.snapshot.store;
+  if (!storeSnapshot.exists || storeSnapshot.value === undefined) {
+    deleteAuthProfileStorePayload(storeKey, { env: params.env });
+  } else {
+    const { value, updatedAt } = storeSnapshot;
+    writeAuthProfileStorePayload(storeKey, value, {
+      env: params.env,
+      now: () => updatedAt,
+    });
+  }
+  const stateKey = authProfileStateKey(params.agentDir, params.env);
+  const stateSnapshot = params.snapshot.state;
+  if (!stateSnapshot.exists || stateSnapshot.value === undefined) {
+    deleteAuthProfileStatePayload(stateKey, { env: params.env });
     return;
   }
-  const { value, updatedAt } = params.snapshot;
-  writeAuthProfileStorePayload(key, value, {
+  const { value, updatedAt } = stateSnapshot;
+  writeAuthProfileStatePayload(stateKey, value, {
     env: params.env,
     now: () => updatedAt,
   });
