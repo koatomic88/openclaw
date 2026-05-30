@@ -4,7 +4,7 @@ import { sanitizeForLog } from "../../terminal/ansi.js";
 
 const MAX_COMPACTION_REASON_DETAIL_CHARS = 100;
 
-/** Reused constant for DEFERRED CONTEXT ENGINE COMPACTION REASON behavior in src/agents/embedded-agent-runner. */
+/** Canonical reason used when live compaction hands work to background maintenance. */
 export const DEFERRED_CONTEXT_ENGINE_COMPACTION_REASON =
   "deferred to background context-engine maintenance";
 
@@ -13,7 +13,7 @@ function isGenericCompactionCancelledReason(reason: string): boolean {
   return normalized === "compaction cancelled" || normalized === "error: compaction cancelled";
 }
 
-/** Reused helper for resolve Compaction Failure Reason behavior in src/agents/embedded-agent-runner. */
+/** Replaces generic cancellation text with the guard-specific reason when available. */
 export function resolveCompactionFailureReason(params: {
   reason: string;
   safeguardCancelReason?: string | null;
@@ -24,7 +24,7 @@ export function resolveCompactionFailureReason(params: {
   return params.reason;
 }
 
-/** Reused helper for classify Compaction Reason behavior in src/agents/embedded-agent-runner. */
+/** Buckets free-form compaction errors into stable telemetry/status reason codes. */
 export function classifyCompactionReason(reason?: string): string {
   const text = normalizeLowercaseStringOrEmpty(reason);
   if (!text) {
@@ -75,7 +75,7 @@ export function classifyCompactionReason(reason?: string): string {
   return "unknown";
 }
 
-/** Reused helper for format Unknown Compaction Reason Detail behavior in src/agents/embedded-agent-runner. */
+/** Sanitizes an unclassified reason into a bounded detail suffix for metrics. */
 export function formatUnknownCompactionReasonDetail(reason?: string): string | undefined {
   const sanitized = sanitizeForLog((reason ?? "").replace(/\s+/g, " "))
     .trim()
