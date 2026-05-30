@@ -1,4 +1,4 @@
-// media-generation catalog helpers and runtime behavior.
+// Media-generation catalog helpers for synthesizing provider/model entries.
 import type {
   UnifiedModelCatalogEntry,
   UnifiedModelCatalogKind,
@@ -6,25 +6,25 @@ import type {
 } from "../model-catalog/types.js";
 import { normalizeUniqueSingleOrTrimmedStringList } from "../shared/string-normalization.js";
 
-/** Shared type for Media Generation Catalog Kind in src/media-generation. */
+/** Catalog kinds owned by media-generation capabilities. */
 export type MediaGenerationCatalogKind = Extract<
   UnifiedModelCatalogKind,
   "image_generation" | "video_generation" | "music_generation"
 >;
 
-/** Shared type for Media Generation Catalog Source in src/media-generation. */
+/** Sources accepted for media-generation catalog entries. */
 export type MediaGenerationCatalogSource = Extract<
   UnifiedModelCatalogSource,
   "static" | "live" | "cache" | "configured"
 >;
 
-/** Shared type for Media Generation Catalog Entry in src/media-generation. */
+/** Unified catalog entry constrained to media-generation kinds and sources. */
 export type MediaGenerationCatalogEntry<TCapabilities> = UnifiedModelCatalogEntry<TCapabilities> & {
   kind: MediaGenerationCatalogKind;
   source: MediaGenerationCatalogSource;
 };
 
-/** Shared type for Media Generation Catalog Provider in src/media-generation. */
+/** Provider definition used to synthesize static media-generation model catalog rows. */
 export type MediaGenerationCatalogProvider<TCapabilities = unknown> = {
   id: string;
   aliases?: readonly string[];
@@ -41,7 +41,7 @@ function uniqueModels(provider: { defaultModel?: string; models?: readonly strin
   ]);
 }
 
-/** Reused helper for synthesize Media Generation Catalog Entries behavior in src/media-generation. */
+/** Build static catalog entries for every configured/default model on a provider. */
 export function synthesizeMediaGenerationCatalogEntries<TCapabilities>(params: {
   kind: MediaGenerationCatalogKind;
   provider: MediaGenerationCatalogProvider<TCapabilities>;
@@ -69,7 +69,7 @@ export function synthesizeMediaGenerationCatalogEntries<TCapabilities>(params: {
   });
 }
 
-/** Reused helper for list Media Generation Provider Models behavior in src/media-generation. */
+/** Return de-duplicated provider model ids with the default model first when present. */
 export function listMediaGenerationProviderModels(provider: {
   defaultModel?: string;
   models?: readonly string[];
