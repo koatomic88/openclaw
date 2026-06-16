@@ -35,9 +35,9 @@ struct RootTabs: View {
 
     private enum AppTab: Hashable {
         case control
-        case chat
         case talk
-        case agent
+        case capture
+        case approvals
         case settings
     }
 
@@ -53,11 +53,13 @@ struct RootTabs: View {
 
         switch arguments[valueIndex].lowercased() {
         case "chat":
-            return .chat
+            return .talk
         case "talk", "voice":
             return .talk
-        case "agent", "agents":
-            return .agent
+        case "capture", "memory", "kg":
+            return .capture
+        case "approvals", "approval":
+            return .approvals
         case "settings":
             return .settings
         default:
@@ -138,15 +140,11 @@ struct RootTabs: View {
     private var tabContent: some View {
         TabView(selection: self.$selectedTab) {
             CommandCenterTab(
-                openChat: { self.selectedTab = .chat },
+                openChat: { self.selectedTab = .talk },
                 openSettings: { self.selectedTab = .settings })
-                .tabItem { Label("Command", systemImage: "target") }
+                .tabItem { Label("Home", systemImage: "sparkles") }
                 .badge(self.appModel.pendingExecApprovalPrompt == nil ? 0 : 1)
                 .tag(AppTab.control)
-
-            ChatProTab()
-                .tabItem { Label("Chat", systemImage: "bubble.left.fill") }
-                .tag(AppTab.chat)
 
             TalkProTab(openSettings: { self.selectedTab = .settings })
                 .tabItem {
@@ -156,9 +154,14 @@ struct RootTabs: View {
                 }
                 .tag(AppTab.talk)
 
-            AgentProTab()
-                .tabItem { Label("Agent", systemImage: "person.2.fill") }
-                .tag(AppTab.agent)
+            AtomCaptureTab()
+                .tabItem { Label("Capture", systemImage: "sparkle.magnifyingglass") }
+                .tag(AppTab.capture)
+
+            AtomApprovalsTab()
+                .tabItem { Label("Approve", systemImage: "checkmark.shield.fill") }
+                .badge(self.appModel.pendingExecApprovalPrompt == nil ? 0 : 1)
+                .tag(AppTab.approvals)
 
             SettingsProTab()
                 .tabItem { Label("Settings", systemImage: "gearshape.fill") }
@@ -294,7 +297,7 @@ struct RootTabs: View {
                 self.evaluateOnboardingPresentation(force: true)
             }
             .onChange(of: self.appModel.openChatRequestID) { _, _ in
-                self.selectedTab = .chat
+                self.selectedTab = .talk
             }
     }
 
@@ -391,16 +394,16 @@ struct RootTabs: View {
             return RootTabsHomeCanvasPayload(
                 gatewayState: "connected",
                 eyebrow: "\(gatewayLabel) online",
-                title: "Command center",
+                title: "ATOM command center",
                 subtitle:
-                "Use Chat for code work, Talk for realtime voice, and gateway tools for approved device actions.",
+                "Use Talk for voice, Capture for KG staging, and Approvals for gated actions.",
                 gatewayLabel: gatewayLabel,
                 activeAgentName: self.appModel.activeAgentName,
                 activeAgentBadge: agents.first(where: { $0.isActive })?.badge ?? "OC",
-                activeAgentCaption: "Routes chat and talk",
+                activeAgentCaption: "Routes voice and memory",
                 agentCount: agents.count,
                 agents: Array(agents.prefix(6)),
-                footer: "OpenClaw only runs phone-side capabilities while the app is connected and permitted.")
+                footer: "ATOM only runs phone-side capabilities while the app is connected and permitted.")
         case .connecting:
             return RootTabsHomeCanvasPayload(
                 gatewayState: "connecting",
@@ -418,10 +421,10 @@ struct RootTabs: View {
         case .error, .disconnected:
             return RootTabsHomeCanvasPayload(
                 gatewayState: self.gatewayStatus == .error ? "error" : "offline",
-                eyebrow: self.gatewayStatus == .error ? "Gateway needs attention" : "OpenClaw iOS",
+                eyebrow: self.gatewayStatus == .error ? "Gateway needs attention" : "ATOM iOS",
                 title: "Pair a gateway",
                 subtitle:
-                "Connect this phone as a local node for chat, realtime voice, share intake, and approved device tools.",
+                "Connect this phone as a local node for voice, capture, share intake, and approved device tools.",
                 gatewayLabel: gatewayLabel,
                 activeAgentName: "Main",
                 activeAgentBadge: "OC",
@@ -429,7 +432,7 @@ struct RootTabs: View {
                 agentCount: agents.count,
                 agents: Array(agents.prefix(4)),
                 footer:
-                "Use Settings to scan a pairing QR code or paste a setup code from your OpenClaw gateway.")
+                "Use Settings to scan a pairing QR code or paste a setup code from your ATOM gateway.")
         }
     }
 

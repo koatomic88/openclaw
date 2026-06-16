@@ -253,7 +253,7 @@ extension SettingsProTab {
             self.toggleCard(
                 icon: "camera",
                 title: "Camera",
-                detail: "Allow the gateway to request photos or video while OpenClaw is foregrounded.",
+                detail: "Allow the gateway to request photos or video while ATOM is foregrounded.",
                 isOn: self.$cameraEnabled)
 
             self.locationModeCard
@@ -261,7 +261,7 @@ extension SettingsProTab {
             self.toggleCard(
                 icon: "lock.display",
                 title: "Keep Awake",
-                detail: "Keep the screen awake while OpenClaw is open.",
+                detail: "Keep the screen awake while ATOM is open.",
                 isOn: self.$preventSleep)
 
             self.privacyAccessCard
@@ -325,7 +325,7 @@ extension SettingsProTab {
             self.detailStatusCard(
                 icon: "hand.raised",
                 title: "Privacy",
-                detail: "Control what device context OpenClaw can expose to the gateway.",
+                detail: "Control what device context ATOM can expose to the gateway.",
                 value: self.privacyDetail,
                 color: .secondary)
 
@@ -352,7 +352,7 @@ extension SettingsProTab {
             self.detailStatusCard(
                 icon: "bell",
                 title: "Notifications",
-                detail: "Approvals and event alerts from OpenClaw.",
+                detail: "Approvals and event alerts from ATOM.",
                 value: self.notificationStatusText,
                 color: self.notificationStatusText == "Allowed" ? OpenClawBrand.ok : .secondary)
 
@@ -369,7 +369,7 @@ extension SettingsProTab {
                     .buttonStyle(.borderedProminent)
                     .controlSize(.small)
 
-                    Text("OpenClaw uses notifications for approval prompts and mirrored event alerts.")
+                    Text("ATOM uses notifications for approval prompts and mirrored event alerts.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -382,7 +382,7 @@ extension SettingsProTab {
         VStack(alignment: .leading, spacing: 14) {
             self.detailStatusCard(
                 icon: "info.circle",
-                title: "OpenClaw",
+                title: "ATOM",
                 detail: "iOS companion app",
                 value: DeviceInfoHelper.openClawVersionString(),
                 color: OpenClawBrand.accent)

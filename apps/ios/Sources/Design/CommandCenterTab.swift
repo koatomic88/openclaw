@@ -64,7 +64,7 @@ struct CommandCenterTab: View {
     private var header: some View {
         HStack(alignment: .center, spacing: 11) {
             OpenClawProMark(size: 31, shadowRadius: 9)
-            Text("OpenClaw")
+            Text("ATOM")
                 .font(.system(size: 27, weight: .bold, design: .rounded))
             Spacer()
         }
@@ -240,7 +240,7 @@ struct CommandCenterTab: View {
         CommandPanel(padding: 0) {
             VStack(spacing: 0) {
                 self.cardHeader(
-                    title: "Active sessions",
+                    title: "Live work",
                     value: self.activeSessionsSummaryText,
                     color: .secondary)
                     .padding(.horizontal, 12)
@@ -289,7 +289,7 @@ struct CommandCenterTab: View {
     private var startWorkAction: some View {
         CommandPanel(tint: OpenClawBrand.accent, isProminent: true, padding: 9) {
             Button(action: self.openChat) {
-                Label("Start work", systemImage: "play.fill")
+                Label("Talk to ATOM", systemImage: "waveform.circle.fill")
                     .font(.subheadline.weight(.bold))
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
@@ -496,7 +496,7 @@ struct CommandCenterTab: View {
             WorkItem(
                 id: "main-chat",
                 icon: "bubble.left.and.text.bubble.right.fill",
-                title: "Main chat",
+                title: "ATOM chat",
                 detail: self.appModel.activeAgentName,
                 state: self.gatewayConnected ? "ready" : "offline",
                 trailing: "session",
@@ -516,8 +516,8 @@ struct CommandCenterTab: View {
             WorkItem(
                 id: "device-capture",
                 icon: self.appModel.screenRecordActive ? "record.circle.fill" : "display",
-                title: "Device capture",
-                detail: self.appModel.screenRecordActive ? "Screen capture is active" : "Screen and device tools",
+                title: "World capture",
+                detail: self.appModel.screenRecordActive ? "Screen capture is active" : "Capture to KG staging",
                 state: self.appModel.screenRecordActive ? "running" : "idle",
                 trailing: "device",
                 color: self.appModel.screenRecordActive ? OpenClawBrand.warn : .secondary,
