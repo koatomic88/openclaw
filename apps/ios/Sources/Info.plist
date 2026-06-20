@@ -60,6 +60,8 @@
 	<string>ATOM can capture photos when you choose to stage observations for memory.</string>
 	<key>NSContactsUsageDescription</key>
 	<string>ATOM uses your contacts so you can search and reference people while using the assistant.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>ATOM uses Face ID to confirm sensitive actions such as pairing, approvals, money/security workflows, and high-trust skill execution.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>ATOM discovers and connects to your OpenClaw gateway on the local network.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>

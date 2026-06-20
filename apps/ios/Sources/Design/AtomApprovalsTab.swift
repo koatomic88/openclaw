@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AtomApprovalsTab: View {
     @Environment(NodeAppModel.self) private var appModel
+    @State private var biometricErrorText: String?
 
     var body: some View {
         NavigationStack {
@@ -74,6 +75,13 @@ struct AtomApprovalsTab: View {
                             .font(.footnote.weight(.medium))
                             .foregroundStyle(OpenClawBrand.danger)
                     }
+                    if let biometricErrorText,
+                       !biometricErrorText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                    {
+                        Text(biometricErrorText)
+                            .font(.footnote.weight(.medium))
+                            .foregroundStyle(OpenClawBrand.danger)
+                    }
 
                     self.approvalButtons(allowsAllowAlways: prompt.allowsAllowAlways)
                 }
@@ -96,7 +104,7 @@ struct AtomApprovalsTab: View {
     private func approvalButtons(allowsAllowAlways: Bool) -> some View {
         VStack(spacing: 9) {
             Button {
-                Task { await self.appModel.resolvePendingExecApprovalPrompt(decision: "allow-once") }
+                Task { await self.resolveWithBiometric(decision: "allow-once") }
             } label: {
                 Label("Allow Once", systemImage: "checkmark")
                     .font(.subheadline.weight(.bold))
@@ -107,7 +115,7 @@ struct AtomApprovalsTab: View {
 
             if allowsAllowAlways {
                 Button {
-                    Task { await self.appModel.resolvePendingExecApprovalPrompt(decision: "allow-always") }
+                    Task { await self.resolveWithBiometric(decision: "allow-always") }
                 } label: {
                     Label("Allow Always", systemImage: "checkmark.shield")
                         .font(.subheadline.weight(.bold))
@@ -128,6 +136,20 @@ struct AtomApprovalsTab: View {
             .disabled(self.appModel.pendingExecApprovalPromptResolving)
         }
         .controlSize(.large)
+    }
+
+    @MainActor
+    private func resolveWithBiometric(decision: String) async {
+        self.biometricErrorText = nil
+        let reason =
+            decision == "allow-always"
+            ? "Confirm before granting ATOM ongoing approval for this action."
+            : "Confirm before allowing ATOM to run this action."
+        if let error = await AtomBiometricGate.authorize(reason: reason) {
+            self.biometricErrorText = "Approval locked: \(error)"
+            return
+        }
+        await self.appModel.resolvePendingExecApprovalPrompt(decision: decision)
     }
 
     private var boundariesCard: some View {

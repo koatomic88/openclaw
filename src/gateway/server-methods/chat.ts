@@ -96,6 +96,7 @@ import {
   isWebchatClient,
   normalizeMessageChannel,
 } from "../../utils/message-channel.js";
+import { verifyAndUnwrapAtomCompanionMessage } from "../atom-companion-envelope.js";
 import {
   abortChatRunById,
   type ChatAbortControllerEntry,
@@ -915,6 +916,79 @@ export function sanitizeChatSendMessageInput(
     return { ok: false, error: "message must not contain null bytes" };
   }
   return { ok: true, message: stripDisallowedChatControlChars(normalized) };
+}
+
+function formatVerifiedAtomCompanionPlaintext(payloadType: string, plaintext: string): string {
+  switch (payloadType) {
+    case "atom.voice.observation":
+      return formatVerifiedAtomVoiceObservation(plaintext);
+    case "atom.voice.profile.enroll":
+      return formatVerifiedAtomVoiceEnrollment(plaintext);
+    default:
+      return plaintext;
+  }
+}
+
+function formatVerifiedAtomVoiceObservation(plaintext: string): string {
+  const payload = parsePlaintextRecord(plaintext);
+  const transcript = typeof payload?.transcript === "string" ? payload.transcript.trim() : "";
+  if (!payload || !transcript) {
+    return plaintext;
+  }
+  const lines = ["Voice transcript:", transcript];
+  const segments = Array.isArray(payload.segments) ? payload.segments : [];
+  const speakerLines = segments
+    .map((segment) => formatSpeakerSegment(segment))
+    .filter((line): line is string => Boolean(line));
+  if (speakerLines.length > 0) {
+    lines.push("", "Speaker observations:", ...speakerLines);
+  }
+  return lines.join("\n");
+}
+
+function formatVerifiedAtomVoiceEnrollment(plaintext: string): string {
+  const payload = parsePlaintextRecord(plaintext);
+  if (!payload) {
+    return plaintext;
+  }
+  const profileName = typeof payload.profileName === "string" ? payload.profileName.trim() : "";
+  const sampleStatus = typeof payload.sampleStatus === "string" ? payload.sampleStatus.trim() : "";
+  const transcript = typeof payload.transcript === "string" ? payload.transcript.trim() : "";
+  return [
+    "Voice profile enrollment sample:",
+    `profile=${profileName || "unknown"}`,
+    `status=${sampleStatus || "unknown"}`,
+    ...(transcript ? ["", "Enrollment transcript:", transcript] : []),
+  ].join("\n");
+}
+
+function parsePlaintextRecord(plaintext: string): Record<string, unknown> | null {
+  try {
+    const parsed = JSON.parse(plaintext) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return null;
+    }
+    return parsed as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+function formatSpeakerSegment(segment: unknown): string | null {
+  if (!segment || typeof segment !== "object" || Array.isArray(segment)) {
+    return null;
+  }
+  const record = segment as Record<string, unknown>;
+  const speakerLabel =
+    typeof record.speakerLabel === "string" && record.speakerLabel.trim()
+      ? record.speakerLabel.trim()
+      : "unknown";
+  const text = typeof record.text === "string" ? record.text.trim() : "";
+  const confidence =
+    typeof record.confidence === "number" && Number.isFinite(record.confidence)
+      ? ` confidence=${record.confidence.toFixed(2)}`
+      : "";
+  return text ? `- ${speakerLabel}${confidence}: ${text}` : null;
 }
 
 function normalizeOptionalChatSystemReceipt(
@@ -2723,7 +2797,31 @@ export const chatHandlers: GatewayRequestHandlers = {
       respond(false, undefined, errorShape(ErrorCodes.INVALID_REQUEST, systemReceiptResult.error));
       return;
     }
-    const inboundMessage = sanitizedMessageResult.message;
+    let inboundMessage = sanitizedMessageResult.message;
+    const atomCompanionEnvelope = await verifyAndUnwrapAtomCompanionMessage(inboundMessage);
+    if (atomCompanionEnvelope && !atomCompanionEnvelope.ok) {
+      respond(
+        false,
+        undefined,
+        errorShape(ErrorCodes.INVALID_REQUEST, atomCompanionEnvelope.error),
+      );
+      return;
+    }
+    if (atomCompanionEnvelope?.ok) {
+      inboundMessage = [
+        "[ATOM companion verified input]",
+        `device=${atomCompanionEnvelope.metadata.deviceId}`,
+        `mode=${atomCompanionEnvelope.metadata.mode}`,
+        `scope=${atomCompanionEnvelope.metadata.scope}`,
+        `payloadType=${atomCompanionEnvelope.metadata.payloadType}`,
+        `sequence=${atomCompanionEnvelope.metadata.sequence}`,
+        "",
+        formatVerifiedAtomCompanionPlaintext(
+          atomCompanionEnvelope.metadata.payloadType,
+          atomCompanionEnvelope.plaintext,
+        ),
+      ].join("\n");
+    }
     const systemInputProvenance = normalizeInputProvenance(p.systemInputProvenance);
     const systemProvenanceReceipt = systemReceiptResult.receipt;
     const stopCommand = isChatStopCommandText(inboundMessage);

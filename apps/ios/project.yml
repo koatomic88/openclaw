@@ -145,6 +145,7 @@ targets:
         NSCalendarsFullAccessUsageDescription: ATOM uses your calendars to show events and scheduling context when you enable calendar access.
         NSCalendarsWriteOnlyAccessUsageDescription: ATOM uses your calendars to add events when you approve calendar actions.
         NSContactsUsageDescription: ATOM uses your contacts so you can search and reference people while using the assistant.
+        NSFaceIDUsageDescription: ATOM uses Face ID to confirm sensitive actions such as pairing, approvals, money/security workflows, and high-trust skill execution.
         NSLocationWhenInUseUsageDescription: ATOM uses your location only when you explicitly attach it to context.
         NSLocationAlwaysAndWhenInUseUsageDescription: ATOM can share your location in the background only when you explicitly enable Always.
         NSMicrophoneUsageDescription: ATOM uses the microphone for push-to-talk, spoken conversations, and approved voice features.

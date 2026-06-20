@@ -30,13 +30,14 @@ struct RootTabs: View {
     @State private var onboardingAllowSkip: Bool = true
     @State private var didEvaluateOnboarding: Bool = false
     @State private var didAutoOpenSettings: Bool = false
+    @State private var didApplyInitialCompanionTab: Bool = false
     @State private var didApplyInitialAppearance: Bool = false
     @State private var didApplyInitialChatSession: Bool = false
 
     private enum AppTab: Hashable {
-        case control
+        case atom
+        case chat
         case talk
-        case capture
         case approvals
         case settings
     }
@@ -44,26 +45,26 @@ struct RootTabs: View {
     private static var initialTab: AppTab {
         let arguments = ProcessInfo.processInfo.arguments
         guard let flagIndex = arguments.firstIndex(of: "--openclaw-initial-tab") else {
-            return .control
+            return .atom
         }
         let valueIndex = arguments.index(after: flagIndex)
         guard arguments.indices.contains(valueIndex) else {
-            return .control
+            return .atom
         }
 
         switch arguments[valueIndex].lowercased() {
         case "chat":
-            return .talk
+            return .chat
         case "talk", "voice":
             return .talk
-        case "capture", "memory", "kg":
-            return .capture
+        case "capture", "memory", "kg", "atom", "home":
+            return .atom
         case "approvals", "approval":
             return .approvals
         case "settings":
             return .settings
         default:
-            return .control
+            return .atom
         }
     }
 
@@ -107,9 +108,7 @@ struct RootTabs: View {
         if shouldPresentOnLaunch || !hasConnectedOnce || !onboardingComplete {
             return .onboarding
         }
-        if !hasExistingGatewayConfig {
-            return .settings
-        }
+        _ = hasExistingGatewayConfig
         return .none
     }
 
@@ -139,24 +138,22 @@ struct RootTabs: View {
 
     private var tabContent: some View {
         TabView(selection: self.$selectedTab) {
-            CommandCenterTab(
-                openChat: { self.selectedTab = .talk },
-                openSettings: { self.selectedTab = .settings })
-                .tabItem { Label("Home", systemImage: "sparkles") }
+            AtomCaptureTab()
+                .tabItem { Label("ATOM", systemImage: "sparkles") }
                 .badge(self.appModel.pendingExecApprovalPrompt == nil ? 0 : 1)
-                .tag(AppTab.control)
+                .tag(AppTab.atom)
+
+            ChatProTab()
+                .tabItem { Label("Text", systemImage: "bubble.left.and.text.bubble.right.fill") }
+                .tag(AppTab.chat)
 
             TalkProTab(openSettings: { self.selectedTab = .settings })
                 .tabItem {
                     Label(
-                        "Talk",
+                        "Voice",
                         systemImage: self.appModel.talkMode.isEnabled ? "waveform.circle.fill" : "waveform.circle")
                 }
                 .tag(AppTab.talk)
-
-            AtomCaptureTab()
-                .tabItem { Label("Capture", systemImage: "sparkle.magnifyingglass") }
-                .tag(AppTab.capture)
 
             AtomApprovalsTab()
                 .tabItem { Label("Approve", systemImage: "checkmark.shield.fill") }
@@ -240,6 +237,7 @@ struct RootTabs: View {
             .onAppear { self.updateCanvasState() }
             .onAppear { self.evaluateOnboardingPresentation(force: false) }
             .onAppear { self.maybeAutoOpenSettings() }
+            .onAppear { self.applyInitialCompanionTabIfNeeded() }
             .onAppear { self.maybeShowQuickSetup() }
             .onAppear { self.applyInitialAppearanceIfNeeded() }
             .onAppear { self.applyInitialChatSessionIfNeeded() }
@@ -297,7 +295,7 @@ struct RootTabs: View {
                 self.evaluateOnboardingPresentation(force: true)
             }
             .onChange(of: self.appModel.openChatRequestID) { _, _ in
-                self.selectedTab = .talk
+                self.selectedTab = .chat
             }
     }
 
@@ -394,9 +392,9 @@ struct RootTabs: View {
             return RootTabsHomeCanvasPayload(
                 gatewayState: "connected",
                 eyebrow: "\(gatewayLabel) online",
-                title: "ATOM command center",
+                title: "ATOM companion",
                 subtitle:
-                "Use Talk for voice, Capture for KG staging, and Approvals for gated actions.",
+                "Use Text or Voice from the orb. ATOM routes heavier work through the Mac brain.",
                 gatewayLabel: gatewayLabel,
                 activeAgentName: self.appModel.activeAgentName,
                 activeAgentBadge: agents.first(where: { $0.isActive })?.badge ?? "OC",
@@ -424,7 +422,7 @@ struct RootTabs: View {
                 eyebrow: self.gatewayStatus == .error ? "Gateway needs attention" : "ATOM iOS",
                 title: "Pair a gateway",
                 subtitle:
-                "Connect this phone as a local node for voice, capture, share intake, and approved device tools.",
+                "Connect this phone as Praveen's private ATOM companion for voice, text, capture, and approvals.",
                 gatewayLabel: gatewayLabel,
                 activeAgentName: "Main",
                 activeAgentBadge: "OC",
@@ -561,6 +559,13 @@ struct RootTabs: View {
         guard route == .settings else { return }
         self.didAutoOpenSettings = true
         self.selectedTab = .settings
+    }
+
+    private func applyInitialCompanionTabIfNeeded() {
+        guard !self.didApplyInitialCompanionTab else { return }
+        self.didApplyInitialCompanionTab = true
+        guard Self.initialTab == .atom else { return }
+        self.selectedTab = .atom
     }
 
     private func applyInitialChatSessionIfNeeded() {

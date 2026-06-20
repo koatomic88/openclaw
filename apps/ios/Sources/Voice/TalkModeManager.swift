@@ -954,6 +954,7 @@ final class TalkModeManager: NSObject {
         GatewayDiagnostics.log("talk: process transcript chars=\(transcript.count) restartAfter=\(restartAfter)")
         await reloadConfig()
         let prompt = self.buildPrompt(transcript: transcript)
+        let message = self.buildSecureVoiceObservationMessage(transcript: transcript) ?? prompt
         guard self.gatewayConnected, let gateway else {
             self.statusText = "Gateway not connected"
             self.logger.warning("finalize: gateway not connected")
@@ -969,9 +970,9 @@ final class TalkModeManager: NSObject {
             let sessionKey = self.mainSessionKey
             await self.subscribeChatIfNeeded(sessionKey: sessionKey)
             self.logger.info(
-                "chat.send start sessionKey=\(sessionKey, privacy: .public) chars=\(prompt.count, privacy: .public)")
-            GatewayDiagnostics.log("talk: chat.send start sessionKey=\(sessionKey) chars=\(prompt.count)")
-            let runId = try await self.sendChat(prompt, gateway: gateway)
+                "chat.send start sessionKey=\(sessionKey, privacy: .public) chars=\(message.count, privacy: .public)")
+            GatewayDiagnostics.log("talk: chat.send start sessionKey=\(sessionKey) chars=\(message.count)")
+            let runId = try await self.sendChat(message, gateway: gateway)
             self.logger.info("chat.send ok runId=\(runId, privacy: .public)")
             GatewayDiagnostics.log("talk: chat.send ok runId=\(runId)")
             let shouldIncremental = self.shouldUseIncrementalTTS()
@@ -1263,6 +1264,27 @@ final class TalkModeManager: NSObject {
             transcript: transcript,
             interruptedAtSeconds: interrupted,
             includeVoiceDirectiveHint: false)
+    }
+
+    private func buildSecureVoiceObservationMessage(transcript: String) -> String? {
+        let trimmed = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        let label = "unknown"
+        let payload = AtomCompanionVoiceObservationPayload(
+            capturedAtMs: Int(Date().timeIntervalSince1970 * 1000),
+            transcript: trimmed,
+            segments: [
+                AtomCompanionVoiceSegment(
+                    speakerLabel: label,
+                    profileId: nil,
+                    confidence: 0,
+                    text: trimmed),
+            ],
+            source: "atom-ios-talk-mode")
+        return AtomCompanionSecureChannel.signedVoiceObservationEnvelopeMessage(
+            payload: payload,
+            mode: "voice",
+            gatewayConnected: self.gatewayConnected)
     }
 
     private enum ChatCompletionState: CustomStringConvertible {
