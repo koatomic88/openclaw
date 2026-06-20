@@ -460,7 +460,7 @@ extension SettingsProTab {
 
     func title(for route: SettingsRoute) -> String {
         switch route {
-        case .gateway: "Gateway"
+        case .gateway: "Mac ATOM Link"
         case .permissions: "Permissions"
         case .voice: "Voice & Talk"
         case .diagnostics: "Diagnostics"
@@ -519,7 +519,7 @@ extension SettingsProTab {
     func friendlyGatewayMessage(from raw: String) -> String? {
         let lower = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         if lower.contains("pairing required") {
-            return "Pairing required. Run /pair approve in your OpenClaw chat, then connect again."
+            return "Pairing required. Approve this iPhone on Mac ATOM, then tap Reconnect."
         }
         if lower.contains("device nonce required") || lower.contains("device nonce mismatch") {
             return "Secure handshake failed. Check Tailscale, then connect again."

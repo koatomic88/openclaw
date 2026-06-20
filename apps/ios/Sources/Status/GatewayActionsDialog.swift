@@ -14,12 +14,12 @@ extension View {
             Button("Disconnect", role: .destructive) {
                 onDisconnect()
             }
-            Button("Open Settings") {
+            Button("Open ATOM Control") {
                 onOpenSettings()
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Disconnect from the gateway?")
+            Text("Disconnect from Mac ATOM?")
         }
     }
 }

@@ -393,7 +393,7 @@ struct TalkProState: Equatable {
         if self.isSpeaking { return "Speaking" }
         if self.isListening { return "Listening" }
         if self.normalizedStatus.contains("connecting") { return "Connecting" }
-        if self.normalizedStatus.contains("thinking") { return "Asking OpenClaw" }
+        if self.normalizedStatus.contains("thinking") { return "Asking ATOM" }
         if self.isEnabled { return "Ready to talk" }
         return "Talk is off"
     }
@@ -470,7 +470,7 @@ struct TalkProState: Equatable {
         case .start: "Start Talk"
         case .stop: "Stop Talk"
         case .enablePermission: "Enable Talk"
-        case .openSettings: self.gatewayConnected ? "Open Voice Settings" : "Open Gateway Settings"
+        case .openSettings: self.gatewayConnected ? "Open Voice Control" : "Open Mac Link Control"
         case .waiting: "Waiting for Approval"
         }
     }

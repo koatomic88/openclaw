@@ -36,7 +36,7 @@ struct OpenClawLiveActivity: Widget {
                 .frame(width: 30, height: 30)
                 .background(.thinMaterial, in: Circle())
             VStack(alignment: .leading, spacing: 2) {
-                Text("OpenClaw")
+                Text("ATOM")
                     .font(.subheadline.bold())
                     .lineLimit(1)
                 Text(context.state.statusText)

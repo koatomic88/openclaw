@@ -3,7 +3,7 @@ import SwiftUI
 
 extension SettingsProTab {
     var settingsHeader: some View {
-        Text("Settings")
+        Text("ATOM Control")
             .font(.system(size: 28, weight: .bold))
             .padding(.horizontal, OpenClawProMetric.pagePadding)
             .padding(.top, 6)
@@ -20,7 +20,7 @@ extension SettingsProTab {
                         }
                     }
                     .pickerStyle(.segmented)
-                    Text("Follows iOS appearance.")
+                    Text("Controls the ATOM app appearance.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -31,7 +31,7 @@ extension SettingsProTab {
 
     var gatewaySection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            ProSectionHeader(title: "Gateway", uppercase: false)
+            ProSectionHeader(title: "Mac ATOM Link", uppercase: false)
             ProCard(padding: 0, radius: SettingsLayout.cardRadius) {
                 VStack(spacing: 0) {
                     NavigationLink(value: SettingsRoute.gateway) {
@@ -217,7 +217,7 @@ extension SettingsProTab {
 
             self.detailStatusCard(
                 icon: "antenna.radiowaves.left.and.right",
-                title: "Gateway",
+                title: "Mac ATOM Link",
                 detail: self.gatewayConnected ? "Connected" : self.appModel.gatewayDisplayStatusText,
                 value: self.gatewayConnected ? "online" : "offline",
                 color: self.gatewayConnected ? OpenClawBrand.ok : .secondary)
@@ -325,7 +325,7 @@ extension SettingsProTab {
             self.detailStatusCard(
                 icon: "hand.raised",
                 title: "Privacy",
-                detail: "Control what device context ATOM can expose to the gateway.",
+                detail: "Control what device context ATOM can expose to the Mac brain.",
                 value: self.privacyDetail,
                 color: .secondary)
 
@@ -464,7 +464,7 @@ extension SettingsProTab {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("Location")
                             .font(.subheadline.weight(.semibold))
-                        Text("Controls whether location can be shared with gateway tools.")
+                        Text("Controls whether location can be shared with ATOM tools.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .lineLimit(2)
@@ -508,7 +508,7 @@ extension SettingsProTab {
                         Text(name.isEmpty ? agent.id : name).tag(agent.id)
                     }
                 }
-                Text("Controls which agent Chat and Talk use.")
+                Text("Controls which Mac ATOM agent Text and Voice use.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -566,7 +566,7 @@ extension SettingsProTab {
                 Text("Discovered Gateways")
                     .font(.subheadline.weight(.semibold))
                 if self.gatewayController.gateways.isEmpty {
-                    Text("No gateways found yet. Use manual setup if Bonjour is blocked.")
+                    Text("No Mac gateways found yet. Use setup code if Bonjour is blocked.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 } else {
@@ -610,7 +610,7 @@ extension SettingsProTab {
     var manualGatewayCard: some View {
         ProCard(radius: SettingsLayout.cardRadius) {
             VStack(alignment: .leading, spacing: 12) {
-                Toggle("Use Manual Gateway", isOn: self.$manualGatewayEnabled)
+                Toggle("Use Manual Mac Link", isOn: self.$manualGatewayEnabled)
                 TextField("Host", text: self.$manualGatewayHost)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
@@ -638,7 +638,7 @@ extension SettingsProTab {
         ProCard(radius: SettingsLayout.cardRadius) {
             VStack(alignment: .leading, spacing: 12) {
                 Toggle("Auto-connect on launch", isOn: self.$gatewayAutoConnect)
-                SecureField("Gateway Auth Token", text: self.$gatewayToken)
+                SecureField("Mac Link Auth Token", text: self.$gatewayToken)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .textFieldStyle(.roundedBorder)

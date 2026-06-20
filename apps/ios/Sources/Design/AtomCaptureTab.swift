@@ -638,10 +638,18 @@ private struct AtomCompanionSecuritySheet: View {
     @Environment(NodeAppModel.self) private var appModel
     @Environment(GatewayConnectionController.self) private var gatewayController
     @Environment(\.dismiss) private var dismiss
+    @AppStorage("camera.enabled") private var cameraEnabled: Bool = true
+    @AppStorage("location.enabledMode") private var locationModeRaw: String = OpenClawLocationMode.off.rawValue
+    @AppStorage("screen.preventSleep") private var preventSleep: Bool = true
+    @AppStorage("talk.background.enabled") private var talkBackgroundEnabled: Bool = false
+    @AppStorage("talk.button.enabled") private var talkButtonEnabled: Bool = true
     @State private var setupCode = ""
     @State private var pairingStatus: String?
     @State private var showQRScanner = false
     @State private var isPairing = false
+    @State private var isRetryingLink = false
+    @State private var locationStatusText: String?
+    @State private var previousLocationModeRaw: String = OpenClawLocationMode.off.rawValue
 
     private var hasOperatorToken: Bool {
         DeviceAuthStore.loadToken(deviceId: self.deviceID, role: "operator") != nil
@@ -657,6 +665,7 @@ private struct AtomCompanionSecuritySheet: View {
                         self.header
                         self.statusPanel
                         self.pairingPanel
+                        self.coreControlsPanel
                         self.modePanel
                         self.voiceIdentityPanel
                         self.protocolPanel
@@ -684,6 +693,12 @@ private struct AtomCompanionSecuritySheet: View {
                     },
                     onDismiss: {})
                     .ignoresSafeArea()
+            }
+            .onAppear {
+                self.previousLocationModeRaw = self.locationModeRaw
+            }
+            .onChange(of: self.locationModeRaw) { _, newValue in
+                self.handleLocationModeChange(newValue)
             }
         }
     }
@@ -725,6 +740,24 @@ private struct AtomCompanionSecuritySheet: View {
                 icon: "🧠",
                 title: self.gatewayName ?? "Mac ATOM",
                 value: self.gatewayAddress ?? "Waiting for paired gateway")
+            if !self.gatewayConnected {
+                Button {
+                    Task { await self.retryMacLink() }
+                } label: {
+                    if self.isRetryingLink {
+                        ProgressView()
+                            .progressViewStyle(.circular)
+                            .tint(Color(red: 1, green: 0.74, blue: 0.28))
+                            .frame(maxWidth: .infinity)
+                    } else {
+                        Label("Retry Mac Link", systemImage: "arrow.triangle.2.circlepath")
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+                .buttonStyle(.bordered)
+                .tint(Color(red: 1, green: 0.74, blue: 0.28))
+                .disabled(self.isRetryingLink)
+            }
         }
         .padding(14)
         .background(Color.white.opacity(0.075), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -795,6 +828,57 @@ private struct AtomCompanionSecuritySheet: View {
             self.toggleRow(emoji: self.speakerEnabled ? "🔊" : "🔇", title: "Speaker", subtitle: "ATOM can speak responses aloud.", isOn: self.$speakerEnabled)
             self.toggleRow(emoji: "⚡", title: "Wake", subtitle: "Wake phrase mode stays explicit.", isOn: self.$wakeEnabled)
             self.toggleRow(emoji: "🌐", title: "Translate", subtitle: "Ambient translation is a separate mode.", isOn: self.$translationEnabled)
+        }
+        .padding(14)
+        .background(Color.white.opacity(0.065), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(Color.white.opacity(0.10), lineWidth: 1))
+    }
+
+    private var coreControlsPanel: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Core App Controls", systemImage: "slider.horizontal.3")
+                .font(.headline.weight(.bold))
+                .foregroundStyle(Color(red: 1, green: 0.82, blue: 0.34))
+
+            self.toggleRow(
+                emoji: "📷",
+                title: "Camera tool",
+                subtitle: "Allow ATOM to request camera capture while this app is open.",
+                isOn: self.$cameraEnabled)
+            self.toggleRow(
+                emoji: "🔆",
+                title: "Keep awake",
+                subtitle: "Keep the iPhone screen awake while ATOM is open.",
+                isOn: self.$preventSleep)
+            self.toggleRow(
+                emoji: "🛰️",
+                title: "Background talk",
+                subtitle: "Let active Talk sessions continue briefly in the background.",
+                isOn: self.$talkBackgroundEnabled)
+            self.toggleRow(
+                emoji: "🎙️",
+                title: "Talk button",
+                subtitle: "Show the voice/talk controls in ATOM.",
+                isOn: self.$talkButtonEnabled)
+
+            VStack(alignment: .leading, spacing: 8) {
+                self.statusLine(
+                    icon: "📍",
+                    title: "Location context",
+                    value: self.locationModeTitle)
+                Picker("Location context", selection: self.$locationModeRaw) {
+                    Text("Off").tag(OpenClawLocationMode.off.rawValue)
+                    Text("While Using").tag(OpenClawLocationMode.whileUsing.rawValue)
+                    Text("Always").tag(OpenClawLocationMode.always.rawValue)
+                }
+                .pickerStyle(.segmented)
+                .tint(Color(red: 1, green: 0.74, blue: 0.28))
+                if let locationStatusText {
+                    Text(locationStatusText)
+                        .font(.caption)
+                        .foregroundStyle(Color(red: 1, green: 0.75, blue: 0.26))
+                }
+            }
         }
         .padding(14)
         .background(Color.white.opacity(0.065), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -960,6 +1044,58 @@ private struct AtomCompanionSecuritySheet: View {
         self.pairingStatus = self.gatewayController.pendingTrustPrompt == nil
             ? "Pairing request sent. Approve on Mac ATOM if prompted."
             : "Verify the Mac gateway fingerprint to continue pairing."
+    }
+
+    @MainActor
+    private func retryMacLink() async {
+        guard !self.isRetryingLink else { return }
+        self.isRetryingLink = true
+        self.pairingStatus = "Retrying Mac ATOM link..."
+        defer { self.isRetryingLink = false }
+        self.appModel.gatewayPairingPaused = false
+        self.appModel.gatewayPairingRequestId = nil
+        await self.gatewayController.connectLastKnown()
+        self.pairingStatus = self.gatewayConnected ? "Mac ATOM link restored." : "Retry sent. Keep ATOM open and approve on the Mac if prompted."
+    }
+
+    private var locationModeTitle: String {
+        switch OpenClawLocationMode(rawValue: self.locationModeRaw) ?? .off {
+        case .off:
+            return "Off"
+        case .whileUsing:
+            return "While using"
+        case .always:
+            return "Always"
+        }
+    }
+
+    private func handleLocationModeChange(_ newValue: String) {
+        guard newValue != self.previousLocationModeRaw else { return }
+        guard let mode = OpenClawLocationMode(rawValue: newValue) else { return }
+        let previous = self.previousLocationModeRaw
+        Task {
+            await self.applyLocationMode(mode, rawValue: newValue, previous: previous)
+        }
+    }
+
+    @MainActor
+    private func applyLocationMode(_ mode: OpenClawLocationMode, rawValue: String, previous: String) async {
+        self.locationStatusText = nil
+        if mode == .off {
+            self.previousLocationModeRaw = rawValue
+            self.gatewayController.refreshActiveGatewayRegistrationFromSettings()
+            return
+        }
+
+        let granted = await self.appModel.requestLocationPermissions(mode: mode)
+        if granted {
+            self.previousLocationModeRaw = rawValue
+            self.gatewayController.refreshActiveGatewayRegistrationFromSettings()
+        } else {
+            self.locationModeRaw = previous
+            self.previousLocationModeRaw = previous
+            self.locationStatusText = "Location permission was not granted."
+        }
     }
 }
 

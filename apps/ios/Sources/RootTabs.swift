@@ -161,7 +161,7 @@ struct RootTabs: View {
                 .tag(AppTab.approvals)
 
             SettingsProTab()
-                .tabItem { Label("Settings", systemImage: "gearshape.fill") }
+                .tabItem { Label("Control", systemImage: "slider.horizontal.3") }
                 .tag(AppTab.settings)
         }
     }
@@ -430,7 +430,7 @@ struct RootTabs: View {
                 agentCount: agents.count,
                 agents: Array(agents.prefix(4)),
                 footer:
-                "Use Settings to scan a pairing QR code or paste a setup code from your ATOM gateway.")
+                "Use ATOM Control to scan a pairing QR code or paste a setup code from your Mac gateway.")
         }
     }
 
@@ -496,7 +496,7 @@ struct RootTabs: View {
 
     private func gatewayProblemPrimaryActionTitle(_ problem: GatewayConnectionProblem) -> String {
         if problem.canTrustRotatedCertificate { return "Trust certificate" }
-        return problem.retryable ? "Retry" : "Open Settings"
+        return problem.retryable ? "Retry" : "Open ATOM Control"
     }
 
     private func handleGatewayProblemPrimaryAction(_ problem: GatewayConnectionProblem) {
