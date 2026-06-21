@@ -263,7 +263,7 @@ public enum DeepLinkParser {
                     host: hostParam,
                     port: port,
                     tls: tls,
-                    bootstrapToken: nil,
+                    bootstrapToken: query["bootstrapToken"],
                     token: query["token"],
                     password: query["password"]))
 

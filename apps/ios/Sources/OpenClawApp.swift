@@ -626,6 +626,9 @@ struct OpenClawApp: App {
                 .task {
                     self.appDelegate.appModel = self.appModel
                     self.applyAppearancePreference()
+                    if UserDefaults.standard.bool(forKey: "gateway.autoconnect") {
+                        await self.gatewayController.connectLastKnown()
+                    }
                     self.gatewayController.setScenePhase(self.scenePhase)
                 }
                 .onOpenURL { url in
@@ -669,9 +672,46 @@ extension OpenClawApp {
         switch route {
         case .agent, .dashboard:
             await self.appModel.handleDeepLink(url: url)
-        case .gateway:
-            break
+        case let .gateway(link):
+            await self.applyGatewayDeepLink(link)
         }
+    }
+
+    @MainActor
+    private func applyGatewayDeepLink(_ link: GatewayConnectDeepLink) async {
+        let instanceId = GatewaySettingsStore.currentInstanceID()
+        let setupAuth = GatewayConnectionController.ManualAuthOverride.setupAuth(from: link)
+        let defaults = UserDefaults.standard
+        if setupAuth.hasBootstrapToken {
+            GatewayOnboardingReset.prepareForBootstrapPairing(
+                appModel: self.appModel,
+                instanceId: instanceId)
+        } else {
+            self.appModel.disconnectGateway()
+        }
+
+        defaults.set(true, forKey: "gateway.autoconnect")
+        defaults.set(true, forKey: "gateway.manual.enabled")
+        defaults.set(link.host, forKey: "gateway.manual.host")
+        defaults.set(link.port, forKey: "gateway.manual.port")
+        defaults.set(link.tls, forKey: "gateway.manual.tls")
+
+        if !instanceId.isEmpty {
+            GatewaySettingsStore.saveGatewayBootstrapToken(setupAuth.bootstrapToken, instanceId: instanceId)
+            if setupAuth.shouldApplyTokenField {
+                GatewaySettingsStore.saveGatewayToken(setupAuth.token, instanceId: instanceId)
+            }
+            if setupAuth.shouldApplyPasswordField {
+                GatewaySettingsStore.saveGatewayPassword(setupAuth.password, instanceId: instanceId)
+            }
+        }
+
+        await self.gatewayController.connectManual(
+            host: link.host,
+            port: link.port,
+            useTLS: link.tls,
+            authOverride: setupAuth.manualAuthOverride,
+            forceReconnect: true)
     }
 
     private static func installUncaughtExceptionLogger() {

@@ -312,7 +312,7 @@ struct OpenClawProMark: View {
             .scaledToFit()
             .frame(width: self.size, height: self.size)
             .shadow(color: OpenClawBrand.accent.opacity(0.28), radius: self.shadowRadius, y: self.shadowRadius / 2)
-            .accessibilityLabel("OpenClaw")
+            .accessibilityLabel("ATOM")
     }
 }
 

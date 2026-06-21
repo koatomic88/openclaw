@@ -16,15 +16,23 @@ struct AtomCaptureTab: View {
     @State private var statusText = "Ready to route through Mac ATOM"
     @State private var errorText: String?
     @State private var activeSheet: AtomCompanionSheet?
+    var openChat: () -> Void = {}
+    var openTalk: () -> Void = {}
+    var openOps: () -> Void = {}
+    var openControl: () -> Void = {}
 
     private enum AtomCompanionSheet: Identifiable {
         case text
         case security
+        case approvals
+        case commandCenter
 
         var id: String {
             switch self {
             case .text: "text"
             case .security: "security"
+            case .approvals: "approvals"
+            case .commandCenter: "commandCenter"
             }
         }
     }
@@ -77,7 +85,6 @@ struct AtomCaptureTab: View {
                 }
             }
             .navigationBarHidden(true)
-            .toolbar(.hidden, for: .tabBar)
             .sheet(item: self.$activeSheet) { sheet in
                 switch sheet {
                 case .text:
@@ -101,6 +108,20 @@ struct AtomCaptureTab: View {
                             }))
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
+                case .approvals:
+                    AtomApprovalsTab()
+                        .presentationDetents([.large])
+                        .presentationDragIndicator(.visible)
+                case .commandCenter:
+                    CommandCenterTab(
+                        openChat: {
+                            self.activeSheet = nil
+                            self.openChat()
+                        },
+                        openSettings: {
+                            self.activeSheet = nil
+                            self.openControl()
+                        })
                 }
             }
         }
@@ -138,12 +159,28 @@ struct AtomCaptureTab: View {
 
     private var companionMenu: some View {
         Menu {
+            Button(action: self.openChat) {
+                Label("Open Text Chat", systemImage: "bubble.left.and.text.bubble.right.fill")
+            }
+            Button(action: self.openTalk) {
+                Label("Open Voice", systemImage: "waveform.circle.fill")
+            }
             Button { self.activeSheet = .text } label: {
-                Label("Text ATOM", systemImage: "keyboard.fill")
+                Label("Quick Capture", systemImage: "text.badge.plus")
             }
-            Button(action: self.handleVoiceAction) {
-                Label(self.voiceButtonTitle, systemImage: self.voiceButtonIcon)
+            Button { self.activeSheet = .approvals } label: {
+                Label("Approvals", systemImage: "checkmark.shield.fill")
             }
+            Button { self.activeSheet = .commandCenter } label: {
+                Label("Command Center", systemImage: "command.circle.fill")
+            }
+            Button(action: self.openOps) {
+                Label("Agent Ops", systemImage: "square.grid.2x2.fill")
+            }
+            Button(action: self.openControl) {
+                Label("Control Settings", systemImage: "slider.horizontal.3")
+            }
+            Divider()
             Button {
                 self.speakerEnabled.toggle()
             } label: {
@@ -311,8 +348,8 @@ struct AtomCaptureTab: View {
         CommandPanel(padding: 12) {
             VStack(spacing: 10) {
                 HStack(spacing: 10) {
-                    Button { self.activeSheet = .text } label: {
-                        Label("Text ATOM", systemImage: "keyboard.fill")
+                    Button(action: self.openChat) {
+                        Label("Text Chat", systemImage: "bubble.left.and.text.bubble.right.fill")
                             .font(.subheadline.weight(.bold))
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
@@ -324,8 +361,8 @@ struct AtomCaptureTab: View {
                     }
                     .buttonStyle(.plain)
 
-                    Button(action: self.handleVoiceAction) {
-                        Label(self.voiceButtonTitle, systemImage: self.voiceButtonIcon)
+                    Button(action: self.openTalk) {
+                        Label("Voice", systemImage: "waveform.circle.fill")
                             .font(.subheadline.weight(.bold))
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity)
@@ -339,7 +376,7 @@ struct AtomCaptureTab: View {
                 }
 
                 Button { self.activeSheet = .security } label: {
-                    Label("Pairing, permissions, and device scopes", systemImage: "lock.shield.fill")
+                    Label("Pairing, permissions, device scopes, and approvals", systemImage: "lock.shield.fill")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .center)

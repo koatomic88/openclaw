@@ -38,7 +38,7 @@ struct RootTabs: View {
         case atom
         case chat
         case talk
-        case approvals
+        case ops
         case settings
     }
 
@@ -59,10 +59,12 @@ struct RootTabs: View {
             return .talk
         case "capture", "memory", "kg", "atom", "home":
             return .atom
-        case "approvals", "approval":
-            return .approvals
-        case "settings":
+        case "ops", "agent", "agents", "skills", "nodes", "cron", "usage", "dreaming":
+            return .ops
+        case "settings", "control":
             return .settings
+        case "approvals", "approval":
+            return .atom
         default:
             return .atom
         }
@@ -138,7 +140,11 @@ struct RootTabs: View {
 
     private var tabContent: some View {
         TabView(selection: self.$selectedTab) {
-            AtomCaptureTab()
+            AtomCaptureTab(
+                openChat: { self.selectedTab = .chat },
+                openTalk: { self.selectedTab = .talk },
+                openOps: { self.selectedTab = .ops },
+                openControl: { self.selectedTab = .settings })
                 .tabItem { Label("ATOM", systemImage: "sparkles") }
                 .badge(self.appModel.pendingExecApprovalPrompt == nil ? 0 : 1)
                 .tag(AppTab.atom)
@@ -155,10 +161,9 @@ struct RootTabs: View {
                 }
                 .tag(AppTab.talk)
 
-            AtomApprovalsTab()
-                .tabItem { Label("Approve", systemImage: "checkmark.shield.fill") }
-                .badge(self.appModel.pendingExecApprovalPrompt == nil ? 0 : 1)
-                .tag(AppTab.approvals)
+            AgentProTab()
+                .tabItem { Label("Ops", systemImage: "square.grid.2x2.fill") }
+                .tag(AppTab.ops)
 
             SettingsProTab()
                 .tabItem { Label("Control", systemImage: "slider.horizontal.3") }
