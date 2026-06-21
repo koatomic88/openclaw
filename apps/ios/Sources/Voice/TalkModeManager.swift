@@ -953,8 +953,7 @@ final class TalkModeManager: NSObject {
 
         GatewayDiagnostics.log("talk: process transcript chars=\(transcript.count) restartAfter=\(restartAfter)")
         await reloadConfig()
-        let prompt = self.buildPrompt(transcript: transcript)
-        let message = self.buildSecureVoiceObservationMessage(transcript: transcript) ?? prompt
+        let message = self.buildPrompt(transcript: transcript)
         guard self.gatewayConnected, let gateway else {
             self.statusText = "Gateway not connected"
             self.logger.warning("finalize: gateway not connected")
@@ -1264,27 +1263,6 @@ final class TalkModeManager: NSObject {
             transcript: transcript,
             interruptedAtSeconds: interrupted,
             includeVoiceDirectiveHint: false)
-    }
-
-    private func buildSecureVoiceObservationMessage(transcript: String) -> String? {
-        let trimmed = transcript.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return nil }
-        let label = "unknown"
-        let payload = AtomCompanionVoiceObservationPayload(
-            capturedAtMs: Int(Date().timeIntervalSince1970 * 1000),
-            transcript: trimmed,
-            segments: [
-                AtomCompanionVoiceSegment(
-                    speakerLabel: label,
-                    profileId: nil,
-                    confidence: 0,
-                    text: trimmed),
-            ],
-            source: "atom-ios-talk-mode")
-        return AtomCompanionSecureChannel.signedVoiceObservationEnvelopeMessage(
-            payload: payload,
-            mode: "voice",
-            gatewayConnected: self.gatewayConnected)
     }
 
     private enum ChatCompletionState: CustomStringConvertible {
