@@ -47,7 +47,7 @@ extension AVAudioPCMBuffer {
         }
         copy.frameLength = frameLength
 
-        if let src = self.floatChannelData, let dst = copy.floatChannelData {
+        if let src = floatChannelData, let dst = copy.floatChannelData {
             let channels = Int(format.channelCount)
             let frames = Int(frameLength)
             for ch in 0..<channels {
@@ -56,7 +56,7 @@ extension AVAudioPCMBuffer {
             return copy
         }
 
-        if let src = self.int16ChannelData, let dst = copy.int16ChannelData {
+        if let src = int16ChannelData, let dst = copy.int16ChannelData {
             let channels = Int(format.channelCount)
             let frames = Int(frameLength)
             for ch in 0..<channels {
@@ -65,7 +65,7 @@ extension AVAudioPCMBuffer {
             return copy
         }
 
-        if let src = self.int32ChannelData, let dst = copy.int32ChannelData {
+        if let src = int32ChannelData, let dst = copy.int32ChannelData {
             let channels = Int(format.channelCount)
             let frames = Int(frameLength)
             for ch in 0..<channels {
@@ -328,7 +328,7 @@ final class VoiceWakeManager: NSObject {
         }
 
         guard let transcript else { return }
-        guard let cmd = self.extractCommand(from: transcript, segments: segments) else { return }
+        guard let cmd = extractCommand(from: transcript, segments: segments) else { return }
 
         if cmd == self.lastDispatched { return }
         self.lastDispatched = cmd
@@ -360,8 +360,79 @@ final class VoiceWakeManager: NSObject {
         minPostTriggerGap: TimeInterval = 0.45) -> String?
     {
         let config = WakeWordGateConfig(triggers: triggers, minPostTriggerGap: minPostTriggerGap)
-        return WakeWordGate.match(transcript: transcript, segments: segments, config: config)?.command
+        if let match = WakeWordGate.match(transcript: transcript, segments: segments, config: config) {
+            return match.command
+        }
+        return Self.textOnlyFallbackCommand(
+            transcript: transcript,
+            triggers: triggers,
+            minCommandLength: config.minCommandLength)
     }
+
+    private nonisolated static func textOnlyFallbackCommand(
+        transcript: String,
+        triggers: [String],
+        minCommandLength: Int) -> String?
+    {
+        let words = Self.normalizedWords(transcript)
+        guard !words.isEmpty else { return nil }
+        let triggerCandidates = triggers
+            .map { Self.normalizedWords($0) }
+            .filter { !$0.isEmpty }
+            .sorted { $0.count > $1.count }
+        guard !triggerCandidates.isEmpty else { return nil }
+
+        for index in words.indices {
+            for trigger in triggerCandidates {
+                guard index + trigger.count <= words.count else { continue }
+                let candidate = Array(words[index..<(index + trigger.count)])
+                guard candidate == trigger else { continue }
+
+                let prefix = Array(words[..<index])
+                guard prefix.isEmpty || prefix.allSatisfy(Self.isWakePrefixFiller) else { continue }
+
+                let suffix = words[(index + trigger.count)...].joined(separator: " ")
+                if suffix.count >= minCommandLength {
+                    return suffix
+                }
+
+                let greeting = prefix.filter { !Self.isDiscardableWakePrefixFiller($0) }.joined(separator: " ")
+                if greeting.count >= minCommandLength {
+                    return greeting
+                }
+
+                return "Hello ATOM."
+            }
+        }
+
+        return nil
+    }
+
+    private nonisolated static func normalizedWords(_ text: String) -> [String] {
+        text
+            .lowercased()
+            .split(whereSeparator: { !$0.isLetter && !$0.isNumber })
+            .map(String.init)
+            .filter { !$0.isEmpty }
+    }
+
+    private nonisolated static func isWakePrefixFiller(_ word: String) -> Bool {
+        self.wakePrefixFillers.contains(word)
+    }
+
+    private nonisolated static func isDiscardableWakePrefixFiller(_ word: String) -> Bool {
+        self.discardableWakePrefixFillers.contains(word)
+    }
+
+    private nonisolated static let wakePrefixFillers: Set<String> = [
+        "a", "ah", "eh", "er", "erm", "hello", "hey", "hi", "hmm", "huh", "mhm", "mm", "oh", "uh", "um", "yo",
+        "呃", "嗯", "啊", "诶", "欸",
+    ]
+
+    private nonisolated static let discardableWakePrefixFillers: Set<String> = [
+        "a", "ah", "eh", "er", "erm", "hey", "hi", "hmm", "huh", "mhm", "mm", "oh", "uh", "um", "yo",
+        "呃", "嗯", "啊", "诶", "欸",
+    ]
 
     private static func configureAudioSession() throws {
         let session = AVAudioSession.sharedInstance()
