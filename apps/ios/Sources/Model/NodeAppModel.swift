@@ -2703,7 +2703,7 @@ extension NodeAppModel {
         self.recordShareEvent("Share self-test running…")
 
         let payload = SharedContentPayload(
-            title: "OpenClaw Share Self-Test",
+            title: "ATOM Share Self-Test",
             url: URL(string: "https://openclaw.ai/share-self-test"),
             text: "Validate iOS share->deep-link->gateway forwarding.")
         guard let deepLink = ShareToAgentDeepLink.buildURL(
@@ -3748,7 +3748,7 @@ extension NodeAppModel {
         guard connected else {
             self.execApprovalNotificationLogger.error(
                 "Exec approval action failed id=\(normalizedApprovalID, privacy: .public): operator not connected")
-            return .failed(message: "OpenClaw couldn't connect to the gateway operator session.")
+            return .failed(message: "ATOM couldn't connect to the Mac operator session.")
         }
 
         do {
@@ -3788,7 +3788,7 @@ extension NodeAppModel {
                 "Exec approval action failed id=\(normalizedApprovalID) error=\(error.localizedDescription)"
             self.execApprovalNotificationLogger.error("\(logMessage, privacy: .public)")
             return .failed(
-                message: "OpenClaw couldn't resolve this approval right now. Try again.")
+                message: "ATOM couldn't resolve this approval right now. Try again.")
         }
     }
 

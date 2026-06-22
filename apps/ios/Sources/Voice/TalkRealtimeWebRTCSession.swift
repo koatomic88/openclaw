@@ -621,7 +621,7 @@ final class TalkRealtimeWebRTCSession: NSObject {
             ?? Self.nonEmptyString(record["query"])
         guard let text else {
             throw NSError(domain: "TalkRealtimeWebRTC", code: 20, userInfo: [
-                NSLocalizedDescriptionKey: "OpenClaw control tool call missing text",
+                NSLocalizedDescriptionKey: "ATOM control tool call missing text",
             ])
         }
         var params: [String: Any] = [
@@ -689,21 +689,21 @@ final class TalkRealtimeWebRTCSession: NSObject {
                         self.trace("chat event runId=\(runId) state=\(chatEvent.state ?? "unknown")")
                     }
                     if chatEvent.state == "final" {
-                        return OpenClawChatEventText.assistantText(from: chatEvent) ?? "OpenClaw finished with no text."
+                        return OpenClawChatEventText.assistantText(from: chatEvent) ?? "ATOM finished with no text."
                     }
                     if chatEvent.state == "aborted" {
                         throw NSError(domain: "TalkRealtimeWebRTC", code: 9, userInfo: [
-                            NSLocalizedDescriptionKey: "OpenClaw realtime tool call aborted",
+                            NSLocalizedDescriptionKey: "ATOM realtime tool call aborted",
                         ])
                     }
                     if chatEvent.state == "error" {
                         throw NSError(domain: "TalkRealtimeWebRTC", code: 10, userInfo: [
-                            NSLocalizedDescriptionKey: "OpenClaw realtime tool call failed",
+                            NSLocalizedDescriptionKey: "ATOM realtime tool call failed",
                         ])
                     }
                 }
                 throw NSError(domain: "TalkRealtimeWebRTC", code: 11, userInfo: [
-                    NSLocalizedDescriptionKey: "OpenClaw realtime tool event stream ended",
+                    NSLocalizedDescriptionKey: "ATOM realtime tool event stream ended",
                 ])
             }
             group.addTask { [gateway, sessionKey] in
@@ -717,12 +717,12 @@ final class TalkRealtimeWebRTCSession: NSObject {
             group.addTask {
                 try await Task.sleep(nanoseconds: UInt64(timeoutSeconds) * 1_000_000_000)
                 throw NSError(domain: "TalkRealtimeWebRTC", code: 12, userInfo: [
-                    NSLocalizedDescriptionKey: "OpenClaw realtime tool call timed out",
+                    NSLocalizedDescriptionKey: "ATOM realtime tool call timed out",
                 ])
             }
             guard let result = try await group.next() else {
                 throw NSError(domain: "TalkRealtimeWebRTC", code: 13, userInfo: [
-                    NSLocalizedDescriptionKey: "OpenClaw realtime tool call did not finish",
+                    NSLocalizedDescriptionKey: "ATOM realtime tool call did not finish",
                 ])
             }
             group.cancelAll()
@@ -776,11 +776,11 @@ final class TalkRealtimeWebRTCSession: NSObject {
                 }
             case "error":
                 throw NSError(domain: "TalkRealtimeWebRTC", code: 14, userInfo: [
-                    NSLocalizedDescriptionKey: wait.error ?? "OpenClaw realtime tool call failed",
+                    NSLocalizedDescriptionKey: wait.error ?? "ATOM realtime tool call failed",
                 ])
             case "aborted", "cancelled", "canceled":
                 throw NSError(domain: "TalkRealtimeWebRTC", code: 15, userInfo: [
-                    NSLocalizedDescriptionKey: wait.stopReason ?? "OpenClaw realtime tool call aborted",
+                    NSLocalizedDescriptionKey: wait.stopReason ?? "ATOM realtime tool call aborted",
                 ])
             case "timeout":
                 break
@@ -790,7 +790,7 @@ final class TalkRealtimeWebRTCSession: NSObject {
         }
         let phase = sawProviderStart ? "provider" : "queue"
         throw NSError(domain: "TalkRealtimeWebRTC", code: 16, userInfo: [
-            NSLocalizedDescriptionKey: "OpenClaw realtime tool call timed out in \(phase)",
+            NSLocalizedDescriptionKey: "ATOM realtime tool call timed out in \(phase)",
         ])
     }
 
@@ -807,7 +807,7 @@ final class TalkRealtimeWebRTCSession: NSObject {
         let data = try JSONSerialization.data(withJSONObject: params)
         guard let json = String(data: data, encoding: .utf8) else {
             throw NSError(domain: "TalkRealtimeWebRTC", code: 17, userInfo: [
-                NSLocalizedDescriptionKey: "Failed to encode OpenClaw wait request",
+                NSLocalizedDescriptionKey: "Failed to encode ATOM wait request",
             ])
         }
         let response = try await gateway.request(
@@ -846,7 +846,7 @@ final class TalkRealtimeWebRTCSession: NSObject {
         let data = try JSONSerialization.data(withJSONObject: params)
         guard let json = String(data: data, encoding: .utf8) else {
             throw NSError(domain: "TalkRealtimeWebRTC", code: 18, userInfo: [
-                NSLocalizedDescriptionKey: "Failed to encode OpenClaw history request",
+                NSLocalizedDescriptionKey: "Failed to encode ATOM history request",
             ])
         }
         let response = try await gateway.request(method: "chat.history", paramsJSON: json, timeoutSeconds: 15)

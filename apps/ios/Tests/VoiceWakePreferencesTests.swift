@@ -24,7 +24,7 @@ struct VoiceWakePreferencesTests {
     }
 
     @Test func `display string uses sanitized words`() {
-        #expect(VoiceWakePreferences.displayString(for: ["", " "]) == "atom, openclaw, claude")
+        #expect(VoiceWakePreferences.displayString(for: ["", " "]) == "atom, adam")
     }
 
     @Test func `load and save trigger words round trip`() throws {

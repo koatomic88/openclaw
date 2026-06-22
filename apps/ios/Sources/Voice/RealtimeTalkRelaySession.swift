@@ -427,8 +427,8 @@ final class RealtimeTalkRelaySession {
                 stream: completionStream,
                 timeoutSeconds: 120)
             let result: [String: Any] = completion.failed
-                ? ["error": "OpenClaw tool call failed"]
-                : ["text": completion.text ?? "OpenClaw finished with no text."]
+                ? ["error": "ATOM tool call failed"]
+                : ["text": completion.text ?? "ATOM finished with no text."]
             try await self.submitToolResult(callId: callId, result: result)
             self.onStatus("Listening (Realtime)")
         } catch {

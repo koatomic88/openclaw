@@ -83,10 +83,18 @@ struct RootTabs: View {
 
     private enum PresentedSheet: Identifiable {
         case quickSetup
+        case chat
+        case talk
+        case ops
+        case settings
 
         var id: Int {
             switch self {
             case .quickSetup: 0
+            case .chat: 1
+            case .talk: 2
+            case .ops: 3
+            case .settings: 4
             }
         }
     }
@@ -139,36 +147,11 @@ struct RootTabs: View {
     }
 
     private var tabContent: some View {
-        TabView(selection: self.$selectedTab) {
-            AtomCaptureTab(
-                openChat: { self.selectedTab = .chat },
-                openTalk: { self.selectedTab = .talk },
-                openOps: { self.selectedTab = .ops },
-                openControl: { self.selectedTab = .settings })
-                .tabItem { Label("ATOM", systemImage: "sparkles") }
-                .badge(self.appModel.pendingExecApprovalPrompt == nil ? 0 : 1)
-                .tag(AppTab.atom)
-
-            ChatProTab()
-                .tabItem { Label("Text", systemImage: "bubble.left.and.text.bubble.right.fill") }
-                .tag(AppTab.chat)
-
-            TalkProTab(openSettings: { self.selectedTab = .settings })
-                .tabItem {
-                    Label(
-                        "Voice",
-                        systemImage: self.appModel.talkMode.isEnabled ? "waveform.circle.fill" : "waveform.circle")
-                }
-                .tag(AppTab.talk)
-
-            AgentProTab()
-                .tabItem { Label("Ops", systemImage: "square.grid.2x2.fill") }
-                .tag(AppTab.ops)
-
-            SettingsProTab()
-                .tabItem { Label("Control", systemImage: "slider.horizontal.3") }
-                .tag(AppTab.settings)
-        }
+        AtomCaptureTab(
+            openChat: { self.presentedSheet = .chat },
+            openTalk: { self.presentedSheet = .talk },
+            openOps: { self.presentedSheet = .ops },
+            openControl: { self.presentedSheet = .settings })
     }
 
     private func rootOverlays(_ content: some View) -> some View {
@@ -300,7 +283,7 @@ struct RootTabs: View {
                 self.evaluateOnboardingPresentation(force: true)
             }
             .onChange(of: self.appModel.openChatRequestID) { _, _ in
-                self.selectedTab = .chat
+                self.presentedSheet = .chat
             }
     }
 
@@ -309,7 +292,7 @@ struct RootTabs: View {
             .gatewayActionsDialog(
                 isPresented: self.$showGatewayActions,
                 onDisconnect: { self.appModel.disconnectGateway() },
-                onOpenSettings: { self.selectedTab = .settings })
+                onOpenSettings: { self.presentedSheet = .settings })
             .sheet(isPresented: self.$showGatewayProblemDetails) {
                 if let gatewayProblem = self.appModel.lastGatewayProblem {
                     GatewayProblemDetailsSheet(
@@ -328,6 +311,32 @@ struct RootTabs: View {
                         .environment(self.gatewayController)
                         .openClawSheetChrome()
                         .preferredColorScheme(self.appearancePreference.colorScheme)
+                case .chat:
+                    ChatProTab()
+                        .environment(self.appModel)
+                        .preferredColorScheme(self.appearancePreference.colorScheme)
+                        .presentationDetents([.large])
+                        .presentationDragIndicator(.visible)
+                case .talk:
+                    TalkProTab(openSettings: { self.presentedSheet = .settings })
+                        .environment(self.appModel)
+                        .preferredColorScheme(self.appearancePreference.colorScheme)
+                        .presentationDetents([.large])
+                        .presentationDragIndicator(.visible)
+                case .ops:
+                    AgentProTab()
+                        .environment(self.appModel)
+                        .preferredColorScheme(self.appearancePreference.colorScheme)
+                        .presentationDetents([.large])
+                        .presentationDragIndicator(.visible)
+                case .settings:
+                    SettingsProTab()
+                        .environment(self.appModel)
+                        .environment(self.voiceWake)
+                        .environment(self.gatewayController)
+                        .preferredColorScheme(self.appearancePreference.colorScheme)
+                        .presentationDetents([.large])
+                        .presentationDragIndicator(.visible)
                 }
             }
             .fullScreenCover(isPresented: self.$showOnboarding) {
@@ -510,7 +519,7 @@ struct RootTabs: View {
         } else if problem.retryable {
             Task { await self.gatewayController.connectLastKnown() }
         } else {
-            self.selectedTab = .settings
+            self.presentedSheet = .settings
         }
     }
 
@@ -537,7 +546,7 @@ struct RootTabs: View {
             self.showOnboarding = true
         case .settings:
             self.didAutoOpenSettings = true
-            self.selectedTab = .settings
+            self.presentedSheet = .settings
         }
     }
 
@@ -563,14 +572,24 @@ struct RootTabs: View {
             shouldPresentOnLaunch: false)
         guard route == .settings else { return }
         self.didAutoOpenSettings = true
-        self.selectedTab = .settings
+        self.presentedSheet = .settings
     }
 
     private func applyInitialCompanionTabIfNeeded() {
         guard !self.didApplyInitialCompanionTab else { return }
         self.didApplyInitialCompanionTab = true
-        guard Self.initialTab == .atom else { return }
-        self.selectedTab = .atom
+        switch Self.initialTab {
+        case .atom:
+            self.selectedTab = .atom
+        case .chat:
+            self.presentedSheet = .chat
+        case .talk:
+            self.presentedSheet = .talk
+        case .ops:
+            self.presentedSheet = .ops
+        case .settings:
+            self.presentedSheet = .settings
+        }
     }
 
     private func applyInitialChatSessionIfNeeded() {

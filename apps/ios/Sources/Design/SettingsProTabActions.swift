@@ -593,7 +593,7 @@ extension SettingsProTab {
     }
 
     var gatewayServer: String {
-        self.appModel.gatewayServerName ?? "OpenClaw Gateway"
+        self.appModel.gatewayServerName ?? "Mac ATOM"
     }
 
     var permissionsDetail: String {
