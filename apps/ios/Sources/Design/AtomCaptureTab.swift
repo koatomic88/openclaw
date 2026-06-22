@@ -16,6 +16,7 @@ struct AtomCaptureTab: View {
     @State private var statusText = "Ready to route through Mac ATOM"
     @State private var errorText: String?
     @State private var activeSheet: AtomCompanionSheet?
+    @State private var showChatModeChoices = false
     var openChat: () -> Void = {}
     var openTalk: () -> Void = {}
     var openOps: () -> Void = {}
@@ -55,8 +56,12 @@ struct AtomCaptureTab: View {
                     Spacer(minLength: 0)
 
                     VStack(spacing: 16) {
-                        KnowledgeOrbView(scale: self.orbScale, reduceMotion: self.reduceMotion)
-                            .frame(width: 348, height: 348)
+                        KnowledgeOrbView(
+                            scale: self.orbScale,
+                            reduceMotion: self.reduceMotion,
+                            isListening: self.appModel.talkMode.isListening || self.appModel.talkMode.isUserSpeechDetected,
+                            isSpeaking: self.appModel.talkMode.isSpeaking)
+                            .frame(width: 360, height: 360)
                             .gesture(
                                 MagnificationGesture()
                                     .onChanged { value in
@@ -67,24 +72,22 @@ struct AtomCaptureTab: View {
                                             self.orbScale = min(max(value, 0.82), 2.35)
                                         }
                                     })
-
-                        VStack(spacing: 5) {
-                            Text("ATOM")
-                                .font(.system(size: 18, weight: .semibold, design: .rounded))
-                                .tracking(3)
-                                .foregroundStyle(Color(red: 1, green: 0.86, blue: 0.45).opacity(0.94))
-                        }
-                        .accessibilityElement(children: .combine)
                     }
-                    .offset(y: -22)
+                    .offset(y: -10)
 
                     Spacer(minLength: 0)
 
-                    self.quickEmojiControls
-                        .padding(.bottom, 28)
+                    self.orbHomeControls
+                        .padding(.bottom, 24)
                 }
             }
             .navigationBarHidden(true)
+            .toolbar(.hidden, for: .tabBar)
+            .confirmationDialog("Chat with ATOM", isPresented: self.$showChatModeChoices, titleVisibility: .hidden) {
+                Button("Text Chat") { self.openChat() }
+                Button("Voice Chat") { self.openTalk() }
+                Button("Cancel", role: .cancel) {}
+            }
             .sheet(item: self.$activeSheet) { sheet in
                 switch sheet {
                 case .text:
@@ -129,31 +132,24 @@ struct AtomCaptureTab: View {
 
     private var lapisBackground: some View {
         ZStack {
-            LinearGradient(
-                colors: [
-                    Color(red: 0.02, green: 0.07, blue: 0.24),
-                    Color(red: 0.04, green: 0.13, blue: 0.38),
-                    Color(red: 0.01, green: 0.04, blue: 0.16),
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing)
+            Color.black
             RadialGradient(
                 colors: [
-                    Color(red: 0.16, green: 0.35, blue: 0.78).opacity(0.58),
-                    Color(red: 0.02, green: 0.08, blue: 0.28).opacity(0.08),
+                    Color(red: 1, green: 0.72, blue: 0.20).opacity(0.14),
+                    Color(red: 0.38, green: 0.22, blue: 0.04).opacity(0.06),
                     .clear,
                 ],
-                center: .center,
+                center: UnitPoint(x: 0.5, y: 0.45),
                 startRadius: 24,
-                endRadius: 390)
+                endRadius: 430)
             RadialGradient(
                 colors: [
-                    Color(red: 1, green: 0.75, blue: 0.26).opacity(0.12),
+                    Color(red: 1, green: 0.82, blue: 0.38).opacity(0.10),
                     .clear,
                 ],
-                center: UnitPoint(x: 0.5, y: 0.44),
-                startRadius: 20,
-                endRadius: 290)
+                center: UnitPoint(x: 0.5, y: 0.72),
+                startRadius: 8,
+                endRadius: 240)
         }
     }
 
@@ -210,78 +206,70 @@ struct AtomCaptureTab: View {
                 Label("Privacy & Audit", systemImage: "checkmark.shield.fill")
             }
         } label: {
-            Image(systemName: "line.3.horizontal")
-                .font(.system(size: 17, weight: .bold))
-                .foregroundStyle(Color.white.opacity(0.88))
-                .frame(width: 42, height: 42)
-                .background(Color.white.opacity(0.08), in: Circle())
-                .overlay(Circle().strokeBorder(Color.white.opacity(0.12), lineWidth: 1))
+            ClockworkGearCluster()
+                .frame(width: 34, height: 34)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel("ATOM controls")
     }
 
     private var secureLinkStatus: some View {
-        HStack(spacing: 5) {
-            Image(systemName: self.gatewayConnected ? "lock.fill" : "lock.slash.fill")
-                .font(.system(size: 9, weight: .bold))
-                .foregroundStyle(self.gatewayConnected ? Color(red: 0.56, green: 1, blue: 0.70) : Color(red: 1, green: 0.78, blue: 0.32))
-            Circle()
-                .fill(self.gatewayConnected ? Color(red: 0.46, green: 1, blue: 0.64) : Color(red: 1, green: 0.75, blue: 0.26))
-                .frame(width: 4, height: 4)
-                .shadow(
-                    color: self.gatewayConnected ? Color.green.opacity(0.6) : Color(red: 1, green: 0.75, blue: 0.26).opacity(0.5),
-                    radius: 5)
-        }
-        .frame(width: 28, height: 20)
+        Circle()
+            .fill(self.attentionDotColor)
+            .frame(width: self.hasAttention ? 9 : 7, height: self.hasAttention ? 9 : 7)
+            .overlay {
+                Circle()
+                    .strokeBorder(self.attentionDotColor.opacity(0.34), lineWidth: 1)
+                    .frame(width: 22, height: 22)
+            }
+            .shadow(color: self.attentionDotColor.opacity(self.hasAttention ? 0.95 : 0.48), radius: self.hasAttention ? 14 : 8)
+            .frame(width: 32, height: 32)
         .contentShape(Rectangle())
-        .onTapGesture { self.activeSheet = .security }
-        .accessibilityLabel(self.gatewayConnected ? "Secure Mac link" : "Mac pairing needed")
+        .onTapGesture { self.activeSheet = self.hasAttention ? .approvals : .security }
+        .accessibilityLabel(self.hasAttention ? "ATOM attention needed" : "ATOM status")
     }
 
-    private var quickEmojiControls: some View {
-        HStack(spacing: 14) {
-            self.emojiControl(
-                emoji: "👂",
-                label: "Listen only",
+    private var orbHomeControls: some View {
+        HStack(spacing: 18) {
+            self.orbControlButton(
+                icon: "bubble.left",
+                label: "Chat",
+                isActive: false,
+                action: { self.showChatModeChoices = true })
+            self.orbControlButton(
+                icon: self.appModel.talkMode.isEnabled ? "mic.fill" : "mic",
+                label: "Mic",
                 isActive: self.appModel.talkMode.isEnabled,
                 action: self.handleVoiceAction)
-            self.emojiControl(
-                emoji: self.speakerEnabled ? "🔊" : "🔇",
-                label: self.speakerEnabled ? "Speaker on" : "Speaker muted",
-                isActive: self.speakerEnabled,
-                action: { self.speakerEnabled.toggle() })
-            self.emojiControl(
-                emoji: "⚡",
-                label: "Wake mode",
+            self.orbControlButton(
+                icon: "dot.radiowaves.left.and.right",
+                label: "Auto",
                 isActive: self.wakeEnabled,
                 action: { self.wakeEnabled.toggle() })
-            self.emojiControl(
-                emoji: "🌐",
-                label: "Translation mode",
-                isActive: self.translationEnabled,
-                action: { self.translationEnabled.toggle() })
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 9)
-        .background(.ultraThinMaterial.opacity(0.62), in: Capsule(style: .continuous))
-        .overlay(Capsule(style: .continuous).strokeBorder(Color.white.opacity(0.12), lineWidth: 1))
+        .padding(.horizontal, 4)
     }
 
-    private func emojiControl(emoji: String, label: String, isActive: Bool, action: @escaping () -> Void) -> some View {
+    private func orbControlButton(icon: String, label: String, isActive: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Text(emoji)
-                .font(.system(size: 16))
-                .frame(width: 34, height: 34)
-                .background(
-                    isActive
-                        ? Color(red: 1, green: 0.75, blue: 0.26).opacity(0.22)
-                        : Color.white.opacity(0.08),
-                    in: Circle())
+            Image(systemName: icon)
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(isActive ? Color.black : Color(red: 1, green: 0.82, blue: 0.40))
+                .frame(width: 42, height: 42)
+                .background {
+                    Circle()
+                        .fill(isActive ? Color(red: 1, green: 0.76, blue: 0.28) : Color.black.opacity(0.36))
+                        .overlay {
+                            Circle()
+                                .strokeBorder(Color(red: 1, green: 0.76, blue: 0.28).opacity(isActive ? 0.72 : 0.46), lineWidth: 1)
+                        }
+                }
+                .shadow(color: Color(red: 1, green: 0.72, blue: 0.22).opacity(isActive ? 0.38 : 0.18), radius: 12, y: 6)
                 .overlay(
                     Circle().strokeBorder(
-                        isActive ? Color(red: 1, green: 0.78, blue: 0.32).opacity(0.42) : Color.white.opacity(0.10),
-                        lineWidth: 1))
+                        Color.white.opacity(isActive ? 0.18 : 0.07),
+                        lineWidth: 0.7))
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label)
@@ -431,6 +419,14 @@ struct AtomCaptureTab: View {
         if self.appModel.talkMode.isListening || self.appModel.talkMode.isUserSpeechDetected { return OpenClawBrand.ok }
         if self.gatewayConnected { return Color(red: 1, green: 0.75, blue: 0.26) }
         return .secondary
+    }
+
+    private var hasAttention: Bool {
+        self.appModel.pendingExecApprovalPrompt != nil || !self.gatewayConnected
+    }
+
+    private var attentionDotColor: Color {
+        self.hasAttention ? Color(red: 1, green: 0.76, blue: 0.28) : Color(red: 0.72, green: 0.58, blue: 0.25)
     }
 
     private var voiceButtonTitle: String {
@@ -1156,17 +1152,81 @@ private struct CaptureStatusPill: View {
     }
 }
 
+private struct ClockworkGearCluster: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        TimelineView(.animation) { timeline in
+            let time = self.reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
+            ZStack {
+                self.gear(size: 17, teeth: 10)
+                    .rotationEffect(.degrees(time * 12))
+                    .offset(x: -5, y: -4)
+                self.gear(size: 12, teeth: 9)
+                    .rotationEffect(.degrees(-time * 18))
+                    .offset(x: 8, y: 1)
+                self.gear(size: 8, teeth: 8)
+                    .rotationEffect(.degrees(time * 25))
+                    .offset(x: -6, y: 8)
+            }
+            .frame(width: 34, height: 34)
+            .foregroundStyle(Color(red: 1, green: 0.78, blue: 0.34))
+            .shadow(color: Color(red: 1, green: 0.72, blue: 0.22).opacity(0.28), radius: 8)
+        }
+    }
+
+    private func gear(size: CGFloat, teeth: Int) -> some View {
+        ZStack {
+            GearShape(teeth: teeth)
+                .stroke(lineWidth: max(1, size * 0.075))
+                .frame(width: size, height: size)
+            Circle()
+                .stroke(lineWidth: max(1, size * 0.06))
+                .frame(width: size * 0.34, height: size * 0.34)
+        }
+    }
+}
+
+private struct GearShape: Shape {
+    let teeth: Int
+
+    func path(in rect: CGRect) -> Path {
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+        let outer = min(rect.width, rect.height) / 2
+        let inner = outer * 0.78
+        let steps = max(6, self.teeth * 2)
+        var path = Path()
+
+        for index in 0...steps {
+            let angle = -CGFloat.pi / 2 + CGFloat(index) * 2 * CGFloat.pi / CGFloat(steps)
+            let radius = index.isMultiple(of: 2) ? outer : inner
+            let point = CGPoint(
+                x: center.x + cos(angle) * radius,
+                y: center.y + sin(angle) * radius)
+            if index == 0 {
+                path.move(to: point)
+            } else {
+                path.addLine(to: point)
+            }
+        }
+        path.closeSubpath()
+        return path
+    }
+}
+
 private struct KnowledgeOrbView: View {
     let scale: CGFloat
     let reduceMotion: Bool
+    var isListening = false
+    var isSpeaking = false
 
     private let nodes: [KnowledgeOrbNode] = Self.makeNodes()
 
     var body: some View {
         TimelineView(.animation) { timeline in
             Canvas { context, size in
-                let time = self.reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
-                self.draw(in: context, size: size, time: time)
+        let time = self.reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
+        self.draw(in: context, size: size, time: time)
             }
         }
     }
@@ -1174,8 +1234,9 @@ private struct KnowledgeOrbView: View {
     private func draw(in originalContext: GraphicsContext, size: CGSize, time: TimeInterval) {
         var context = originalContext
         let center = CGPoint(x: size.width / 2, y: size.height / 2)
-        let radius = min(size.width, size.height) * 0.39 * self.scale
-        let rotationY = 0.48 + time * 0.085
+        let stateBoost: CGFloat = self.isSpeaking ? 1.12 : (self.isListening ? 1.06 : 1)
+        let radius = min(size.width, size.height) * 0.38 * self.scale * stateBoost
+        let rotationY = 0.48 + time * (self.isSpeaking ? 0.13 : 0.075)
         let rotationX = -0.18 + sin(time * 0.04) * 0.04
         let projected = self.nodes.enumerated().map { index, node in
             let spherePoint = Self.fibonacciPoint(index: index, count: self.nodes.count)
@@ -1185,7 +1246,7 @@ private struct KnowledgeOrbView: View {
             let point = CGPoint(
                 x: center.x + rotated.x * radius * perspective,
                 y: center.y + rotated.y * radius * perspective)
-            let nodeRadius = (1.15 + CGFloat(node.value) * 0.15 + sqrt(CGFloat(node.degree)) * 0.22)
+            let nodeRadius = (0.55 + CGFloat(node.value) * 0.075 + sqrt(CGFloat(node.degree)) * 0.13)
                 * perspective
                 * sqrt(self.scale)
             return KnowledgeOrbProjectedNode(
@@ -1196,14 +1257,14 @@ private struct KnowledgeOrbView: View {
                 alpha: max(0.16, 0.22 + depth * 0.78))
         }
 
-        self.drawAtmosphere(in: &context, center: center, radius: radius)
+        self.drawAtmosphere(in: &context, center: center, radius: radius, time: time)
 
         context.blendMode = .plusLighter
         let sorted = projected.sorted(by: { $0.z < $1.z })
         self.drawConnections(in: &context, projected: sorted)
 
         for item in projected.sorted(by: { $0.z < $1.z }) where item.z > -0.92 {
-            let haloRadius = item.radius * 3.3
+            let haloRadius = item.radius * (self.isSpeaking ? 4.8 : 3.8)
             let haloRect = CGRect(
                 x: item.point.x - haloRadius,
                 y: item.point.y - haloRadius,
@@ -1213,7 +1274,7 @@ private struct KnowledgeOrbView: View {
                 Path(ellipseIn: haloRect),
                 with: .radialGradient(
                     Gradient(colors: [
-                        item.node.color.opacity(0.28 * item.alpha),
+                        item.node.color.opacity((self.isSpeaking ? 0.36 : 0.25) * item.alpha),
                         item.node.color.opacity(0.05 * item.alpha),
                         .clear,
                     ]),
@@ -1231,9 +1292,9 @@ private struct KnowledgeOrbView: View {
                 Path(ellipseIn: CGRect(
                     x: item.point.x - max(0.7, item.radius * 0.34),
                     y: item.point.y - max(0.7, item.radius * 0.34),
-                    width: max(1.4, item.radius * 0.68),
-                    height: max(1.4, item.radius * 0.68))),
-                with: .color(Color.white.opacity(0.54 * item.alpha)))
+                    width: max(1.1, item.radius * 0.58),
+                    height: max(1.1, item.radius * 0.58))),
+                with: .color(Color.white.opacity(0.48 * item.alpha)))
         }
 
         guard self.scale > 1.36 else { return }
@@ -1249,16 +1310,30 @@ private struct KnowledgeOrbView: View {
         }
     }
 
-    private func drawAtmosphere(in context: inout GraphicsContext, center: CGPoint, radius: CGFloat) {
+    private func drawAtmosphere(in context: inout GraphicsContext, center: CGPoint, radius: CGFloat, time: TimeInterval) {
         context.blendMode = .plusLighter
+        let pulse = self.isSpeaking ? 0.18 + 0.12 * sin(time * 7) : (self.isListening ? 0.11 + 0.04 * sin(time * 4) : 0)
+        for index in 0..<5 {
+            let progress = CGFloat(index) / 4
+            let ringRadius = radius * (0.76 + progress * 0.18 + pulse)
+            let ringRect = CGRect(
+                x: center.x - ringRadius,
+                y: center.y - ringRadius,
+                width: ringRadius * 2,
+                height: ringRadius * 2)
+            context.stroke(
+                Path(ellipseIn: ringRect),
+                with: .color(Color(red: 1, green: 0.78, blue: 0.32).opacity(0.03 + (self.isListening || self.isSpeaking ? 0.05 : 0.015))),
+                lineWidth: 0.7)
+        }
         context.stroke(
             Path(ellipseIn: CGRect(
                 x: center.x - radius * 0.93,
                 y: center.y - radius * 0.93,
                 width: radius * 1.86,
                 height: radius * 1.86)),
-            with: .color(Color(red: 1, green: 0.76, blue: 0.28).opacity(0.12)),
-            lineWidth: 0.8)
+            with: .color(Color(red: 1, green: 0.78, blue: 0.32).opacity(self.isSpeaking ? 0.28 : 0.16)),
+            lineWidth: self.isSpeaking ? 1.2 : 0.8)
         context.fill(
             Path(ellipseIn: CGRect(
                 x: center.x - radius * 1.12,
@@ -1267,8 +1342,8 @@ private struct KnowledgeOrbView: View {
                 height: radius * 2.24)),
             with: .radialGradient(
                 Gradient(colors: [
-                    Color(red: 1, green: 0.75, blue: 0.28).opacity(0.12),
-                    Color(red: 0.28, green: 0.54, blue: 1).opacity(0.04),
+                    Color(red: 1, green: 0.78, blue: 0.32).opacity(self.isSpeaking ? 0.18 : 0.12),
+                    Color(red: 1, green: 0.58, blue: 0.18).opacity(0.055),
                     .clear,
                 ]),
                 center: center,
@@ -1316,7 +1391,7 @@ private struct KnowledgeOrbView: View {
             .init(label: "Evidence", kind: .source, degree: 12, value: 6, seed: 10),
         ]
         let kinds: [KnowledgeOrbKind] = [.source, .task, .skill, .project, .lesson, .agent, .decision, .preference]
-        let generated = (0..<146).map { index in
+        let generated = (0..<360).map { index in
             let kind = kinds[index % kinds.count]
             let degree = 3 + ((index * 7 + 11) % 18)
             let value = 2 + ((index * 5 + 3) % 7)
