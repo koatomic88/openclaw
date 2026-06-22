@@ -2354,6 +2354,10 @@ extension TalkModeManager {
         }
     }
 
+    private static func isSystemSpeechProvider(_ provider: String) -> Bool {
+        provider.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "system"
+    }
+
     private func applyVoiceModeDescriptor(_ descriptor: TalkVoiceModeDescriptor, persistAsConfigured: Bool = false) {
         if persistAsConfigured {
             self.configuredVoiceModeDescriptor = descriptor
@@ -2483,8 +2487,15 @@ extension TalkModeManager {
             realtimeProvider = realtimeProvider ?? "openai"
             realtimeModelId = realtimeModelId ?? Self.defaultRealtimeModelIdFallback
         }
+        let usesSystemSpeech = Self.isSystemSpeechProvider(activeProvider)
+        if usesSystemSpeech {
+            executionMode = .native
+            realtimeProvider = nil
+            realtimeModelId = nil
+        }
 
-        let usesRealtimeConfig = activeProvider != Self.defaultTalkProvider || executionMode != .native
+        let usesRealtimeConfig = !usesSystemSpeech &&
+            (activeProvider != Self.defaultTalkProvider || executionMode != .native)
         self.activeTalkProvider = activeProvider
         self.executionMode = executionMode
         self.realtimeWebRTCEnabled = usesRealtimeConfig
@@ -2517,7 +2528,8 @@ extension TalkModeManager {
             realtimeVoiceId: realtimeVoiceId)
         self.applyTalkPermissionState(
             redactedFallbackMissingScope: redactedFallbackMissingScope,
-            gatewayOwnedVoiceProvider: gatewayOwnedVoiceProvider)
+            gatewayOwnedVoiceProvider: gatewayOwnedVoiceProvider,
+            systemSpeechProvider: usesSystemSpeech)
 
         if let interrupt = parsed.interruptOnSpeech {
             self.interruptOnSpeech = interrupt
@@ -2593,9 +2605,12 @@ extension TalkModeManager {
 
     private func applyTalkPermissionState(
         redactedFallbackMissingScope: String?,
-        gatewayOwnedVoiceProvider: Bool)
+        gatewayOwnedVoiceProvider: Bool,
+        systemSpeechProvider: Bool)
     {
-        self.gatewayTalkApiKeyConfigured = gatewayOwnedVoiceProvider || (self.apiKey?.isEmpty == false)
+        self
+            .gatewayTalkApiKeyConfigured = systemSpeechProvider || gatewayOwnedVoiceProvider ||
+            (self.apiKey?.isEmpty == false)
         self.gatewayTalkConfigLoaded = true
         self.talkConfigLoadedAt = Date()
         if let missingScope = redactedFallbackMissingScope,
@@ -2907,6 +2922,18 @@ extension TalkModeManager {
 
     func _test_gatewayTalkUsesRealtimeRelay() -> Bool {
         self.gatewayTalkUsesRealtimeRelay
+    }
+
+    func _test_gatewayTalkUsesRealtime() -> Bool {
+        self.gatewayTalkUsesRealtime
+    }
+
+    func _test_gatewayTalkApiKeyConfigured() -> Bool {
+        self.gatewayTalkApiKeyConfigured
+    }
+
+    func _test_applyLoadedTalkConfigState(_ parsed: TalkModeGatewayConfigState) {
+        self.applyLoadedTalkConfig(parsed, redactedFallbackMissingScope: nil)
     }
 
     func _test_seedTranscript(_ transcript: String) {

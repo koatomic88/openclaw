@@ -172,6 +172,37 @@ import Testing
         #expect(descriptor.subtitle == "Native • en-US")
     }
 
+    @Test func systemProviderUsesNativeSpeechWithoutApiKey() {
+        let config: [String: Any] = [
+            "talk": [
+                "provider": "system",
+                "speechLocale": "en-US",
+                "realtime": [
+                    "mode": "stt-tts",
+                    "transport": "gateway-relay",
+                    "brain": "agent-consult",
+                ],
+            ],
+        ]
+
+        let parsed = TalkModeGatewayConfigParser.parse(
+            config: config,
+            defaultProvider: "elevenlabs",
+            defaultModelIdFallback: "eleven_v3",
+            defaultRealtimeModelIdFallback: "gpt-realtime-2",
+            defaultSilenceTimeoutMs: 900)
+        let manager = TalkModeManager(allowSimulatorCapture: true)
+
+        manager._test_applyLoadedTalkConfigState(parsed)
+
+        #expect(parsed.activeProvider == "system")
+        #expect(manager._test_executionMode() == .native)
+        #expect(manager._test_gatewayTalkUsesRealtime() == false)
+        #expect(manager._test_gatewayTalkUsesRealtimeRelay() == false)
+        #expect(manager._test_realtimeProvider() == nil)
+        #expect(manager._test_gatewayTalkApiKeyConfigured())
+    }
+
     @Test func openAIRealtimeSelectionFallbackKeepsGatewayRelayDefaults() {
         let manager = TalkModeManager(allowSimulatorCapture: true)
 

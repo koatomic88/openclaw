@@ -1,8 +1,18 @@
+import AVFoundation
 import XCTest
 @testable import OpenClawKit
 
 @MainActor
 final class TalkSystemSpeechSynthesizerTests: XCTestCase {
+    func testAtomStoicVoiceStyleUsesLowerPitchAndMeasuredRate() {
+        let style = TalkSystemSpeechSynthesizer.VoiceStyle.atomStoic
+
+        XCTAssertLessThan(style.pitchMultiplier, 1.0)
+        XCTAssertLessThan(style.rate, AVSpeechUtteranceDefaultSpeechRate)
+        XCTAssertGreaterThan(style.rate, AVSpeechUtteranceMinimumSpeechRate)
+        XCTAssertEqual(style.volume, 1.0, accuracy: 0.001)
+    }
+
     func testWatchdogTimeoutDefaultsToLatinProfile() {
         let timeout = TalkSystemSpeechSynthesizer.watchdogTimeoutSeconds(
             text: String(repeating: "a", count: 100),

@@ -7,6 +7,23 @@ public final class TalkSystemSpeechSynthesizer: NSObject {
         case canceled
     }
 
+    public struct VoiceStyle: Equatable, Sendable {
+        public var rate: Float
+        public var pitchMultiplier: Float
+        public var volume: Float
+
+        public init(rate: Float, pitchMultiplier: Float, volume: Float) {
+            self.rate = rate
+            self.pitchMultiplier = pitchMultiplier
+            self.volume = volume
+        }
+
+        public static let atomStoic = VoiceStyle(
+            rate: AVSpeechUtteranceDefaultSpeechRate * 0.86,
+            pitchMultiplier: 0.82,
+            volume: 1.0)
+    }
+
     public static let shared = TalkSystemSpeechSynthesizer()
 
     private let synth = AVSpeechSynthesizer()
@@ -37,6 +54,7 @@ public final class TalkSystemSpeechSynthesizer: NSObject {
     public func speak(
         text: String,
         language: String? = nil,
+        style: VoiceStyle = .atomStoic,
         onStart: (() -> Void)? = nil) async throws
     {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -51,6 +69,9 @@ public final class TalkSystemSpeechSynthesizer: NSObject {
         if let language, let voice = AVSpeechSynthesisVoice(language: language) {
             utterance.voice = voice
         }
+        utterance.rate = style.rate
+        utterance.pitchMultiplier = style.pitchMultiplier
+        utterance.volume = style.volume
         self.currentUtterance = utterance
 
         let watchdogTimeout = Self.watchdogTimeoutSeconds(
