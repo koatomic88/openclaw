@@ -1039,6 +1039,7 @@ extension GatewayConnectionController {
             OpenClawTalkCommand.pttStop.rawValue,
             OpenClawTalkCommand.pttCancel.rawValue,
             OpenClawTalkCommand.pttOnce.rawValue,
+            OpenClawTalkCommand.speak.rawValue,
         ]
 
         let caps = Set(self.currentCaps())

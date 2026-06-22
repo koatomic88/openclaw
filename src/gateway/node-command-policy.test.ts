@@ -54,6 +54,7 @@ describe("gateway/node-command-policy", () => {
       expect(allowlist.has("talk.ptt.stop")).toBe(true);
       expect(allowlist.has("talk.ptt.cancel")).toBe(true);
       expect(allowlist.has("talk.ptt.once")).toBe(true);
+      expect(allowlist.has("talk.speak")).toBe(true);
       expect(
         isNodeCommandAllowed({
           command: "talk.ptt.start",
@@ -79,10 +80,11 @@ describe("gateway/node-command-policy", () => {
     const cfg = {} as OpenClawConfig;
     const allowlist = resolveNodeCommandAllowlist(cfg, {
       platform: "custom",
-      commands: ["talk.ptt.start"],
+      commands: ["talk.ptt.start", "talk.speak"],
     });
 
     expect(allowlist.has("talk.ptt.start")).toBe(true);
+    expect(allowlist.has("talk.speak")).toBe(true);
   });
 
   it("keeps canvas commands out of core defaults when the canvas plugin is not active", () => {

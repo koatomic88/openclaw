@@ -1585,6 +1585,20 @@ final class NodeAppModel {
             let payload = try await self.talkMode.runPushToTalkOnce()
             let json = try Self.encodePayload(payload)
             return BridgeInvokeResponse(id: req.id, ok: true, payloadJSON: json)
+        case OpenClawTalkCommand.speak.rawValue:
+            let params = (try? Self.decodeParams(OpenClawTalkSpeakParams.self, from: req.paramsJSON)) ??
+                OpenClawTalkSpeakParams(text: "")
+            let text = params.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !text.isEmpty else {
+                return BridgeInvokeResponse(
+                    id: req.id,
+                    ok: false,
+                    error: OpenClawNodeError(code: .invalidRequest, message: "INVALID_REQUEST: text is required"))
+            }
+            try await TalkSystemSpeechSynthesizer.shared.speak(text: text, language: params.language)
+            let payload = OpenClawTalkSpeakPayload(status: "spoken", chars: text.count)
+            let json = try Self.encodePayload(payload)
+            return BridgeInvokeResponse(id: req.id, ok: true, payloadJSON: json)
         default:
             return BridgeInvokeResponse(
                 id: req.id,
@@ -1712,6 +1726,7 @@ extension NodeAppModel {
             OpenClawTalkCommand.pttStop.rawValue,
             OpenClawTalkCommand.pttCancel.rawValue,
             OpenClawTalkCommand.pttOnce.rawValue,
+            OpenClawTalkCommand.speak.rawValue,
         ]) { [weak self] req in
             guard let self else { throw NodeCapabilityRouter.RouterError.handlerUnavailable }
             return try await self.handleTalkInvoke(req)

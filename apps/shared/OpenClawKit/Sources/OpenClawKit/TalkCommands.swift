@@ -5,6 +5,27 @@ public enum OpenClawTalkCommand: String, Codable, Sendable {
     case pttStop = "talk.ptt.stop"
     case pttCancel = "talk.ptt.cancel"
     case pttOnce = "talk.ptt.once"
+    case speak = "talk.speak"
+}
+
+public struct OpenClawTalkSpeakParams: Codable, Sendable, Equatable {
+    public var text: String
+    public var language: String?
+
+    public init(text: String, language: String? = nil) {
+        self.text = text
+        self.language = language
+    }
+}
+
+public struct OpenClawTalkSpeakPayload: Codable, Sendable, Equatable {
+    public var status: String
+    public var chars: Int
+
+    public init(status: String, chars: Int) {
+        self.status = status
+        self.chars = chars
+    }
 }
 
 public struct OpenClawTalkPTTStartPayload: Codable, Sendable, Equatable {

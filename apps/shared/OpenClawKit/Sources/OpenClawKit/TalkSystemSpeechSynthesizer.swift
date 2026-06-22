@@ -66,13 +66,13 @@ public final class TalkSystemSpeechSynthesizer: NSObject {
         self.didStartCallback = onStart
 
         let utterance = AVSpeechUtterance(string: trimmed)
-        if let language, let voice = AVSpeechSynthesisVoice(language: language) {
-            utterance.voice = voice
-        }
+        utterance.voice = Self.atomVoice(language: language)
         utterance.rate = style.rate
         utterance.pitchMultiplier = style.pitchMultiplier
         utterance.volume = style.volume
         self.currentUtterance = utterance
+
+        Self.configurePlaybackSession()
 
         let watchdogTimeout = Self.watchdogTimeoutSeconds(
             text: trimmed,
@@ -106,6 +106,73 @@ public final class TalkSystemSpeechSynthesizer: NSObject {
         if self.currentToken != token {
             throw SpeakError.canceled
         }
+    }
+
+    private static func configurePlaybackSession() {
+        #if os(iOS)
+        let session = AVAudioSession.sharedInstance()
+        do {
+            try session.setCategory(.playback, mode: .spokenAudio, options: [.duckOthers])
+            try session.setActive(true, options: [])
+            return
+        } catch {
+            // If Talk/STT is active, iOS can reject a playback-only category switch
+            // with '!pri'. Keep the command alive and use a duplex speech route.
+        }
+
+        do {
+            try session.setCategory(.playAndRecord, mode: .spokenAudio, options: [
+                .allowBluetoothHFP,
+                .defaultToSpeaker,
+                .duckOthers,
+            ])
+            try? session.setPreferredSampleRate(48000)
+            try? session.setPreferredIOBufferDuration(0.02)
+            try session.setActive(true, options: [])
+            try? session.overrideOutputAudioPort(.speaker)
+        } catch {
+            // AVSpeechSynthesizer can still use the current app audio session.
+            // Do not fail the spoken reply before synthesis has a chance to start.
+        }
+        #endif
+    }
+
+    static func atomVoice(language: String?) -> AVSpeechSynthesisVoice? {
+        let normalizedLanguage = language?.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let normalizedLanguage, !normalizedLanguage.isEmpty,
+           !normalizedLanguage.lowercased().hasPrefix("en")
+        {
+            return AVSpeechSynthesisVoice(language: normalizedLanguage)
+        }
+
+        let preferredIdentifiers = [
+            "com.apple.voice.enhanced.en-US.Eddy",
+            "com.apple.voice.premium.en-US.Eddy",
+            "com.apple.voice.compact.en-US.Eddy",
+            "com.apple.ttsbundle.siri_male_en-US_compact",
+            "com.apple.ttsbundle.siri_male_en-US_premium",
+            "com.apple.voice.enhanced.en-US.Alex",
+            "com.apple.voice.compact.en-US.Alex",
+            "com.apple.ttsbundle.Daniel-compact",
+            "com.apple.voice.compact.en-GB.Daniel",
+        ]
+        for identifier in preferredIdentifiers {
+            if let voice = AVSpeechSynthesisVoice(identifier: identifier) {
+                return voice
+            }
+        }
+
+        let englishVoices = AVSpeechSynthesisVoice.speechVoices()
+            .filter { $0.language.lowercased().hasPrefix("en") }
+        let maleNameHints = ["eddy", "alex", "daniel", "aaron", "fred", "reed", "rocko", "siri male"]
+        if let voice = englishVoices.first(where: { voice in
+            let searchable = "\(voice.name) \(voice.identifier)".lowercased()
+            return maleNameHints.contains(where: { searchable.contains($0) })
+        }) {
+            return voice
+        }
+
+        return AVSpeechSynthesisVoice(language: normalizedLanguage?.isEmpty == false ? normalizedLanguage : "en-US")
     }
 
     static func watchdogTimeoutSeconds(text: String, language: String?) -> Double {

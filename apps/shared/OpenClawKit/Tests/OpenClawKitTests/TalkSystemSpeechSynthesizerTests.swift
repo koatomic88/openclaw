@@ -13,6 +13,18 @@ final class TalkSystemSpeechSynthesizerTests: XCTestCase {
         XCTAssertEqual(style.volume, 1.0, accuracy: 0.001)
     }
 
+    func testAtomVoicePrefersEnglishForDefaultSpeech() {
+        let voice = TalkSystemSpeechSynthesizer.atomVoice(language: nil)
+
+        XCTAssertEqual(voice?.language.hasPrefix("en"), true)
+    }
+
+    func testAtomVoiceRespectsNonEnglishLanguage() {
+        let voice = TalkSystemSpeechSynthesizer.atomVoice(language: "ja-JP")
+
+        XCTAssertEqual(voice?.language, "ja-JP")
+    }
+
     func testWatchdogTimeoutDefaultsToLatinProfile() {
         let timeout = TalkSystemSpeechSynthesizer.watchdogTimeoutSeconds(
             text: String(repeating: "a", count: 100),
