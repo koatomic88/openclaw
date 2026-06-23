@@ -8,6 +8,7 @@ struct SettingsProTab: View {
     @Environment(VoiceWakeManager.self) var voiceWake
     @Environment(GatewayConnectionController.self) var gatewayController
     @Environment(\.scenePhase) var scenePhase
+    @Environment(\.dismiss) var dismiss
     @AppStorage(AppAppearancePreference.storageKey) var appearancePreferenceRaw: String =
         AppAppearancePreference.system.rawValue
     @AppStorage("node.displayName") var displayName: String = "iOS Node"
@@ -74,7 +75,22 @@ struct SettingsProTab: View {
                 }
                 .safeAreaPadding(.bottom, OpenClawProMetric.bottomScrollInset)
             }
-            .navigationBarHidden(true)
+            .navigationTitle("ATOM Control")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        self.dismiss()
+                    } label: {
+                        Label("Home", systemImage: "house.fill")
+                    }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
+                        self.dismiss()
+                    }
+                }
+            }
             .navigationDestination(for: SettingsRoute.self) { route in
                 self.destination(for: route)
             }

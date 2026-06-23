@@ -534,48 +534,320 @@ private struct TalkProOrb: View {
     let systemImage: String
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private let particles = TalkProOrbParticle.make(count: 118)
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 1.0 / 24.0)) { timeline in
-            ZStack {
-                ForEach(0..<3, id: \.self) { ring in
-                    Circle()
-                        .strokeBorder(self.color.opacity(self.ringOpacity(ring)), lineWidth: 1.4)
-                        .scaleEffect(self.ringScale(ring, date: timeline.date))
-                }
-                Circle()
-                    .fill(self.color.opacity(0.13))
-                    .frame(width: 128, height: 128)
-                    .overlay {
-                        Circle()
-                            .strokeBorder(self.color.opacity(0.30), lineWidth: 1)
-                    }
-                TalkProWaveform(mode: self.mode, tint: self.color, barCount: 18)
-                    .frame(width: 116, height: 52)
-                    .opacity(self.systemImage == "waveform" || self.systemImage == "mic.fill" ? 1 : 0.34)
-                Image(systemName: self.systemImage)
-                    .font(.system(size: 34, weight: .bold))
-                    .foregroundStyle(self.color)
-                    .opacity(self.systemImage == "waveform" || self.systemImage == "mic.fill" ? 0.20 : 1)
+        TimelineView(.periodic(from: .now, by: 1.0 / 14.0)) { timeline in
+            Canvas { context, size in
+                let time = self.reduceMotion ? 0 : timeline.date.timeIntervalSinceReferenceDate
+                self.draw(in: &context, size: size, time: time)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 
-    private func ringScale(_ ring: Int, date: Date) -> CGFloat {
-        guard !self.reduceMotion else { return CGFloat(1.0 + (Double(ring) * 0.12)) }
-        let base = 0.88 + (Double(ring) * 0.18)
-        let speed = self.mode == .still ? 0.8 : 1.8
-        let phase = date.timeIntervalSinceReferenceDate * speed + Double(ring) * 0.9
-        return CGFloat(base + (sin(phase) * 0.035))
+    private func draw(in context: inout GraphicsContext, size: CGSize, time: TimeInterval) {
+        let center = CGPoint(x: size.width / 2, y: size.height / 2)
+        let profile = self.motionProfile(time: time)
+        let isSpeaking = profile.speechRipple > 0
+        let layoutTime = isSpeaking ? 0 : time
+        let fieldPulse = self.speechFieldPulse(time: time, profile: profile)
+        let radius = min(size.width, size.height) * profile.spread * (1 + fieldPulse * profile.speechRipple * 3.75)
+        let breath = 1 + profile.breathe * sin(time * profile.breatheSpeed)
+        let rotation = layoutTime * profile.rotationSpeed
+        context.blendMode = .plusLighter
+
+        let sortedParticles = self.particles.sorted { lhs, rhs in
+            self.depth(for: lhs, time: layoutTime, rotation: rotation)
+                < self.depth(for: rhs, time: layoutTime, rotation: rotation)
+        }
+
+        for particle in sortedParticles {
+            let point = self.project(
+                particle,
+                center: center,
+                radius: radius,
+                time: layoutTime,
+                rotation: rotation,
+                breath: breath,
+                profile: profile)
+            let depth = self.depth(for: particle, time: layoutTime, rotation: rotation)
+            let perspective = 0.68 + depth * 0.36
+            let activityWave = 0.5 + 0.5 * sin(layoutTime * profile.waveSpeed + Double(particle.baseY) * 1.8)
+            let size = particle.size * profile.size * perspective
+                * (0.88 + CGFloat(activityWave) * profile.sizePulse)
+            let edgePresence = self.edgePresence(point: point, center: center, radius: radius)
+            let listeningAlpha = profile.edgeBandBias > 0 ? (0.30 + edgePresence * 0.70) : 1
+            let alpha = particle.alpha * profile.alpha * (0.52 + depth * 0.44)
+                * Double(0.92 + CGFloat(activityWave) * 0.08)
+                * listeningAlpha
+            let haloRadius = size * (4.6 + profile.activity * 1.8 + fieldPulse * profile.speechRipple * 8)
+
+            context.fill(
+                Path(ellipseIn: CGRect(
+                    x: point.x - haloRadius,
+                    y: point.y - haloRadius,
+                    width: haloRadius * 2,
+                    height: haloRadius * 2)),
+                with: .radialGradient(
+                    Gradient(colors: [
+                        self.color.opacity(alpha * 0.18),
+                        self.color.opacity(alpha * 0.04),
+                        .clear,
+                    ]),
+                    center: point,
+                    startRadius: 0,
+                    endRadius: haloRadius))
+            context.fill(
+                Path(ellipseIn: CGRect(
+                    x: point.x - size,
+                    y: point.y - size,
+                    width: size * 2,
+                    height: size * 2)),
+                with: .color(self.color.opacity(alpha)))
+            if particle.isCore {
+                let coreSize = max(0.75, size * 0.42)
+                context.fill(
+                    Path(ellipseIn: CGRect(
+                        x: point.x - coreSize,
+                        y: point.y - coreSize,
+                        width: coreSize * 2,
+                        height: coreSize * 2)),
+                    with: .color(Color.white.opacity(alpha * 0.48)))
+            }
+        }
     }
 
-    private func ringOpacity(_ ring: Int) -> Double {
+    private func project(
+        _ particle: TalkProOrbParticle,
+        center: CGPoint,
+        radius: CGFloat,
+        time: TimeInterval,
+        rotation: Double,
+        breath: CGFloat,
+        profile: TalkProOrbMotionProfile) -> CGPoint
+    {
+        let cosR = CGFloat(cos(rotation))
+        let sinR = CGFloat(sin(rotation))
+        let flockTime = time * profile.waveSpeed
+        let latitudeBand = CGFloat(sin(flockTime + Double(particle.baseY) * 2.0 + particle.phase * 0.10))
+        let diagonalBand = CGFloat(cos(flockTime * 0.70 + Double(particle.baseX + particle.baseZ) * 1.6))
+        let turningBand = CGFloat(sin(flockTime * 0.50 + particle.phase * 0.18))
+        let listenPull = profile.listeningPull * latitudeBand * (0.40 + particle.shell * 0.60)
+        let radial = breath * (1 + profile.activity * 0.018 * latitudeBand)
+        let x = (particle.baseX * cosR - particle.baseZ * sinR) * radial
+        let murmurationX = (-particle.baseY * latitudeBand + turningBand * 0.25) * profile.horizontalFlow
+        let y = particle.baseY * radial + (diagonalBand * profile.verticalFlow) + listenPull
+        let rawPoint = CGPoint(
+            x: center.x + (x + murmurationX) * radius,
+            y: center.y + y * radius)
+        guard profile.edgeBandBias > 0 else { return rawPoint }
+        let dx = rawPoint.x - center.x
+        let dy = rawPoint.y - center.y
+        let distance = max(0.0001, hypot(dx, dy))
+        let target = radius * (0.72 + 0.06 * CGFloat(sin(time * 0.030 + particle.phase)))
+        guard distance < target else { return rawPoint }
+        let pull = min(profile.edgeBandBias, (target - distance) / max(1, target) * profile.edgeBandBias)
+        let nextDistance = distance + (target - distance) * pull
+        return CGPoint(
+            x: center.x + dx / distance * nextDistance,
+            y: center.y + dy / distance * nextDistance)
+    }
+
+    private func edgePresence(point: CGPoint, center: CGPoint, radius: CGFloat) -> Double {
+        let distance = hypot(point.x - center.x, point.y - center.y)
+        return Double(min(1, max(0, distance / max(1, radius * 0.70))))
+    }
+
+    private func speechFieldPulse(time: TimeInterval, profile: TalkProOrbMotionProfile) -> CGFloat {
+        guard profile.speechRipple > 0 else { return 0 }
+        let phrase = 0.30 + 0.70 * max(0, sin(time * 0.62 - .pi * 0.20))
+        let syllable = pow(max(0, sin(time * 4.15)), 1.18)
+        let emphasis = pow(max(0, sin(time * 2.05 + .pi * 0.24)), 2.0)
+        let attack = pow(max(0, sin(time * 8.30 - .pi * 0.12)), 4.5) * 0.38
+        let release = max(0, sin(time * 4.15 - .pi * 0.58)) * 0.30
+        let sizeVariation = 0.72
+            + 0.30 * (0.5 + 0.5 * sin(time * 0.91 + .pi * 0.31))
+            + 0.16 * (0.5 + 0.5 * sin(time * 1.73 + .pi * 0.07))
+        let pulse = phrase * (syllable * 0.74 + emphasis * 0.46 + release + attack) * sizeVariation
+        return CGFloat(min(1.18, pulse))
+    }
+
+    private func depth(for particle: TalkProOrbParticle, time: TimeInterval, rotation: Double) -> CGFloat {
+        let cosR = CGFloat(cos(rotation))
+        let sinR = CGFloat(sin(rotation))
+        let z = particle.baseX * sinR + particle.baseZ * cosR
+        let softDrift = CGFloat(sin(time * 0.025 + Double(particle.baseY) * 1.6)) * 0.025
+        return max(0, min(1, (z + 1 + softDrift) / 2))
+    }
+
+    private func motionProfile(time: TimeInterval) -> TalkProOrbMotionProfile {
+        let base = TalkProOrbMotionProfile(
+            activity: 0.16,
+            spread: 0.34,
+            alpha: 0.60,
+            size: 1.0,
+            breathe: 0.014,
+            breatheSpeed: 0.055,
+            rotationSpeed: 0.0025,
+            driftSpeed: 0.010,
+            waveSpeed: 0.018,
+            horizontalFlow: 0.0015,
+            verticalFlow: 0.0012,
+            listeningPull: 0,
+            speechRipple: 0,
+            edgeBandBias: 0,
+            sizePulse: 0.026)
+
         switch self.mode {
         case .still:
-            0.10 - (Double(ring) * 0.018)
-        default:
-            0.24 - (Double(ring) * 0.045)
+            return base
+        case .indeterminate:
+            return base.adjusted(
+                activity: 0.26,
+                alpha: 0.72,
+                breathe: 0.020,
+                breatheSpeed: 0.075,
+                rotationSpeed: 0.004,
+                driftSpeed: 0.016,
+                waveSpeed: 0.028,
+                horizontalFlow: 0.0025,
+                verticalFlow: 0.002,
+                sizePulse: 0.040)
+        case let .level(level):
+            let clamped = min(max(level, 0), 1)
+            return base.adjusted(
+                activity: 0.20 + CGFloat(clamped) * 0.08,
+                spread: 0.35 + CGFloat(clamped) * 0.010,
+                alpha: 0.80,
+                breathe: 0.018 + CGFloat(clamped) * 0.006,
+                breatheSpeed: 0.080,
+                rotationSpeed: 0.0045,
+                driftSpeed: 0.018,
+                waveSpeed: 0.032 + clamped * 0.010,
+                horizontalFlow: 0.003,
+                verticalFlow: 0.0022,
+                listeningPull: 0.004 + CGFloat(clamped) * 0.003,
+                edgeBandBias: 0.72,
+                sizePulse: 0.038)
+        case .inputSpeech:
+            return base.adjusted(
+                activity: 0.36,
+                spread: 0.37,
+                alpha: 0.88,
+                size: 1.04,
+                breathe: 0.026,
+                breatheSpeed: 0.095,
+                rotationSpeed: 0.006,
+                driftSpeed: 0.022,
+                waveSpeed: 0.045,
+                horizontalFlow: 0.004,
+                verticalFlow: 0.003,
+                listeningPull: 0.010,
+                edgeBandBias: 0.76,
+                sizePulse: 0.055)
+        case .speaking:
+            return base.adjusted(
+                activity: 0.22,
+                spread: 0.38,
+                alpha: 0.94,
+                size: 1.10,
+                breathe: 0.060,
+                breatheSpeed: 2.05,
+                rotationSpeed: 0,
+                driftSpeed: 0,
+                waveSpeed: 0,
+                horizontalFlow: 0,
+                verticalFlow: 0,
+                speechRipple: 0.17,
+                sizePulse: 0.020)
+        }
+    }
+}
+
+private struct TalkProOrbMotionProfile {
+    let activity: CGFloat
+    let spread: CGFloat
+    let alpha: Double
+    let size: CGFloat
+    let breathe: CGFloat
+    let breatheSpeed: Double
+    let rotationSpeed: Double
+    let driftSpeed: Double
+    let waveSpeed: Double
+    let horizontalFlow: CGFloat
+    let verticalFlow: CGFloat
+    let listeningPull: CGFloat
+    let speechRipple: CGFloat
+    let edgeBandBias: CGFloat
+    let sizePulse: CGFloat
+
+    func adjusted(
+        activity: CGFloat? = nil,
+        spread: CGFloat? = nil,
+        alpha: Double? = nil,
+        size: CGFloat? = nil,
+        breathe: CGFloat? = nil,
+        breatheSpeed: Double? = nil,
+        rotationSpeed: Double? = nil,
+        driftSpeed: Double? = nil,
+        waveSpeed: Double? = nil,
+        horizontalFlow: CGFloat? = nil,
+        verticalFlow: CGFloat? = nil,
+        listeningPull: CGFloat? = nil,
+        speechRipple: CGFloat? = nil,
+        edgeBandBias: CGFloat? = nil,
+        sizePulse: CGFloat? = nil) -> TalkProOrbMotionProfile
+    {
+        TalkProOrbMotionProfile(
+            activity: activity ?? self.activity,
+            spread: spread ?? self.spread,
+            alpha: alpha ?? self.alpha,
+            size: size ?? self.size,
+            breathe: breathe ?? self.breathe,
+            breatheSpeed: breatheSpeed ?? self.breatheSpeed,
+            rotationSpeed: rotationSpeed ?? self.rotationSpeed,
+            driftSpeed: driftSpeed ?? self.driftSpeed,
+            waveSpeed: waveSpeed ?? self.waveSpeed,
+            horizontalFlow: horizontalFlow ?? self.horizontalFlow,
+            verticalFlow: verticalFlow ?? self.verticalFlow,
+            listeningPull: listeningPull ?? self.listeningPull,
+            speechRipple: speechRipple ?? self.speechRipple,
+            edgeBandBias: edgeBandBias ?? self.edgeBandBias,
+            sizePulse: sizePulse ?? self.sizePulse)
+    }
+}
+
+private struct TalkProOrbParticle {
+    let baseX: CGFloat
+    let baseY: CGFloat
+    let baseZ: CGFloat
+    let shell: CGFloat
+    let phase: Double
+    let size: CGFloat
+    let alpha: Double
+    let isCore: Bool
+
+    static func make(count: Int) -> [TalkProOrbParticle] {
+        guard count > 1 else { return [] }
+        let increment = CGFloat.pi * (3 - sqrt(CGFloat(5)))
+        return (0..<count).map { index in
+            let progress = CGFloat(index) / CGFloat(count - 1)
+            let y = 1 - progress * 2
+            let radius = sqrt(max(0, 1 - y * y))
+            let theta = CGFloat(index) * increment
+            let shell = 0.52 + 0.48 * CGFloat((index * 17) % 29) / 28
+            let phase = Double(index * 37).truncatingRemainder(dividingBy: 360) * .pi / 180
+            let isCore = index % 11 == 0 || index < 8
+            return TalkProOrbParticle(
+                baseX: cos(theta) * radius * shell,
+                baseY: y * shell,
+                baseZ: sin(theta) * radius * shell,
+                shell: shell,
+                phase: phase,
+                size: isCore ? 1.75 : 1.05 + CGFloat((index * 13) % 9) * 0.075,
+                alpha: isCore ? 0.92 : 0.56 + Double((index * 19) % 10) * 0.035,
+                isCore: isCore)
         }
     }
 }

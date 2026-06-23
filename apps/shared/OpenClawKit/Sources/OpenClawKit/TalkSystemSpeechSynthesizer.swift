@@ -11,17 +11,29 @@ public final class TalkSystemSpeechSynthesizer: NSObject {
         public var rate: Float
         public var pitchMultiplier: Float
         public var volume: Float
+        public var preUtteranceDelay: TimeInterval
+        public var postUtteranceDelay: TimeInterval
 
-        public init(rate: Float, pitchMultiplier: Float, volume: Float) {
+        public init(
+            rate: Float,
+            pitchMultiplier: Float,
+            volume: Float,
+            preUtteranceDelay: TimeInterval = 0,
+            postUtteranceDelay: TimeInterval = 0)
+        {
             self.rate = rate
             self.pitchMultiplier = pitchMultiplier
             self.volume = volume
+            self.preUtteranceDelay = preUtteranceDelay
+            self.postUtteranceDelay = postUtteranceDelay
         }
 
         public static let atomStoic = VoiceStyle(
-            rate: AVSpeechUtteranceDefaultSpeechRate * 0.86,
-            pitchMultiplier: 0.82,
-            volume: 1.0)
+            rate: AVSpeechUtteranceDefaultSpeechRate,
+            pitchMultiplier: 1.0,
+            volume: 1.0,
+            preUtteranceDelay: 0,
+            postUtteranceDelay: 0)
     }
 
     public static let shared = TalkSystemSpeechSynthesizer()
@@ -70,6 +82,8 @@ public final class TalkSystemSpeechSynthesizer: NSObject {
         utterance.rate = style.rate
         utterance.pitchMultiplier = style.pitchMultiplier
         utterance.volume = style.volume
+        utterance.preUtteranceDelay = style.preUtteranceDelay
+        utterance.postUtteranceDelay = style.postUtteranceDelay
         self.currentUtterance = utterance
 
         Self.configurePlaybackSession()
@@ -142,12 +156,18 @@ public final class TalkSystemSpeechSynthesizer: NSObject {
         if let normalizedLanguage, !normalizedLanguage.isEmpty,
            !normalizedLanguage.lowercased().hasPrefix("en")
         {
-            return AVSpeechSynthesisVoice(language: normalizedLanguage)
+            return self.preferredPremiumVoice(language: normalizedLanguage)
+                ?? AVSpeechSynthesisVoice(language: normalizedLanguage)
         }
 
         let preferredIdentifiers = [
-            "com.apple.voice.enhanced.en-US.Eddy",
+            "com.apple.voice.premium.en-AU.Lee",
+            "com.apple.voice.enhanced.en-AU.Lee",
+            "com.apple.voice.compact.en-AU.Lee",
+            "com.apple.ttsbundle.Lee-premium",
+            "com.apple.ttsbundle.Lee-compact",
             "com.apple.voice.premium.en-US.Eddy",
+            "com.apple.voice.enhanced.en-US.Eddy",
             "com.apple.voice.compact.en-US.Eddy",
             "com.apple.ttsbundle.siri_male_en-US_compact",
             "com.apple.ttsbundle.siri_male_en-US_premium",
@@ -164,15 +184,63 @@ public final class TalkSystemSpeechSynthesizer: NSObject {
 
         let englishVoices = AVSpeechSynthesisVoice.speechVoices()
             .filter { $0.language.lowercased().hasPrefix("en") }
-        let maleNameHints = ["eddy", "alex", "daniel", "aaron", "fred", "reed", "rocko", "siri male"]
+        let preferredNameHints = ["lee", "eddy", "alex", "daniel", "aaron", "fred", "reed", "rocko", "siri male"]
+        if let premiumPreferred = self.bestVoice(in: englishVoices, nameHints: preferredNameHints) {
+            return premiumPreferred
+        }
         if let voice = englishVoices.first(where: { voice in
             let searchable = "\(voice.name) \(voice.identifier)".lowercased()
-            return maleNameHints.contains(where: { searchable.contains($0) })
+            return preferredNameHints.contains(where: { searchable.contains($0) })
         }) {
             return voice
         }
 
         return AVSpeechSynthesisVoice(language: normalizedLanguage?.isEmpty == false ? normalizedLanguage : "en-US")
+    }
+
+    private static func preferredPremiumVoice(language: String) -> AVSpeechSynthesisVoice? {
+        let normalized = language.lowercased().replacingOccurrences(of: "_", with: "-")
+        let voices = AVSpeechSynthesisVoice.speechVoices().filter { voice in
+            voice.language.lowercased().replacingOccurrences(of: "_", with: "-") == normalized
+        }
+        return self.bestVoice(in: voices, nameHints: [])
+            ?? voices.first(where: { self.voiceQualityRank($0) > 0 })
+    }
+
+    private static func bestVoice(
+        in voices: [AVSpeechSynthesisVoice],
+        nameHints: [String]) -> AVSpeechSynthesisVoice?
+    {
+        voices
+            .filter { voice in
+                guard !nameHints.isEmpty else { return true }
+                let searchable = "\(voice.name) \(voice.identifier)".lowercased()
+                return nameHints.contains(where: { searchable.contains($0) })
+            }
+            .sorted { lhs, rhs in
+                let leftRank = self.voiceQualityRank(lhs)
+                let rightRank = self.voiceQualityRank(rhs)
+                if leftRank != rightRank { return leftRank > rightRank }
+                let leftName = self.voiceNameRank(lhs, nameHints: nameHints)
+                let rightName = self.voiceNameRank(rhs, nameHints: nameHints)
+                if leftName != rightName { return leftName < rightName }
+                return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
+            }
+            .first
+    }
+
+    private static func voiceQualityRank(_ voice: AVSpeechSynthesisVoice) -> Int {
+        let searchable = "\(voice.name) \(voice.identifier)".lowercased()
+        if searchable.contains("premium") { return 3 }
+        if searchable.contains("enhanced") { return 2 }
+        if searchable.contains("siri") { return 1 }
+        return 0
+    }
+
+    private static func voiceNameRank(_ voice: AVSpeechSynthesisVoice, nameHints: [String]) -> Int {
+        guard !nameHints.isEmpty else { return 0 }
+        let searchable = "\(voice.name) \(voice.identifier)".lowercased()
+        return nameHints.firstIndex(where: { searchable.contains($0) }) ?? nameHints.count
     }
 
     static func watchdogTimeoutSeconds(text: String, language: String?) -> Double {

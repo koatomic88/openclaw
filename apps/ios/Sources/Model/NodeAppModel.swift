@@ -130,7 +130,8 @@ final class NodeAppModel {
     }
 
     var seamColorHex: String?
-    private var mainSessionBaseKey: String = "main"
+    private static let atomAppSessionBaseKey = "webchat:direct:openclaw-ios"
+    private var mainSessionBaseKey: String = NodeAppModel.atomAppSessionBaseKey
     private var focusedChatSessionKey: String?
     var selectedAgentId: String?
     var gatewayDefaultAgentId: String?
@@ -728,11 +729,8 @@ final class NodeAppModel {
             guard let config = json["config"] as? [String: Any] else { return }
             let ui = config["ui"] as? [String: Any]
             let raw = (ui?["seamColor"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            let session = config["session"] as? [String: Any]
-            let mainKey = SessionKey.normalizeMainKey(session?["mainKey"] as? String)
             await MainActor.run {
                 self.seamColorHex = raw.isEmpty ? nil : raw
-                self.mainSessionBaseKey = mainKey
                 self.talkMode.updateMainSessionKey(self.mainSessionKey)
                 self.homeCanvasRevision &+= 1
             }
@@ -754,8 +752,6 @@ final class NodeAppModel {
             await MainActor.run {
                 self.gatewayDefaultAgentId = decoded.defaultid
                 self.gatewayAgents = decoded.agents
-                self.applyMainSessionKey(decoded.mainkey)
-
                 let selected = (self.selectedAgentId ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
                 if !selected.isEmpty, !decoded.agents.contains(where: { $0.id == selected }) {
                     self.selectedAgentId = nil
@@ -1859,8 +1855,8 @@ extension NodeAppModel {
         let base = SessionKey.normalizeMainKey(self.mainSessionBaseKey)
         let agentId = (self.selectedAgentId ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         let defaultId = (self.gatewayDefaultAgentId ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        if agentId.isEmpty || (!defaultId.isEmpty && agentId == defaultId) { return base }
-        return SessionKey.makeAgentSessionKey(agentId: agentId, baseKey: base)
+        let resolvedAgentId = agentId.isEmpty ? (defaultId.isEmpty ? "main" : defaultId) : agentId
+        return SessionKey.makeAgentSessionKey(agentId: resolvedAgentId, baseKey: base)
     }
 
     var chatSessionKey: String {
@@ -1999,7 +1995,7 @@ extension NodeAppModel {
         self.setOperatorConnected(false)
         self.talkMode.updateGatewayConnected(false)
         self.seamColorHex = nil
-        self.mainSessionBaseKey = "main"
+        self.mainSessionBaseKey = Self.atomAppSessionBaseKey
         self.talkMode.updateMainSessionKey(self.mainSessionKey)
         ShareGatewayRelaySettings.clearConfig()
         self.showLocalCanvasOnDisconnect()
@@ -2545,7 +2541,7 @@ extension NodeAppModel {
                 self.setOperatorConnected(false)
                 self.talkMode.updateGatewayConnected(false)
                 self.seamColorHex = nil
-                self.mainSessionBaseKey = "main"
+                self.mainSessionBaseKey = Self.atomAppSessionBaseKey
                 self.talkMode.updateMainSessionKey(self.mainSessionKey)
                 self.showLocalCanvasOnDisconnect()
             }
@@ -4240,6 +4236,9 @@ extension NodeAppModel {
     private func applyMainSessionKey(_ key: String?) {
         let trimmed = (key ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
+        if trimmed == "main" || trimmed == "global" || trimmed.hasPrefix("agent:") {
+            return
+        }
         let current = self.mainSessionBaseKey.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed == current { return }
         self.mainSessionBaseKey = trimmed

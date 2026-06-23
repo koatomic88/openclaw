@@ -4,13 +4,15 @@ import XCTest
 
 @MainActor
 final class TalkSystemSpeechSynthesizerTests: XCTestCase {
-    func testAtomStoicVoiceStyleUsesLowerPitchAndMeasuredRate() {
+    func testAtomStoicVoiceStyleLeavesPremiumVoiceCharacterIntact() {
         let style = TalkSystemSpeechSynthesizer.VoiceStyle.atomStoic
 
-        XCTAssertLessThan(style.pitchMultiplier, 1.0)
-        XCTAssertLessThan(style.rate, AVSpeechUtteranceDefaultSpeechRate)
+        XCTAssertEqual(style.pitchMultiplier, 1.0, accuracy: 0.001)
+        XCTAssertEqual(style.rate, AVSpeechUtteranceDefaultSpeechRate, accuracy: 0.001)
         XCTAssertGreaterThan(style.rate, AVSpeechUtteranceMinimumSpeechRate)
         XCTAssertEqual(style.volume, 1.0, accuracy: 0.001)
+        XCTAssertEqual(style.preUtteranceDelay, 0, accuracy: 0.001)
+        XCTAssertEqual(style.postUtteranceDelay, 0, accuracy: 0.001)
     }
 
     func testAtomVoicePrefersEnglishForDefaultSpeech() {
