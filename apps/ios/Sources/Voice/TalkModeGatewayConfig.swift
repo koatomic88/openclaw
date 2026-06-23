@@ -189,8 +189,9 @@ enum TalkModeGatewayConfigParser {
             talk,
             defaultProvider: defaultProvider,
             allowLegacyFallback: false)
-        let activeProvider = selection?.provider ?? defaultProvider
-        let activeConfig = selection?.config
+        let explicitSystemProvider = Self.explicitSystemProvider(talk)
+        let activeProvider = selection?.provider ?? explicitSystemProvider ?? defaultProvider
+        let activeConfig = selection?.config ?? Self.providerConfig(talk, provider: explicitSystemProvider)
         let voiceAliases: [String: String]
         if let aliases = activeConfig?["voiceAliases"]?.dictionaryValue {
             var resolved: [String: String] = [:]
@@ -232,7 +233,7 @@ enum TalkModeGatewayConfigParser {
         return TalkModeGatewayConfigState(
             activeProvider: activeProvider,
             normalizedPayload: selection?.normalizedPayload == true,
-            missingResolvedPayload: talk != nil && selection == nil,
+            missingResolvedPayload: talk != nil && selection == nil && explicitSystemProvider == nil,
             executionMode: executionMode,
             defaultVoiceId: defaultVoiceId,
             voiceAliases: voiceAliases,
@@ -245,6 +246,21 @@ enum TalkModeGatewayConfigParser {
             interruptOnSpeech: interruptOnSpeech,
             silenceTimeoutMs: silenceTimeoutMs,
             speechLocaleID: speechLocaleID)
+    }
+
+    private static func explicitSystemProvider(_ talk: [String: AnyCodable]?) -> String? {
+        let provider = talk?["provider"]?.stringValue?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        return provider == "system" ? provider : nil
+    }
+
+    private static func providerConfig(
+        _ talk: [String: AnyCodable]?,
+        provider: String?) -> [String: AnyCodable]?
+    {
+        guard let provider else { return nil }
+        return talk?["providers"]?.dictionaryValue?[provider]?.dictionaryValue ?? [:]
     }
 
     private static func firstString(_ config: [String: AnyCodable]?, keys: [String]) -> String? {

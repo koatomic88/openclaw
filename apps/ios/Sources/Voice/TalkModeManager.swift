@@ -36,6 +36,10 @@ final class TalkModeManager: NSObject {
     private static let defaultRealtimeModelIdFallback = "gpt-realtime-2"
     private static let defaultTalkProvider = "elevenlabs"
     private static let defaultSilenceTimeoutMs = TalkDefaults.silenceTimeoutMs
+    private static let chatCompletionTimeoutSeconds = 300
+    private static let assistantHistoryFinalFallbackTimeoutSeconds = 30
+    private static let assistantHistoryDelayedFallbackTimeoutSeconds = 90
+    private static let listenOnlyEnabledKey = "atom.companion.listenOnlyEnabled"
     private static let redactedConfigSentinel = "__OPENCLAW_REDACTED__"
     private static let realtimePrefetchExpiryLeewaySeconds: TimeInterval = 30
     var isEnabled: Bool = false
@@ -61,6 +65,10 @@ final class TalkModeManager: NSObject {
     var gatewayTalkVoiceModeSubtitle: String?
     var gatewayTalkVoiceModeAccessibilityValue: String = "Not loaded"
     var gatewayTalkPermissionState: TalkGatewayPermissionState = .unknown
+    var displayUserTranscript: String = ""
+    var displayAssistantResponse: String = ""
+    var conversationEntries: [AtomConversationEntry] = []
+    var taskLifecycle: AtomTaskLifecycleSnapshot = .idle
 
     var isGatewayConnected: Bool {
         self.gatewayConnected
@@ -162,6 +170,7 @@ final class TalkModeManager: NSObject {
     private var incrementalSpeechDirective: TalkDirective?
     private var incrementalSpeechPrefetch: IncrementalSpeechPrefetchState?
     private var incrementalSpeechPrefetchMonitorTask: Task<Void, Never>?
+    private var activeWorkerTask: Task<Void, Never>?
 
     private let logger = Logger(subsystem: "ai.openclaw", category: "TalkMode")
 
@@ -187,12 +196,18 @@ final class TalkModeManager: NSObject {
         if connected {
             // If talk mode is enabled before the gateway connects (common on cold start),
             // kick recognition once we're online so the UI doesn’t stay “Offline”.
-            if self.isEnabled, !self.isListening, self.captureMode != .pushToTalk {
+            if self.isEnabled, !self.isListening, !self.isSpeaking, self.captureMode != .pushToTalk {
                 Task { await self.start() }
             }
         } else {
             self.stopRealtimeSession()
-            if self.isEnabled, !self.isSpeaking {
+            if self.captureMode == .continuous {
+                self.stopRecognition()
+                self.isListening = false
+                self.isUserSpeechDetected = false
+                self.captureMode = .idle
+            }
+            if self.isEnabled {
                 self.statusText = "Offline"
             }
             self.realtimePrefetchTask?.cancel()
@@ -870,10 +885,12 @@ final class TalkModeManager: NSObject {
         guard self.isListening else { return }
         if !trimmed.isEmpty {
             self.lastTranscript = trimmed
+            self.displayUserTranscript = trimmed
             self.lastHeard = Date()
         }
         if isFinal {
             self.lastTranscript = trimmed
+            self.displayUserTranscript = trimmed
             guard !trimmed.isEmpty else { return }
             GatewayDiagnostics.log("talk speech: final transcript chars=\(trimmed.count)")
             self.loggedPartialThisCycle = false
@@ -943,6 +960,7 @@ final class TalkModeManager: NSObject {
     }
 
     private func processTranscript(_ transcript: String, restartAfter: Bool) async {
+        let requestStartedAt = Self.nowSeconds()
         self.isListening = false
         self.isUserSpeechDetected = false
         self.captureMode = .idle
@@ -954,6 +972,22 @@ final class TalkModeManager: NSObject {
         GatewayDiagnostics.log("talk: process transcript chars=\(transcript.count) restartAfter=\(restartAfter)")
         await reloadConfig()
         let message = self.buildPrompt(transcript: transcript)
+        let sessionKey = self.mainSessionKey
+        self.appendConversationEntry(
+            speaker: .user,
+            text: transcript,
+            sessionKey: sessionKey,
+            source: "voice")
+        self.logVoiceEvent(
+            speaker: .user,
+            transcript: transcript,
+            response: nil,
+            sessionKey: sessionKey,
+            workerSessionKey: nil,
+            runId: nil,
+            taskStatus: nil,
+            source: "voice",
+            requestStartedAt: requestStartedAt)
         guard self.gatewayConnected, let gateway else {
             self.statusText = "Gateway not connected"
             self.logger.warning("finalize: gateway not connected")
@@ -966,8 +1000,17 @@ final class TalkModeManager: NSObject {
 
         do {
             let startedAt = Date().timeIntervalSince1970
-            let sessionKey = self.mainSessionKey
             await self.subscribeChatIfNeeded(sessionKey: sessionKey)
+            if self.shouldRouteToWorker(transcript: transcript) {
+                await self.processTranscriptInWorker(
+                    transcript: transcript,
+                    message: message,
+                    sessionKey: sessionKey,
+                    gateway: gateway,
+                    requestStartedAt: requestStartedAt,
+                    restartAfter: restartAfter)
+                return
+            }
             self.logger.info(
                 "chat.send start sessionKey=\(sessionKey, privacy: .public) chars=\(message.count, privacy: .public)")
             GatewayDiagnostics.log("talk: chat.send start sessionKey=\(sessionKey) chars=\(message.count)")
@@ -983,7 +1026,10 @@ final class TalkModeManager: NSObject {
                     await self.streamAssistant(runId: runId, gateway: gateway)
                 }
             }
-            let completion = await waitForChatCompletion(runId: runId, gateway: gateway, timeoutSeconds: 120)
+            let completion = await waitForChatCompletion(
+                runId: runId,
+                gateway: gateway,
+                timeoutSeconds: Self.chatCompletionTimeoutSeconds)
             if completion.state == .timeout {
                 self.logger.warning(
                     "chat completion timeout runId=\(runId, privacy: .public); attempting history fallback")
@@ -1017,7 +1063,9 @@ final class TalkModeManager: NSObject {
                 assistantText = try await self.waitForAssistantTextFromHistory(
                     gateway: gateway,
                     since: startedAt,
-                    timeoutSeconds: completion.state == .final ? 12 : 25)
+                    timeoutSeconds: completion.state == .final
+                        ? Self.assistantHistoryFinalFallbackTimeoutSeconds
+                        : Self.assistantHistoryDelayedFallbackTimeoutSeconds)
             }
             guard let assistantText else {
                 self.statusText = "No reply"
@@ -1031,11 +1079,28 @@ final class TalkModeManager: NSObject {
             self.logger.info("assistant text ok chars=\(assistantText.count, privacy: .public)")
             GatewayDiagnostics.log("talk: assistant text ok chars=\(assistantText.count)")
             streamingTask?.cancel()
+            self.appendConversationEntry(
+                speaker: .atom,
+                text: assistantText,
+                sessionKey: sessionKey,
+                runId: runId,
+                taskStatus: .completed,
+                source: "voice-direct")
             if shouldIncremental {
                 await self.handleIncrementalAssistantFinal(text: assistantText)
             } else {
                 await self.playAssistant(text: assistantText)
             }
+            self.logVoiceEvent(
+                speaker: .atom,
+                transcript: transcript,
+                response: assistantText,
+                sessionKey: sessionKey,
+                workerSessionKey: nil,
+                runId: runId,
+                taskStatus: .completed,
+                source: "voice-direct",
+                requestStartedAt: requestStartedAt)
         } catch {
             self.statusText = "Talk failed: \(error.localizedDescription)"
             self.logger.error("finalize failed: \(error.localizedDescription, privacy: .public)")
@@ -1045,6 +1110,279 @@ final class TalkModeManager: NSObject {
         if restartAfter {
             await self.start()
         }
+    }
+
+    private func processTranscriptInWorker(
+        transcript: String,
+        message: String,
+        sessionKey: String,
+        gateway: GatewayNodeSession,
+        requestStartedAt: TimeInterval,
+        restartAfter: Bool) async
+    {
+        let workerSessionKey = self.makeWorkerSessionKey(parent: sessionKey)
+        let title = self.taskTitle(from: transcript)
+        let ack = self.acknowledgement(for: transcript)
+        self.updateTaskLifecycle(
+            title: title,
+            status: .acknowledged,
+            detail: "Starting worker",
+            runId: nil,
+            workerSessionKey: workerSessionKey)
+        self.statusText = "Acknowledged"
+        self.logVoiceEvent(
+            speaker: .atom,
+            transcript: transcript,
+            response: ack,
+            sessionKey: sessionKey,
+            workerSessionKey: workerSessionKey,
+            runId: nil,
+            taskStatus: .acknowledged,
+            source: "voice-ack",
+            requestStartedAt: requestStartedAt,
+            ackLatencyMs: Self.elapsedMs(since: requestStartedAt))
+        self.appendConversationEntry(
+            speaker: .atom,
+            text: ack,
+            sessionKey: sessionKey,
+            workerSessionKey: workerSessionKey,
+            taskStatus: .acknowledged,
+            source: "voice-ack")
+
+        let ackTask = Task { @MainActor [weak self] in
+            await self?.playAssistant(text: ack)
+        }
+
+        do {
+            try await self.ensureWorkerSession(
+                sessionKey: workerSessionKey,
+                parentSessionKey: sessionKey,
+                gateway: gateway)
+            let runId = try await self.sendChat(message, sessionKey: workerSessionKey, gateway: gateway)
+            self.updateTaskLifecycle(
+                title: title,
+                status: .running,
+                detail: "Working in background",
+                runId: runId,
+                workerSessionKey: workerSessionKey)
+            self.logVoiceEvent(
+                speaker: .system,
+                transcript: transcript,
+                response: nil,
+                sessionKey: sessionKey,
+                workerSessionKey: workerSessionKey,
+                runId: runId,
+                taskStatus: .running,
+                source: "voice-worker",
+                requestStartedAt: requestStartedAt)
+            self.activeWorkerTask?.cancel()
+            self.activeWorkerTask = Task { @MainActor [weak self, gateway] in
+                guard let self else { return }
+                await self.monitorWorkerCompletion(
+                    transcript: transcript,
+                    title: title,
+                    runId: runId,
+                    parentSessionKey: sessionKey,
+                    workerSessionKey: workerSessionKey,
+                    gateway: gateway,
+                    requestStartedAt: requestStartedAt)
+            }
+        } catch {
+            self.updateTaskLifecycle(
+                title: title,
+                status: .failed,
+                detail: error.localizedDescription,
+                runId: nil,
+                workerSessionKey: workerSessionKey)
+            self.logVoiceEvent(
+                speaker: .system,
+                transcript: transcript,
+                response: error.localizedDescription,
+                sessionKey: sessionKey,
+                workerSessionKey: workerSessionKey,
+                runId: nil,
+                taskStatus: .failed,
+                source: "voice-worker",
+                requestStartedAt: requestStartedAt)
+        }
+
+        await ackTask.value
+        if restartAfter {
+            await self.start()
+        }
+    }
+
+    func recordAppTextInput(
+        text: String,
+        sessionKey: String,
+        runId: String?,
+        source: String,
+        taskStatus: AtomTaskLifecycleStatus? = .running)
+    {
+        self.appendConversationEntry(
+            speaker: .user,
+            text: text,
+            sessionKey: sessionKey,
+            runId: runId,
+            taskStatus: taskStatus,
+            source: source)
+    }
+
+    private func appendConversationEntry(
+        speaker: AtomConversationSpeaker,
+        text: String,
+        sessionKey: String,
+        runId: String? = nil,
+        workerSessionKey: String? = nil,
+        taskStatus: AtomTaskLifecycleStatus? = nil,
+        source: String)
+    {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        let entry = AtomConversationEntry(
+            speaker: speaker,
+            text: trimmed,
+            sessionKey: sessionKey,
+            runId: runId,
+            workerSessionKey: workerSessionKey,
+            taskStatus: taskStatus,
+            source: source)
+        self.conversationEntries.append(entry)
+        if self.conversationEntries.count > 60 {
+            self.conversationEntries.removeFirst(self.conversationEntries.count - 60)
+        }
+        switch speaker {
+        case .user:
+            self.displayUserTranscript = trimmed
+        case .atom:
+            self.displayAssistantResponse = trimmed
+        case .system:
+            break
+        }
+    }
+
+    private func updateTaskLifecycle(
+        title: String,
+        status: AtomTaskLifecycleStatus,
+        detail: String?,
+        runId: String?,
+        workerSessionKey: String?)
+    {
+        self.taskLifecycle = AtomTaskLifecycleSnapshot(
+            title: title,
+            status: status,
+            detail: detail,
+            runId: runId,
+            workerSessionKey: workerSessionKey,
+            updatedAt: Date())
+        switch status {
+        case .idle:
+            self.statusText = "Ready"
+        case .acknowledged:
+            self.statusText = "Acknowledged"
+        case .running:
+            self.statusText = "Working"
+        case .completed:
+            self.statusText = "Completed"
+        case .failed:
+            self.statusText = "Failed"
+        case .blocked:
+            self.statusText = "Needs attention"
+        }
+    }
+
+    // swiftlint:disable:next function_parameter_count
+    private func logVoiceEvent(
+        speaker: AtomConversationSpeaker,
+        transcript: String?,
+        response: String?,
+        sessionKey: String,
+        workerSessionKey: String?,
+        runId: String?,
+        taskStatus: AtomTaskLifecycleStatus?,
+        source: String,
+        requestStartedAt: TimeInterval? = nil,
+        ackLatencyMs: Int? = nil,
+        completionLatencyMs: Int? = nil,
+        metadata: [String: String]? = nil)
+    {
+        let latencyMs = requestStartedAt.map { Self.elapsedMs(since: $0) }
+        AtomVoiceEventStore.append(AtomVoiceEventRecord(
+            id: UUID(),
+            timestamp: Date(),
+            surface: "ios",
+            source: source,
+            sessionKey: sessionKey,
+            workerSessionKey: workerSessionKey,
+            runId: runId,
+            taskStatus: taskStatus,
+            speaker: speaker,
+            transcript: transcript,
+            response: response,
+            latencyMs: latencyMs,
+            ackLatencyMs: ackLatencyMs,
+            completionLatencyMs: completionLatencyMs,
+            metadata: metadata))
+    }
+
+    private func shouldRouteToWorker(transcript: String) -> Bool {
+        let lower = transcript.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !lower.isEmpty else { return false }
+        if lower.count > 160 { return true }
+        let workerSignals = [
+            "analyze", "audit", "browse", "build", "change", "compare", "create", "debug",
+            "deploy", "fix", "implement", "install", "make these", "proceed", "refactor",
+            "research", "review", "run", "search", "test", "update", "work on", "write",
+        ]
+        return workerSignals.contains { lower.contains($0) }
+    }
+
+    private func makeWorkerSessionKey(parent: String) -> String {
+        let base = parent.trimmingCharacters(in: .whitespacesAndNewlines)
+        let safeBase = base.isEmpty ? "main" : base
+        let suffix = UUID().uuidString.prefix(8).lowercased()
+        return "\(safeBase):voice-worker:\(suffix)"
+    }
+
+    private func taskTitle(from transcript: String) -> String {
+        let singleLine = transcript
+            .replacingOccurrences(of: "\n", with: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !singleLine.isEmpty else { return "Voice task" }
+        if singleLine.count <= 54 { return singleLine }
+        return String(singleLine.prefix(51)) + "..."
+    }
+
+    private func acknowledgement(for transcript: String) -> String {
+        if transcript.lowercased().contains("install") {
+            return "Understood. I’ll stage the work locally first and wait for your approval before installing."
+        }
+        return "Understood. I’ll start that in the background and keep the app responsive."
+    }
+
+    private func shouldSpeakWorkerCompletion(status: AtomTaskLifecycleStatus) -> Bool {
+        guard !self.listenOnlyEnabled else { return false }
+        return switch status {
+        case .completed, .failed:
+            true
+        case .idle, .acknowledged, .running, .blocked:
+            false
+        }
+    }
+
+    private func completionAnnouncement(title: String, response: String?) -> String {
+        let responseText = response?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard !responseText.isEmpty else {
+            return "The background task is complete."
+        }
+        let firstSentence = responseText
+            .components(separatedBy: CharacterSet(charactersIn: ".!?\n"))
+            .first?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        if let firstSentence, !firstSentence.isEmpty {
+            return "The background task is complete. \(firstSentence)."
+        }
+        return "The background task is complete."
     }
 
     private func startRealtimeIfAvailable() async -> Bool {
@@ -1287,12 +1625,17 @@ final class TalkModeManager: NSObject {
     }
 
     private func sendChat(_ message: String, gateway: GatewayNodeSession) async throws -> String {
+        try await self.sendChat(message, sessionKey: self.mainSessionKey, gateway: gateway)
+    }
+
+    private func sendChat(_ message: String, sessionKey: String, gateway: GatewayNodeSession) async throws -> String {
         struct SendResponse: Decodable { let runId: String }
         let payload: [String: Any] = [
-            "sessionKey": mainSessionKey,
+            "sessionKey": sessionKey,
             "message": message,
             "thinking": "low",
-            "timeoutMs": 30000,
+            "fastMode": true,
+            "timeoutMs": Self.chatCompletionTimeoutSeconds * 1000,
             "idempotencyKey": UUID().uuidString,
         ]
         let data = try JSONSerialization.data(withJSONObject: payload)
@@ -1305,6 +1648,19 @@ final class TalkModeManager: NSObject {
         let res = try await gateway.request(method: "chat.send", paramsJSON: json, timeoutSeconds: 30)
         let decoded = try JSONDecoder().decode(SendResponse.self, from: res)
         return decoded.runId
+    }
+
+    private func ensureWorkerSession(
+        sessionKey: String,
+        parentSessionKey: String,
+        gateway: GatewayNodeSession) async throws
+    {
+        let transport = IOSGatewayChatTransport(gateway: gateway)
+        _ = try await transport.createSession(
+            key: sessionKey,
+            label: "ATOM voice worker",
+            parentSessionKey: parentSessionKey)
+        await self.subscribeChatIfNeeded(sessionKey: sessionKey)
     }
 
     private func waitForChatCompletion(
@@ -1384,11 +1740,12 @@ final class TalkModeManager: NSObject {
     private func waitForAssistantTextFromHistory(
         gateway: GatewayNodeSession,
         since: Double,
-        timeoutSeconds: Int) async throws -> String?
+        timeoutSeconds: Int,
+        sessionKey: String? = nil) async throws -> String?
     {
         let deadline = Date().addingTimeInterval(TimeInterval(timeoutSeconds))
         while Date() < deadline {
-            if let text = try await fetchLatestAssistantText(gateway: gateway, since: since) {
+            if let text = try await fetchLatestAssistantText(gateway: gateway, since: since, sessionKey: sessionKey) {
                 return text
             }
             try? await Task.sleep(nanoseconds: 300_000_000)
@@ -1396,10 +1753,17 @@ final class TalkModeManager: NSObject {
         return nil
     }
 
-    private func fetchLatestAssistantText(gateway: GatewayNodeSession, since: Double? = nil) async throws -> String? {
+    private func fetchLatestAssistantText(
+        gateway: GatewayNodeSession,
+        since: Double? = nil,
+        sessionKey: String? = nil) async throws -> String?
+    {
+        let key = (sessionKey ?? self.mainSessionKey).trimmingCharacters(in: .whitespacesAndNewlines)
+        let params = try JSONSerialization.data(withJSONObject: ["sessionKey": key])
+        guard let paramsJSON = String(bytes: params, encoding: .utf8) else { return nil }
         let res = try await gateway.request(
             method: "chat.history",
-            paramsJSON: "{\"sessionKey\":\"\(self.mainSessionKey)\"}",
+            paramsJSON: paramsJSON,
             timeoutSeconds: 15)
         guard let json = try JSONSerialization.jsonObject(with: res) as? [String: Any] else { return nil }
         guard let messages = json["messages"] as? [[String: Any]] else { return nil }
@@ -1418,6 +1782,107 @@ final class TalkModeManager: NSObject {
         return nil
     }
 
+    private func monitorWorkerCompletion(
+        transcript: String,
+        title: String,
+        runId: String,
+        parentSessionKey: String,
+        workerSessionKey: String,
+        gateway: GatewayNodeSession,
+        requestStartedAt: TimeInterval) async
+    {
+        let startedAt = Date().timeIntervalSince1970
+        let completion = await self.waitForChatCompletion(
+            runId: runId,
+            gateway: gateway,
+            timeoutSeconds: Self.chatCompletionTimeoutSeconds)
+
+        switch completion.state {
+        case .final, .timeout:
+            var text = completion.assistantText
+            if text == nil {
+                text = try? await self.waitForAssistantTextFromHistory(
+                    gateway: gateway,
+                    since: startedAt,
+                    timeoutSeconds: completion.state == .final
+                        ? Self.assistantHistoryFinalFallbackTimeoutSeconds
+                        : Self.assistantHistoryDelayedFallbackTimeoutSeconds,
+                    sessionKey: workerSessionKey)
+            }
+            let response = text?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let detail = completion.state == .timeout ? "Finished after delayed check" : "Completed"
+            self.updateTaskLifecycle(
+                title: title,
+                status: .completed,
+                detail: detail,
+                runId: runId,
+                workerSessionKey: workerSessionKey)
+            if let response, !response.isEmpty {
+                self.appendConversationEntry(
+                    speaker: .atom,
+                    text: response,
+                    sessionKey: parentSessionKey,
+                    runId: runId,
+                    workerSessionKey: workerSessionKey,
+                    taskStatus: .completed,
+                    source: "voice-worker-completion")
+            }
+            self.logVoiceEvent(
+                speaker: .atom,
+                transcript: transcript,
+                response: response,
+                sessionKey: parentSessionKey,
+                workerSessionKey: workerSessionKey,
+                runId: runId,
+                taskStatus: .completed,
+                source: "voice-worker-completion",
+                requestStartedAt: requestStartedAt,
+                completionLatencyMs: Self.elapsedMs(since: requestStartedAt))
+            if self.shouldSpeakWorkerCompletion(status: .completed) {
+                await self.playAssistant(text: self.completionAnnouncement(title: title, response: response))
+            }
+        case .aborted:
+            self.updateTaskLifecycle(
+                title: title,
+                status: .blocked,
+                detail: "Worker aborted",
+                runId: runId,
+                workerSessionKey: workerSessionKey)
+            self.logVoiceEvent(
+                speaker: .system,
+                transcript: transcript,
+                response: "Worker aborted",
+                sessionKey: parentSessionKey,
+                workerSessionKey: workerSessionKey,
+                runId: runId,
+                taskStatus: .blocked,
+                source: "voice-worker-completion",
+                requestStartedAt: requestStartedAt,
+                completionLatencyMs: Self.elapsedMs(since: requestStartedAt))
+        case .error:
+            self.updateTaskLifecycle(
+                title: title,
+                status: .failed,
+                detail: "Worker failed",
+                runId: runId,
+                workerSessionKey: workerSessionKey)
+            self.logVoiceEvent(
+                speaker: .system,
+                transcript: transcript,
+                response: "Worker failed",
+                sessionKey: parentSessionKey,
+                workerSessionKey: workerSessionKey,
+                runId: runId,
+                taskStatus: .failed,
+                source: "voice-worker-completion",
+                requestStartedAt: requestStartedAt,
+                completionLatencyMs: Self.elapsedMs(since: requestStartedAt))
+            if self.shouldSpeakWorkerCompletion(status: .failed) {
+                await self.playAssistant(text: "The background task failed. I have the status captured.")
+            }
+        }
+    }
+
     private func playAssistant(text: String) async {
         let parsed = TalkDirectiveParser.parse(text)
         let directive = parsed.directive
@@ -1425,9 +1890,19 @@ final class TalkModeManager: NSObject {
         guard !cleaned.isEmpty else { return }
         self.applyDirective(directive)
 
+        if self.listenOnlyEnabled {
+            self.statusText = "Listen only"
+            self.isSpeaking = false
+            self.lastSpokenText = nil
+            self.displayAssistantResponse = cleaned
+            GatewayDiagnostics.log("talk tts: suppressed for listen-only mode chars=\(cleaned.count)")
+            return
+        }
+
         self.statusText = "Generating voice…"
         self.isSpeaking = true
         self.lastSpokenText = cleaned
+        self.displayAssistantResponse = cleaned
 
         do {
             let started = Date()
@@ -1596,6 +2071,10 @@ final class TalkModeManager: NSObject {
 
     private func startSpeechInterruptionRecognitionIfNeeded() {
         guard self.interruptOnSpeech else { return }
+        guard self.shouldAllowSpeechInterruptForCurrentRoute() else {
+            GatewayDiagnostics.log("talk speech: interruption recognition skipped for speaker route")
+            return
+        }
         do {
             try self.startRecognition()
         } catch {
@@ -1651,7 +2130,11 @@ final class TalkModeManager: NSObject {
     }
 
     private func shouldUseIncrementalTTS() -> Bool {
-        true
+        !self.listenOnlyEnabled
+    }
+
+    private var listenOnlyEnabled: Bool {
+        UserDefaults.standard.bool(forKey: Self.listenOnlyEnabledKey)
     }
 
     private var isSpeechOutputActive: Bool {
@@ -1715,7 +2198,7 @@ final class TalkModeManager: NSObject {
     }
 
     private func startIncrementalSpeechTask() {
-        if self.interruptOnSpeech {
+        if self.interruptOnSpeech, self.shouldAllowSpeechInterruptForCurrentRoute() {
             do {
                 try self.startRecognition()
             } catch {
@@ -1738,6 +2221,7 @@ final class TalkModeManager: NSObject {
                 self.statusText = "Speaking…"
                 self.isSpeaking = true
                 self.lastSpokenText = segment
+                self.displayAssistantResponse = segment
                 await self.updateIncrementalContextIfNeeded()
                 let context = self.incrementalSpeechContext
                 let prefetchedAudio = await self.consumeIncrementalPrefetchedAudioIfAvailable(
@@ -2875,6 +3359,7 @@ extension TalkModeManager: TalkRealtimeWebRTCSessionDelegate {
         guard !trimmed.isEmpty else { return }
         GatewayDiagnostics.log("talk.timeline realtime user transcript chars=\(trimmed.count)")
         self.lastTranscript = trimmed
+        self.displayUserTranscript = trimmed
         self.lastHeard = Date()
     }
 
@@ -2884,6 +3369,7 @@ extension TalkModeManager: TalkRealtimeWebRTCSessionDelegate {
         guard !trimmed.isEmpty else { return }
         GatewayDiagnostics.log("talk.timeline realtime assistant transcript chars=\(trimmed.count)")
         self.lastSpokenText = trimmed
+        self.displayAssistantResponse = trimmed
     }
 
     func realtimeSessionDidFinish(_ session: TalkRealtimeWebRTCSession) {

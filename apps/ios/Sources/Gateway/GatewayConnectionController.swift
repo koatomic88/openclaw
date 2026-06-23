@@ -160,12 +160,15 @@ final class GatewayConnectionController {
         switch phase {
         case .background:
             self.discovery.stop()
-        case .active, .inactive:
+        case .active:
             self.discovery.start()
-            self.attemptAutoReconnectIfNeeded()
+            self.attemptAutoReconnectIfNeeded(forceActiveConfig: true)
+        case .inactive:
+            self.discovery.start()
+            self.attemptAutoReconnectIfNeeded(forceActiveConfig: false)
         @unknown default:
             self.discovery.start()
-            self.attemptAutoReconnectIfNeeded()
+            self.attemptAutoReconnectIfNeeded(forceActiveConfig: false)
         }
     }
 
@@ -624,12 +627,20 @@ final class GatewayConnectionController {
         }
     }
 
-    private func attemptAutoReconnectIfNeeded() {
+    private func attemptAutoReconnectIfNeeded(forceActiveConfig: Bool) {
         guard let appModel = self.appModel else { return }
         guard appModel.gatewayAutoReconnectEnabled else { return }
+        guard UserDefaults.standard.bool(forKey: "gateway.autoconnect") else { return }
+        if forceActiveConfig,
+           appModel.gatewayServerName == nil,
+           let cfg = appModel.activeGatewayConnectConfig
+        {
+            appModel.gatewayStatusText = "Reconnecting…"
+            appModel.applyGatewayConnectConfig(cfg, forceReconnect: true)
+            return
+        }
         // Avoid starting duplicate connect loops while a prior config is active.
         guard appModel.activeGatewayConnectConfig == nil else { return }
-        guard UserDefaults.standard.bool(forKey: "gateway.autoconnect") else { return }
         self.didAutoConnect = false
         self.maybeAutoConnect()
     }
