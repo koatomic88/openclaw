@@ -8,6 +8,7 @@ struct AtomCaptureTab: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @AppStorage("talk.enabled") private var talkEnabled: Bool = false
     @AppStorage("atom.companion.speakerEnabled") private var speakerEnabled: Bool = true
+    @AppStorage("atom.companion.listenOnlyEnabled") private var listenOnlyEnabled: Bool = false
     @AppStorage("atom.companion.wakeEnabled") private var wakeEnabled: Bool = false
     @AppStorage("atom.companion.translationEnabled") private var translationEnabled: Bool = false
     @State private var observationText = ""
@@ -226,7 +227,7 @@ struct AtomCaptureTab: View {
     }
 
     private var orbHomeControls: some View {
-        HStack(spacing: 18) {
+        HStack(spacing: 14) {
             self.orbControlButton(
                 icon: "bubble.left",
                 label: "Chat",
@@ -235,8 +236,9 @@ struct AtomCaptureTab: View {
             self.orbControlButton(
                 icon: self.appModel.talkMode.isEnabled ? "mic.fill" : "mic",
                 label: "Mic",
-                isActive: self.appModel.talkMode.isEnabled,
+                isActive: self.appModel.talkMode.isEnabled && !self.listenOnlyEnabled,
                 action: self.handleVoiceAction)
+            self.listenOnlyControlButton
             self.orbControlButton(
                 icon: "dot.radiowaves.left.and.right",
                 label: "Auto",
@@ -247,7 +249,7 @@ struct AtomCaptureTab: View {
     }
 
     private var orbSpeechStrip: some View {
-        let entries = self.appModel.talkMode.conversationEntries.suffix(5)
+        let entries = Array(self.appModel.talkMode.conversationEntries.suffix(5))
         return VStack(alignment: .leading, spacing: 6) {
             if entries.isEmpty {
                 self.orbSpeechLine(
@@ -258,8 +260,11 @@ struct AtomCaptureTab: View {
                         taskStatus: self.appModel.talkMode.taskLifecycle.status,
                         source: "status"))
             } else {
-                ForEach(Array(entries)) { entry in
+                ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
+                    let newestDistance = entries.count - 1 - index
                     self.orbSpeechLine(entry: entry)
+                        .opacity(self.transcriptOpacity(newestDistance: newestDistance))
+                        .blur(radius: self.transcriptBlur(newestDistance: newestDistance))
                 }
             }
             if self.appModel.talkMode.taskLifecycle.status != .idle {
@@ -279,9 +284,8 @@ struct AtomCaptureTab: View {
             LinearGradient(
                 stops: [
                     .init(color: .clear, location: 0),
-                    .init(color: .black, location: 0.18),
-                    .init(color: .black, location: 0.82),
-                    .init(color: .clear, location: 1),
+                    .init(color: .black, location: 0.24),
+                    .init(color: .black, location: 1),
                 ],
                 startPoint: .top,
                 endPoint: .bottom)
@@ -293,14 +297,25 @@ struct AtomCaptureTab: View {
                 .blur(radius: 8)
                 .allowsHitTesting(false)
         }
-        .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(Color.black.opacity(0.18))
-                .frame(height: 12)
-                .blur(radius: 8)
-                .allowsHitTesting(false)
-        }
         .accessibilityElement(children: .combine)
+    }
+
+    private func transcriptOpacity(newestDistance: Int) -> Double {
+        switch newestDistance {
+        case 0: 0.96
+        case 1: 0.74
+        case 2: 0.52
+        default: 0.34
+        }
+    }
+
+    private func transcriptBlur(newestDistance: Int) -> CGFloat {
+        switch newestDistance {
+        case 0: 0
+        case 1: 0.35
+        case 2: 1.0
+        default: 1.9
+        }
     }
 
     private func orbSpeechLine(entry: AtomConversationEntry) -> some View {
@@ -390,6 +405,42 @@ struct AtomCaptureTab: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label)
+    }
+
+    private var listenOnlyControlButton: some View {
+        Button(action: self.handleListenOnlyAction) {
+            ListenOnlyGlyph()
+                .stroke(
+                    self.listenOnlyActive ? Color.black : Color(red: 1, green: 0.82, blue: 0.40),
+                    style: StrokeStyle(lineWidth: 1.8, lineCap: .round, lineJoin: .round))
+                .frame(width: 19, height: 19)
+                .frame(width: 42, height: 42)
+                .background {
+                    Circle()
+                        .fill(
+                            self.listenOnlyActive
+                                ? Color(red: 1, green: 0.76, blue: 0.28)
+                                : Color.black.opacity(0.36))
+                        .overlay {
+                            Circle()
+                                .strokeBorder(
+                                    Color(red: 1, green: 0.76, blue: 0.28)
+                                        .opacity(self.listenOnlyActive ? 0.72 : 0.46),
+                                    lineWidth: 1)
+                        }
+                }
+                .shadow(
+                    color: Color(red: 1, green: 0.72, blue: 0.22)
+                        .opacity(self.listenOnlyActive ? 0.38 : 0.18),
+                    radius: 12,
+                    y: 6)
+                .overlay(
+                    Circle().strokeBorder(
+                        Color.white.opacity(self.listenOnlyActive ? 0.18 : 0.07),
+                        lineWidth: 0.7))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Listen Only")
     }
 
     private var header: some View {
@@ -558,14 +609,26 @@ struct AtomCaptureTab: View {
         GatewayStatusBuilder.build(appModel: self.appModel) == .connected
     }
 
+    private var listenOnlyActive: Bool {
+        self.listenOnlyEnabled && self.appModel.talkMode.isEnabled
+    }
+
     private func handleVoiceAction() {
         if self.appModel.talkMode.isEnabled {
+            self.listenOnlyEnabled = false
             self.talkEnabled = false
             self.appModel.setTalkEnabled(false)
         } else {
+            self.listenOnlyEnabled = false
             self.talkEnabled = true
             self.appModel.setTalkEnabled(true)
         }
+    }
+
+    private func handleListenOnlyAction() {
+        self.listenOnlyEnabled.toggle()
+        self.talkEnabled = self.listenOnlyEnabled
+        self.appModel.setTalkEnabled(self.listenOnlyEnabled)
     }
 
     private var atomTextSheet: some View {
@@ -664,7 +727,7 @@ struct AtomCaptureTab: View {
                 CaptureActionRow(
                     icon: "person.badge.shield.checkmark.fill",
                     title: "Approval-gated actions",
-                    detail: "Banking, security, and other high-trust skills require explicit permission and audit trails.",
+                    detail: "Banking, security, and high-trust skills require explicit permission and audit trails.",
                     color: OpenClawBrand.warn)
             }
         }
@@ -925,7 +988,8 @@ private struct AtomCompanionSecuritySheet: View {
                 .font(.title3.weight(.bold))
                 .foregroundStyle(Color(red: 1, green: 0.82, blue: 0.34))
             Text(
-                "Pair this iPhone to Mac ATOM. Text, transcript, translation, and approval events use a scoped signed envelope over the pinned gateway channel.")
+                "Pair this iPhone to Mac ATOM. Text, transcript, translation, and approval events use a scoped "
+                    + "signed envelope over the pinned gateway channel.")
                 .font(.subheadline)
                 .foregroundStyle(Color.white.opacity(0.64))
                 .fixedSize(horizontal: false, vertical: true)
@@ -1135,7 +1199,8 @@ private struct AtomCompanionSecuritySheet: View {
                 value: "Embeddings only; raw audio is not sent in trusted payloads")
 
             Text(
-                "Voice identity can enrich memory, meetings, and ambient observations, but Face ID/passcode remains the authority for sensitive actions.")
+                "Voice identity can enrich memory, meetings, and ambient observations, but Face ID/passcode remains "
+                    + "the authority for sensitive actions.")
                 .font(.caption)
                 .foregroundStyle(Color.white.opacity(0.58))
                 .fixedSize(horizontal: false, vertical: true)
@@ -1290,7 +1355,9 @@ private struct AtomCompanionSecuritySheet: View {
         self.appModel.gatewayPairingPaused = false
         self.appModel.gatewayPairingRequestId = nil
         await self.gatewayController.connectLastKnown()
-        self.pairingStatus = self.gatewayConnected ? "Mac ATOM link restored." : "Retry sent. Keep ATOM open and approve on the Mac if prompted."
+        self.pairingStatus = self.gatewayConnected
+            ? "Mac ATOM link restored."
+            : "Retry sent. Keep ATOM open and approve on the Mac if prompted."
     }
 
     private var locationModeTitle: String {
@@ -1416,6 +1483,45 @@ private struct GearShape: Shape {
     }
 }
 
+private struct ListenOnlyGlyph: Shape {
+    func path(in rect: CGRect) -> Path {
+        let width = rect.width
+        let height = rect.height
+        var path = Path()
+
+        path.addEllipse(in: CGRect(
+            x: width * 0.30,
+            y: height * 0.20,
+            width: width * 0.34,
+            height: height * 0.46))
+        path.move(to: CGPoint(x: width * 0.50, y: height * 0.33))
+        path.addCurve(
+            to: CGPoint(x: width * 0.44, y: height * 0.76),
+            control1: CGPoint(x: width * 0.62, y: height * 0.42),
+            control2: CGPoint(x: width * 0.58, y: height * 0.66))
+        path.addCurve(
+            to: CGPoint(x: width * 0.36, y: height * 0.84),
+            control1: CGPoint(x: width * 0.40, y: height * 0.79),
+            control2: CGPoint(x: width * 0.37, y: height * 0.80))
+        path.move(to: CGPoint(x: width * 0.70, y: height * 0.34))
+        path.addCurve(
+            to: CGPoint(x: width * 0.70, y: height * 0.66),
+            control1: CGPoint(x: width * 0.80, y: height * 0.42),
+            control2: CGPoint(x: width * 0.80, y: height * 0.58))
+        path.move(to: CGPoint(x: width * 0.82, y: height * 0.22))
+        path.addCurve(
+            to: CGPoint(x: width * 0.82, y: height * 0.78),
+            control1: CGPoint(x: width * 1.02, y: height * 0.36),
+            control2: CGPoint(x: width * 1.02, y: height * 0.64))
+        path.addEllipse(in: CGRect(
+            x: width * 0.10,
+            y: height * 0.10,
+            width: width * 0.72,
+            height: height * 0.72))
+        return path
+    }
+}
+
 private struct KnowledgeOrbView: View {
     let scale: CGFloat
     let reduceMotion: Bool
@@ -1443,8 +1549,8 @@ private struct KnowledgeOrbView: View {
             ? 1 + speakingPulse * 0.34
             : (self.isListening ? 1.012 : 1)
         let radius = min(size.width, size.height) * 0.38 * self.scale * stateBoost
-        let rotationY = 0.48 + layoutTime * (0.00075 + Double(activity) * 0.00090)
-        let rotationX = -0.16 + sin(layoutTime * (0.0018 + Double(activity) * 0.0015)) * (0.003 + activity * 0.003)
+        let rotationY = 0.48 + layoutTime * (0.00038 + Double(activity) * 0.00062)
+        let rotationX = -0.16 + sin(layoutTime * (0.00095 + Double(activity) * 0.0009)) * (0.0018 + activity * 0.002)
         let projected = self.nodes.enumerated().map { index, node in
             let spherePoint = Self.fibonacciPoint(index: index, count: self.nodes.count)
             let morphed = self.morph(
@@ -1469,7 +1575,8 @@ private struct KnowledgeOrbView: View {
             let distance = hypot(point.x - center.x, point.y - center.y)
             let edgePresence = min(1, max(0, distance / max(1, radius * 0.74)))
             let listeningAlpha = self.isListening ? (0.28 + edgePresence * 0.72) : 1
-            let flicker = 1 + activity * 0.003 * sin(time * (0.025 + Double(node.seed % 7) * 0.004) + Double(node.seed))
+            let flickerSpeed = 0.012 + Double(node.seed % 7) * 0.002
+            let flicker = 1 + activity * 0.0014 * sin(time * flickerSpeed + Double(node.seed))
             let nodeRadius = (0.55 + CGFloat(node.value) * 0.075 + sqrt(CGFloat(node.degree)) * 0.13)
                 * perspective
                 * sqrt(self.scale)
@@ -1535,7 +1642,7 @@ private struct KnowledgeOrbView: View {
     private func activityLevel(time: TimeInterval) -> CGFloat {
         if self.isSpeaking { return 0.13 + 0.035 * max(0, sin(time * 1.35)) }
         if self.isListening { return 0.060 + 0.006 * sin(time * 0.045) }
-        return 0.014 + 0.004 * sin(time * 0.018)
+        return 0.008 + 0.002 * sin(time * 0.010)
     }
 
     private func edgeBiasedPoint(
@@ -1580,25 +1687,26 @@ private struct KnowledgeOrbView: View {
         activity: CGFloat) -> KnowledgeOrbPoint
     {
         let seed = Double(node.seed + index * 17)
-        let flockSpeed = self.isSpeaking ? 0 : (self.isListening ? 0.026 : 0.010)
-        let flockStrength = self.isSpeaking ? 0 : (self.isListening ? 0.006 : 0.003)
+        let flockSpeed = self.isSpeaking ? 0 : (self.isListening ? 0.026 : 0.0038)
+        let flockStrength = self.isSpeaking ? 0 : (self.isListening ? 0.006 : 0.0014)
         let timePhase = time * flockSpeed
-        let latitudeBand = sin(timePhase + Double(point.y) * 2.20 + seed * 0.010)
-        let diagonalBand = cos(timePhase * 0.73 + Double(point.x + point.z) * 1.70)
-        let turningBand = sin(timePhase * 0.47 + Double(index % 17) * 0.13)
-        let swirl = flockStrength * (0.55 + 0.45 * latitudeBand)
+        let latitudeBand = sin(timePhase + Double(point.y) * 1.55 + seed * 0.004)
+        let diagonalBand = cos(timePhase * 0.62 + Double(point.x + point.z) * 1.15)
+        let turningBand = sin(timePhase * 0.42 + Double(index % 17) * 0.08)
+        let murmurationBand = sin(timePhase * 0.28 + Double(point.x - point.y + point.z) * 1.05)
+        let swirl = flockStrength * (0.42 + 0.58 * latitudeBand)
         let liftScale = self.isListening ? 0.14 : 0.08
-        let lift = flockStrength * liftScale * diagonalBand
-        let radial = 1 + flockStrength * 0.65 * sin(timePhase * 0.38 + Double(point.x - point.y) * 1.40)
+        let lift = flockStrength * liftScale * (diagonalBand * 0.72 + murmurationBand * 0.28)
+        let radial = 1 + flockStrength * 0.42 * sin(timePhase * 0.30 + Double(point.x - point.y) * 1.05)
         return KnowledgeOrbPoint(
             x: point.x * CGFloat(radial)
                 - point.y * CGFloat(swirl)
-                + CGFloat(turningBand * flockStrength * 0.18),
+                + CGFloat(turningBand * flockStrength * 0.10),
             y: point.y * CGFloat(radial)
-                + point.x * CGFloat(swirl * 0.55)
+                + point.x * CGFloat(swirl * 0.44)
                 + CGFloat(lift),
             z: point.z * (1 + CGFloat(flockStrength * 0.25 * diagonalBand))
-                + CGFloat(Double(point.x + point.y) * flockStrength * 0.12 * latitudeBand))
+                + CGFloat(Double(point.x + point.y) * flockStrength * 0.06 * latitudeBand))
     }
 
     private func drawAtmosphere(

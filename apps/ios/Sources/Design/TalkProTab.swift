@@ -683,37 +683,37 @@ private struct TalkProOrb: View {
 
     private func motionProfile(time: TimeInterval) -> TalkProOrbMotionProfile {
         let base = TalkProOrbMotionProfile(
-            activity: 0.16,
+            activity: 0.10,
             spread: 0.34,
-            alpha: 0.60,
+            alpha: 0.58,
             size: 1.0,
-            breathe: 0.014,
-            breatheSpeed: 0.055,
-            rotationSpeed: 0.0025,
-            driftSpeed: 0.010,
-            waveSpeed: 0.018,
-            horizontalFlow: 0.0015,
-            verticalFlow: 0.0012,
+            breathe: 0.009,
+            breatheSpeed: 0.030,
+            rotationSpeed: 0.0011,
+            driftSpeed: 0.0035,
+            waveSpeed: 0.006,
+            horizontalFlow: 0.0007,
+            verticalFlow: 0.00055,
             listeningPull: 0,
             speechRipple: 0,
             edgeBandBias: 0,
-            sizePulse: 0.026)
+            sizePulse: 0.012)
 
         switch self.mode {
         case .still:
             return base
         case .indeterminate:
             return base.adjusted(
-                activity: 0.26,
+                activity: 0.18,
                 alpha: 0.72,
-                breathe: 0.020,
-                breatheSpeed: 0.075,
-                rotationSpeed: 0.004,
-                driftSpeed: 0.016,
-                waveSpeed: 0.028,
-                horizontalFlow: 0.0025,
-                verticalFlow: 0.002,
-                sizePulse: 0.040)
+                breathe: 0.014,
+                breatheSpeed: 0.052,
+                rotationSpeed: 0.0024,
+                driftSpeed: 0.008,
+                waveSpeed: 0.015,
+                horizontalFlow: 0.0016,
+                verticalFlow: 0.0012,
+                sizePulse: 0.026)
         case let .level(level):
             let clamped = min(max(level, 0), 1)
             return base.adjusted(

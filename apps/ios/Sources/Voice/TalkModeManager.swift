@@ -39,6 +39,7 @@ final class TalkModeManager: NSObject {
     private static let chatCompletionTimeoutSeconds = 300
     private static let assistantHistoryFinalFallbackTimeoutSeconds = 30
     private static let assistantHistoryDelayedFallbackTimeoutSeconds = 90
+    private static let listenOnlyEnabledKey = "atom.companion.listenOnlyEnabled"
     private static let redactedConfigSentinel = "__OPENCLAW_REDACTED__"
     private static let realtimePrefetchExpiryLeewaySeconds: TimeInterval = 30
     var isEnabled: Bool = false
@@ -1360,7 +1361,8 @@ final class TalkModeManager: NSObject {
     }
 
     private func shouldSpeakWorkerCompletion(status: AtomTaskLifecycleStatus) -> Bool {
-        switch status {
+        guard !self.listenOnlyEnabled else { return false }
+        return switch status {
         case .completed, .failed:
             true
         case .idle, .acknowledged, .running, .blocked:
@@ -1888,6 +1890,15 @@ final class TalkModeManager: NSObject {
         guard !cleaned.isEmpty else { return }
         self.applyDirective(directive)
 
+        if self.listenOnlyEnabled {
+            self.statusText = "Listen only"
+            self.isSpeaking = false
+            self.lastSpokenText = nil
+            self.displayAssistantResponse = cleaned
+            GatewayDiagnostics.log("talk tts: suppressed for listen-only mode chars=\(cleaned.count)")
+            return
+        }
+
         self.statusText = "Generating voice…"
         self.isSpeaking = true
         self.lastSpokenText = cleaned
@@ -2119,7 +2130,11 @@ final class TalkModeManager: NSObject {
     }
 
     private func shouldUseIncrementalTTS() -> Bool {
-        true
+        !self.listenOnlyEnabled
+    }
+
+    private var listenOnlyEnabled: Bool {
+        UserDefaults.standard.bool(forKey: Self.listenOnlyEnabledKey)
     }
 
     private var isSpeechOutputActive: Bool {
